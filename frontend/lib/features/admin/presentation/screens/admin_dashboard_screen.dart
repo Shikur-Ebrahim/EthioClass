@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'admin_upload_screen.dart';
 
 // Colors based on the UI provided
 class AdminColors {
@@ -88,7 +89,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ],
         ),
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminUploadScreen()));
+          },
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add New Course'),
           style: ElevatedButton.styleFrom(
@@ -630,7 +633,13 @@ class _QuickActions extends StatelessWidget {
       title: 'Quick Actions',
       child: Column(
         children: [
-          _ActionRow(icon: Icons.add_box_outlined, label: 'Add New Course'),
+          _ActionRow(
+            icon: Icons.add_box_outlined, 
+            label: 'Add New Course',
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminUploadScreen()));
+            },
+          ),
           const Divider(color: AdminColors.border),
           _ActionRow(icon: Icons.play_circle_outline, label: 'Add New Video'),
           const Divider(color: AdminColors.border),
@@ -648,18 +657,22 @@ class _QuickActions extends StatelessWidget {
 class _ActionRow extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _ActionRow({required this.icon, required this.label});
+  final VoidCallback? onTap;
+  const _ActionRow({required this.icon, required this.label, this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Icon(icon, color: AdminColors.primaryBlue, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label, style: const TextStyle(color: AdminColors.textPrimary, fontSize: 14))),
-          const Icon(Icons.chevron_right, color: AdminColors.textSecondary, size: 20),
-        ],
+    return InkWell(
+      onTap: onTap ?? () {},
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: AdminColors.primaryBlue, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: const TextStyle(color: AdminColors.textPrimary, fontSize: 14))),
+            const Icon(Icons.chevron_right, color: AdminColors.textSecondary, size: 20),
+          ],
+        ),
       ),
     );
   }
