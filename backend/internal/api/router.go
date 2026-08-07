@@ -1,13 +1,17 @@
 package api
 
 import (
+	"github.com/EthioClass/backend/internal/api/handlers"
+	"github.com/EthioClass/backend/internal/api/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	supa "github.com/supabase-community/supabase-go"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *pgxpool.Pool, supaClient *supa.Client) *gin.Engine {
 	r := gin.Default()
 
-	// Simple health check endpoint
+	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
@@ -15,11 +19,17 @@ func SetupRouter() *gin.Engine {
 		})
 	})
 
-	// API group
-	// api := r.Group("/api")
-	// {
-	// 	// Register routes here
-	// }
+	// API v1 group
+	api := r.Group("/api/v1")
+	{
+		// Protected routes — require a valid Supabase JWT
+		protected := api.Group("/")
+		protected.Use(middleware.AuthMiddleware(supaClient))
+		{
+			userHandler := handlers.NewUserHandler(db)
+			protected.GET("/users/profile", userHandler.GetProfile)
+		}
+	}
 
 	return r
 }
