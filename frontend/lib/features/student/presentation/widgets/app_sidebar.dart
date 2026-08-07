@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../auth/presentation/providers/user_profile_provider.dart';
-import '../screens/course_details_screen.dart'; // reuse CourseColors
+import '../screens/course_details_screen.dart';
+import '../screens/my_learning_screen.dart';
+import '../screens/notifications_screen.dart';
+import '../screens/messages_screen.dart';
 
 class AppSidebar extends ConsumerWidget {
   const AppSidebar({super.key});
@@ -66,12 +69,30 @@ class AppSidebar extends ConsumerWidget {
               children: [
                 _SidebarItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home', isActive: true, onTap: () { Navigator.of(context).pop(); }),
                 _SidebarItem(icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book, label: 'Courses', onTap: () { Navigator.of(context).pop(); }),
-                _SidebarItem(icon: Icons.school_outlined, activeIcon: Icons.school, label: 'My Learning', onTap: () { Navigator.of(context).pop(); }),
+                _SidebarItem(
+                  icon: Icons.school_outlined, activeIcon: Icons.school, label: 'My Learning',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyLearningScreen()));
+                  },
+                ),
                 _SidebarItem(icon: Icons.download_for_offline_outlined, activeIcon: Icons.download_for_offline, label: 'Downloads', onTap: () { Navigator.of(context).pop(); }),
                 _SidebarItem(icon: Icons.bookmark_border, activeIcon: Icons.bookmark, label: 'Bookmarks', onTap: () { Navigator.of(context).pop(); }),
                 _SidebarItem(icon: Icons.note_alt_outlined, activeIcon: Icons.note_alt, label: 'My Notes', onTap: () { Navigator.of(context).pop(); }),
-                _SidebarItem(icon: Icons.notifications_none, activeIcon: Icons.notifications, label: 'Notifications', badge: 3, onTap: () { Navigator.of(context).pop(); }),
-                _SidebarItem(icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble, label: 'Messages', onTap: () { Navigator.of(context).pop(); }),
+                _SidebarItem(
+                  icon: Icons.notifications_none, activeIcon: Icons.notifications, label: 'Notifications', badge: 3,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                  },
+                ),
+                _SidebarItem(
+                  icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble, label: 'Messages',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MessagesScreen()));
+                  },
+                ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   child: Divider(color: CourseColors.border),
