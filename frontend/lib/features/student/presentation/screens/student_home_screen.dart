@@ -9,6 +9,7 @@ import '../../../../courses/data/models/course_models.dart';
 import 'downloads_screen.dart';
 import 'bookmarks_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/app_sidebar.dart';
 
 class StudentHomeScreen extends ConsumerStatefulWidget {
   const StudentHomeScreen({super.key});
@@ -20,6 +21,7 @@ class StudentHomeScreen extends ConsumerStatefulWidget {
 class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
   int _currentNavIndex = 0;
   final _searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Returns the correct page body for the selected nav tab
   Widget _buildBody(int index) {
@@ -55,7 +57,9 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
+      drawer: const AppSidebar(),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -65,7 +69,10 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Row(
                   children: [
-                    const Icon(Icons.menu, color: AppColors.textPrimary, size: 26),
+                    GestureDetector(
+                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 26),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: profileAsync.when(
