@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/EthioClass/backend/internal/api/handlers"
 	"github.com/EthioClass/backend/internal/api/middleware"
+	"github.com/EthioClass/backend/internal/infrastructure/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	supa "github.com/supabase-community/supabase-go"
