@@ -7,6 +7,9 @@ import '../screens/course_details_screen.dart';
 import '../screens/my_learning_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/messages_screen.dart';
+import '../screens/settings_screen.dart';
+import '../screens/help_support_screen.dart';
+import '../screens/about_screen.dart';
 
 class AppSidebar extends ConsumerWidget {
   const AppSidebar({super.key});
@@ -97,9 +100,27 @@ class AppSidebar extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   child: Divider(color: CourseColors.border),
                 ),
-                _SidebarItem(icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Settings', onTap: () { Navigator.of(context).pop(); }),
-                _SidebarItem(icon: Icons.help_outline, activeIcon: Icons.help, label: 'Help & Support', onTap: () { Navigator.of(context).pop(); }),
-                _SidebarItem(icon: Icons.info_outline, activeIcon: Icons.info, label: 'About EthioClass', onTap: () { Navigator.of(context).pop(); }),
+                _SidebarItem(
+                  icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Settings',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                  },
+                ),
+                _SidebarItem(
+                  icon: Icons.help_outline, activeIcon: Icons.help, label: 'Help & Support',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                  },
+                ),
+                _SidebarItem(
+                  icon: Icons.info_outline, activeIcon: Icons.info, label: 'About EthioClass',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AboutScreen()));
+                  },
+                ),
                 const SizedBox(height: 8),
                 // ── Log Out
                 _SidebarItem(
