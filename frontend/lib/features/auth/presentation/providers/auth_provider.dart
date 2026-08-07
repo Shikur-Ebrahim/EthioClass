@@ -1,10 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/auth_repository.dart';
-
-// Auth repository provider
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository();
-});
+import 'user_profile_provider.dart';
 
 // Auth state class
 class AuthState {

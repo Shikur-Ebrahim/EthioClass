@@ -1,7 +1,22 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'models/user_profile.dart';
 
 class AuthRepository {
   final SupabaseClient _client = Supabase.instance.client;
+
+  // Fetch the user profile (including role) from Supabase
+  Future<UserProfile?> fetchProfile() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return null;
+
+    final data = await _client
+        .from('profiles')
+        .select()
+        .eq('id', user.id)
+        .single();
+
+    return UserProfile.fromMap(data);
+  }
 
   // Sign Up with email and password, storing extra user metadata
   Future<AuthResponse> signUp({

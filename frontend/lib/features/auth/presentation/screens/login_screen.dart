@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_text_field.dart';
@@ -34,7 +35,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final state = ref.read(authProvider);
     if (state.isSuccess && mounted) {
-      context.go('/home'); // Will route to home once built
+      // Fetch role and redirect accordingly
+      final client = Supabase.instance.client;
+      try {
+        final profile = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', client.auth.currentUser!.id)
+            .single();
+        final role = profile['role'] as String? ?? 'student';
+        if (mounted) context.go(role == 'admin' ? '/admin' : '/home');
+      } catch (_) {
+        if (mounted) context.go('/home');
+      }
     }
   }
 

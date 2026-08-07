@@ -21,6 +21,7 @@ type Profile struct {
 	FullName    string `json:"full_name"`
 	PhoneNumber string `json:"phone_number"`
 	AvatarURL   string `json:"avatar_url"`
+	Role        string `json:"role"`
 	CreatedAt   string `json:"created_at"`
 }
 
@@ -34,9 +35,9 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	var profile Profile
 	err := h.DB.QueryRow(
 		context.Background(),
-		"SELECT id, full_name, COALESCE(phone_number, ''), COALESCE(avatar_url, ''), created_at FROM public.profiles WHERE id = $1",
+		"SELECT id, full_name, COALESCE(phone_number, ''), COALESCE(avatar_url, ''), COALESCE(role, 'student'), created_at FROM public.profiles WHERE id = $1",
 		userID,
-	).Scan(&profile.ID, &profile.FullName, &profile.PhoneNumber, &profile.AvatarURL, &profile.CreatedAt)
+	).Scan(&profile.ID, &profile.FullName, &profile.PhoneNumber, &profile.AvatarURL, &profile.Role, &profile.CreatedAt)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
