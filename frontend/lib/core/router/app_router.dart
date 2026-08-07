@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/student/presentation/screens/student_home_screen.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/courses/presentation/screens/course_detail_screen.dart';
 
 // Role-aware router — fetches profile after login to determine redirect
 final appRouter = GoRouter(
@@ -70,6 +71,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminDashboardScreen(),
+    ),
+    // Course Detail
+    GoRoute(
+      path: '/course/:id',
+      builder: (context, state) {
+        final courseId = state.pathParameters['id']!;
+        return CourseDetailScreen(courseId: courseId);
+      },
     ),
   ],
 );
