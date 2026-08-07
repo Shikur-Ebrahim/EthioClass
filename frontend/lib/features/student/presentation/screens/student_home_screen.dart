@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../auth/presentation/providers/user_profile_provider.dart';
-import '../../courses/presentation/providers/course_provider.dart';
-import '../../courses/data/models/course_models.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../auth/presentation/providers/user_profile_provider.dart';
+import '../../../../courses/presentation/providers/course_provider.dart';
+import '../../../../courses/data/models/course_models.dart';
+import 'downloads_screen.dart';
+import 'bookmarks_screen.dart';
+import 'profile_screen.dart';
 
 class StudentHomeScreen extends ConsumerStatefulWidget {
   const StudentHomeScreen({super.key});
@@ -17,6 +20,20 @@ class StudentHomeScreen extends ConsumerStatefulWidget {
 class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
   int _currentNavIndex = 0;
   final _searchController = TextEditingController();
+
+  // Returns the correct page body for the selected nav tab
+  Widget _buildBody(int index) {
+    switch (index) {
+      case 2:
+        return const DownloadsScreen();
+      case 3:
+        return const BookmarksScreen();
+      case 4:
+        return const ProfileScreen();
+      default:
+        return _buildHomeBody();
+    }
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -31,6 +48,11 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final myEnrollmentsAsync = ref.watch(myEnrollmentsProvider);
     final continueLearningAsync = ref.watch(continueLearningProvider);
+
+    // For non-home tabs, return the respective screen
+    if (_currentNavIndex != 0 && _currentNavIndex != 1) {
+      return _buildBody(_currentNavIndex);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -278,6 +300,11 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
         onTap: (i) => setState(() => _currentNavIndex = i),
       ),
     );
+  }
+
+  Widget _buildHomeBody() {
+    // Just an alias to avoid confusion — the main scaffold returns this
+    return const SizedBox();
   }
 }
 
