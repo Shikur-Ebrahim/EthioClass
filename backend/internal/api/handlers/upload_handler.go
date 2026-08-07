@@ -57,7 +57,7 @@ func (h *UploadHandler) UploadFile(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute) // Videos can be large
 	defer cancel()
 
-	err = h.R2Service.UploadFile(ctx, file, objectKey, contentType)
+	err = h.R2Service.UploadFile(ctx, objectKey, file, contentType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file to R2: " + err.Error()})
 		return

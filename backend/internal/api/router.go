@@ -30,6 +30,12 @@ func SetupRouter(db *pgxpool.Pool, supaClient *supa.Client, r2Svc *storage.R2Ser
 			userHandler := handlers.NewUserHandler(db)
 			protected.GET("/users/profile", userHandler.GetProfile)
 
+			// Course routes
+			courseHandler := handlers.NewCourseHandler(db)
+			protected.GET("/courses", courseHandler.GetCourses)
+			protected.GET("/courses/:id/modules", courseHandler.GetCourseModules)
+			protected.POST("/courses", courseHandler.CreateCourse) // Admin only
+
 			// Cloudflare R2 Upload routes
 			if r2Svc != nil {
 				uploadHandler := &handlers.UploadHandler{R2Service: r2Svc}
