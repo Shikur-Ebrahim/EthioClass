@@ -8,7 +8,7 @@ import (
 	supa "github.com/supabase-community/supabase-go"
 )
 
-func SetupRouter(db *pgxpool.Pool, supaClient *supa.Client) *gin.Engine {
+func SetupRouter(db *pgxpool.Pool, supaClient *supa.Client, r2Svc *storage.R2Service) *gin.Engine {
 	r := gin.Default()
 
 	// Health check endpoint
@@ -28,6 +28,15 @@ func SetupRouter(db *pgxpool.Pool, supaClient *supa.Client) *gin.Engine {
 		{
 			userHandler := handlers.NewUserHandler(db)
 			protected.GET("/users/profile", userHandler.GetProfile)
+
+			// Cloudflare R2 Upload routes
+			if r2Svc != nil {
+				uploadHandler := &handlers.UploadHandler{R2Service: r2Svc}
+				// Admin route for uploading files
+				protected.POST("/upload", uploadHandler.UploadFile)
+				// Route to get presigned URL for viewing secure files
+				protected.GET("/presigned-url", uploadHandler.GetPresignedURL)
+			}
 		}
 	}
 

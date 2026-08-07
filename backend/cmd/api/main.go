@@ -28,13 +28,13 @@ func main() {
 	defer dbPool.Close()
 
 	// Initialize Cloudflare R2 Storage
-	_, err = storage.ConnectCloudflareR2(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2BucketName)
+	r2Svc, err := storage.NewR2Service(cfg)
 	if err != nil {
 		log.Printf("Warning: Failed to initialize Cloudflare R2: %v\n", err)
 	}
 
 	// Setup Router with dependencies
-	router := api.SetupRouter(dbPool, supaClient.Client)
+	router := api.SetupRouter(dbPool, supaClient.Client, r2Svc)
 
 	// Start Server
 	log.Printf("Starting EthioClass API server on port %s...\n", cfg.Port)
