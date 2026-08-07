@@ -133,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () => context.push('/forgot-password'),
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(color: AppColors.yellow, fontSize: 13, fontWeight: FontWeight.w500),

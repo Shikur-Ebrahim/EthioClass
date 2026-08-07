@@ -33,6 +33,14 @@ class AuthRepository {
     return response;
   }
 
+  // Send password reset email via Supabase
+  Future<void> resetPassword({required String email}) async {
+    await _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'ethioclass://reset-password',
+    );
+  }
+
   // Sign Out
   Future<void> signOut() async {
     await _client.auth.signOut();
