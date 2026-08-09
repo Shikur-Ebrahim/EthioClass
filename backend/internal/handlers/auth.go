@@ -65,3 +65,21 @@ func LoginHandler(c *gin.Context) {
 		"user":    resp.User,
 	})
 }
+
+func ResetPasswordHandler(c *gin.Context) {
+	var req models.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := auth.Client.Auth.ResetPasswordForEmail(req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Password reset link sent",
+	})
+}

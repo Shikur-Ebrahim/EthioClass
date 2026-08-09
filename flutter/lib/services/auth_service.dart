@@ -50,4 +50,17 @@ class AuthService {
       throw Exception(data['error'] ?? 'Login failed');
     }
   }
+
+  Future<void> resetPassword({required String email}) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(data['error'] ?? 'Failed to send reset link');
+    }
+  }
 }

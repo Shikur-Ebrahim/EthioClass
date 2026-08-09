@@ -299,6 +299,16 @@ class _SignupScreenState extends State<SignupScreen> {
                         onPressed: () {},
                       ),
 
+                      const SizedBox(height: 12),
+
+                      // Facebook Button
+                      SocialButton(
+                        label: 'Facebook',
+                        icon: const Icon(Icons.facebook_rounded,
+                            color: Color(0xFF1877F2), size: 24),
+                        onPressed: () {},
+                      ),
+
                       const SizedBox(height: 24),
 
                       // Already have account
