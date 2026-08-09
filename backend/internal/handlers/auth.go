@@ -92,11 +92,27 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	httpClient := &http.Client{}
 	httpResp, err := httpClient.Do(httpReq)
-	if err != nil || httpResp.StatusCode >= 400 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: network error"})
 		return
 	}
 	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode >= 400 {
+		var errorResponse map[string]interface{}
+		json.NewDecoder(httpResp.Body).Decode(&errorResponse)
+		errorMsg := "Unknown error"
+		if msg, ok := errorResponse["msg"].(string); ok {
+			errorMsg = msg
+		} else if msg, ok := errorResponse["message"].(string); ok {
+			errorMsg = msg
+		} else if msg, ok := errorResponse["error_description"].(string); ok {
+			errorMsg = msg
+		}
+		
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: " + errorMsg})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset link sent to your email"})
 }
