@@ -9,6 +9,7 @@ ENV GOTOOLCHAIN=auto
 # Copy dependency files first (cache layer)
 COPY go.mod go.sum ./
 RUN go mod download
+RUN go mod tidy
 
 # Copy source code
 COPY . .
