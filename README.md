@@ -1,33 +1,85 @@
+﻿# EthioClass Backend
+
+Go backend for the EthioClass platform.
+
+## Architecture
+
+`
+Flutter (Android / Windows Desktop)
+    |
+    | HTTPS
+    v
+https://api.ethioclass.com
+    |
+    v
+Cloudflare (DNS + TLS — Full Strict)
+    |
+    v
+Contabo VPS → Nginx → Go Backend Container
+    |
+    +-- Supabase (PostgreSQL + Auth)
+    +-- Cloudflare R2 (Object Storage)
+`
+
+## Local Development
+
+`ash
+cp .env.example .env
+# Fill in your .env values
+go run ./cmd/server
+`
+
+Test the health endpoint:
+`ash
+curl http://localhost:8080/health
+# Expected: {"status":"ok"}
+`
+
+## Environment Variables
+
+See .env.example for all required variables.
+**Never commit .env to Git.**
+
+## Production Deployment
+
+The backend runs inside Docker on the Contabo VPS.
+See the root docker-compose.yml for the full stack.
+
+Nginx certificates must exist at /etc/nginx/ssl/ on the VPS
+(Cloudflare Origin Certificate — generate from CF dashboard).
+
+`ash
+# On VPS:
+git pull origin main
+docker compose up -d --build
+docker compose exec backend wget -qO- http://localhost:8080/health
+`
+"@ | Set-Content -Encoding UTF8 C:\Users\hp\Desktop\EthioClass\backend\README.md
+
+@"
 # EthioClass
 
-Production-ready enterprise infrastructure for EthioClass.
+An educational platform for Ethiopian students.
 
-## Infrastructure
-- **VPS**: Contabo VPS
-- **Domain**: ethioclass.com (Proxy via Cloudflare)
-- **Containerization**: Docker & Docker Compose
-- **Reverse Proxy**: Nginx
+## Project Structure
 
-## Tech Stack
-- **Frontend**: Flutter, Riverpod, GoRouter, Dio
-- **Backend**: Go (Gin Framework)
-- **Database**: Supabase PostgreSQL
-- **Authentication**: Supabase Auth
-- **Storage**: Cloudflare R2 Object Storage (Videos & PDFs)
+`
+EthioClass/
+├── flutter/     Flutter app (Android user + Windows admin)
+├── backend/     Go REST API
+├── docker/      Dockerfiles
+├── nginx/       Nginx configuration
+└── supabase/    Database migrations
+`
 
-## Directory Structure
-- `/frontend`: Flutter application (Clean Architecture).
-- `/backend`: Go Gin API (Clean Architecture).
-- `/docker`: Dockerfiles and container-related scripts.
-- `/nginx`: Nginx reverse proxy configurations for SSL and routing.
-- `docker-compose.yml`: Orchestration file for deployment.
+## Architecture
 
-## Deployment on VPS
-1. Clone the repository on your Contabo VPS.
-2. Ensure Docker and Docker Compose are installed.
-3. Configure your Cloudflare Origin SSL certificates in `/nginx/ssl/` (or update `nginx/conf.d/ethioclass.com.conf` for Let's Encrypt / Certbot).
-4. Create `.env` files in `backend/` and `frontend/` directories by copying from `.env.example`.
-5. Run the deployment:
-   ```bash
-   docker-compose up -d --build
-   ```
+`
+Flutter → https://api.ethioclass.com → Cloudflare → Contabo VPS → Nginx → Go Backend
+                                                                              |
+                                                                    Supabase + Cloudflare R2
+`
+
+## Quick Start
+
+See ackend/README.md and lutter/README.md for setup instructions.

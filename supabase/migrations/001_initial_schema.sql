@@ -13,19 +13,19 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 -- Auto-create profile on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, full_name, role)
+  INSERT INTO public.profiles (id, full_name, role)
   VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', 'student');
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE handle_new_user();
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- ─────────────────────────────────────────────
 -- COURSES

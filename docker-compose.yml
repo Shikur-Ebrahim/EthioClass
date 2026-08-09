@@ -1,4 +1,4 @@
-version: '3.8'
+﻿version: '3.8'
 
 services:
   backend:
@@ -9,13 +9,13 @@ services:
     restart: always
     env_file:
       - ./backend/.env
-    ports:
-      - "8080:8080"
+    # Port 8080 is NOT exposed publicly — only accessible within Docker network
+    # To test internally: docker compose exec backend wget -qO- http://localhost:8080/health
     networks:
       - ethioclass_network
 
   nginx:
-    image: nginx:latest
+    image: nginx:alpine
     container_name: ethioclass_nginx
     restart: always
     ports:
@@ -24,8 +24,11 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # Volumes for SSL certificates (Cloudflare Origin certs or Certbot)
-      # - ./nginx/ssl:/etc/nginx/ssl:ro
+      # Origin TLS certificates — must exist on VPS at /etc/nginx/ssl/
+      # Generate from Cloudflare Dashboard → SSL/TLS → Origin Server → Create Certificate
+      # Place files at: /etc/nginx/ssl/cloudflare-origin.crt and .key
+      # Then mount with: -v /etc/nginx/ssl:/etc/nginx/ssl:ro
+      - /etc/nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:

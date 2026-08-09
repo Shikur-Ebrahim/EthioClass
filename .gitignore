@@ -1,25 +1,32 @@
-# General
+﻿# ─── Secrets — NEVER commit these ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Nginx TLS certificates (VPS-only, never in repo) ───────────────────────
+nginx/ssl/
+
+# ─── Go build artifacts ──────────────────────────────────────────────────────
+backend/server
+backend/*.exe
+backend/bin/
+
+# ─── Flutter ─────────────────────────────────────────────────────────────────
+flutter/.dart_tool/
+flutter/build/
+flutter/.flutter-plugins
+flutter/.flutter-plugins-dependencies
+flutter/android/local.properties
+flutter/android/.gradle/
+flutter/android/app/google-services.json
+flutter/ios/Pods/
+flutter/ios/.symlinks/
+flutter/*.iml
+flutter/.idea/
+flutter/windows/flutter/generated_*
+
+# ─── General ─────────────────────────────────────────────────────────────────
 .DS_Store
 .vscode/
 .idea/
-
-# Backend
-backend/.env
-backend/main
-backend/bin/
-
-# Frontend (Flutter)
-frontend/.env
-frontend/.dart_tool/
-frontend/build/
-frontend/ios/Pods/
-frontend/ios/.symlinks/
-frontend/ios/Flutter/Flutter.podspec
-frontend/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-frontend/android/local.properties
-frontend/*.iml
-frontend/.idea/
-
-# Docker & Secrets
-nginx/ssl/
-.env
+*.log
