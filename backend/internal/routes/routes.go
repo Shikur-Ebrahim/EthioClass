@@ -1,4 +1,4 @@
-﻿package routes
+package routes
 
 import (
 	"github.com/EthioClass/backend/internal/handlers"
@@ -13,6 +13,12 @@ func Register(r *gin.Engine) {
 
 	// Health check — unauthenticated, no rate limit needed
 	r.GET("/health", handlers.Health)
+
+	authGroup := r.Group("/auth")
+	{
+		authGroup.POST("/signup", handlers.SignupHandler)
+		authGroup.POST("/login", handlers.LoginHandler)
+	}
 
 	// Future API groups will be registered here:
 	// v1 := r.Group("/api/v1")

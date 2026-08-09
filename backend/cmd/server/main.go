@@ -1,8 +1,9 @@
-﻿package main
+package main
 
 import (
 	"log"
 
+	"github.com/EthioClass/backend/internal/auth"
 	"github.com/EthioClass/backend/internal/config"
 	"github.com/EthioClass/backend/internal/database"
 	"github.com/EthioClass/backend/internal/routes"
@@ -28,6 +29,9 @@ func main() {
 		database.CheckConnection(db)
 		defer db.Close()
 	}
+
+	// --- Supabase Auth Client ---
+	auth.InitSupabaseAuth()
 
 	// --- Cloudflare R2 (non-fatal) ---
 	r2, err := storage.New(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2BucketName)
