@@ -1,7 +1,10 @@
-# Build stage
-FROM golang:1.24-alpine AS builder
+﻿# Build stage — use latest Go to avoid toolchain version conflicts
+FROM golang:latest AS builder
 
 WORKDIR /app
+
+# Allow Go to auto-select toolchain if needed
+ENV GOTOOLCHAIN=auto
 
 # Copy dependency files first (cache layer)
 COPY go.mod go.sum ./
