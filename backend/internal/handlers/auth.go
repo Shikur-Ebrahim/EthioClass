@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/EthioClass/backend/internal/auth"
 	"github.com/EthioClass/backend/internal/models"
@@ -16,8 +20,6 @@ func SignupHandler(c *gin.Context) {
 		return
 	}
 
-	// Sign up user via Supabase Go client
-	// The client handles password hashing and email verification logic based on your Supabase project settings
 	signupReq := supa.SignupRequest{
 		Email:    req.Email,
 		Password: req.Password,
@@ -46,7 +48,6 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// Log in via Supabase
 	tokenReq := supa.TokenRequest{
 		GrantType: "password",
 		Email:     req.Email,
@@ -73,13 +74,29 @@ func ResetPasswordHandler(c *gin.Context) {
 		return
 	}
 
-	err := auth.Client.Auth.ResetPasswordForEmail(req.Email)
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+
+	body, _ := json.Marshal(map[string]string{"email": req.Email})
+
+	httpReq, err := http.NewRequest("POST",
+		fmt.Sprintf("%s/auth/v1/recover", supabaseURL),
+		bytes.NewBuffer(body),
+	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build request"})
 		return
 	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("apikey", supabaseKey)
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Password reset link sent",
-	})
+	httpClient := &http.Client{}
+	httpResp, err := httpClient.Do(httpReq)
+	if err != nil || httpResp.StatusCode >= 400 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email"})
+		return
+	}
+	defer httpResp.Body.Close()
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset link sent to your email"})
 }
