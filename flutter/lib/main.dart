@@ -52,19 +52,29 @@ class _EthioClassAppState extends State<EthioClassApp> {
 
   void _handleDeepLink(Uri uri) {
     if (uri.scheme == 'ethioclass' && uri.host == 'reset-password') {
-      // Supabase returns the tokens in the URL fragment (#access_token=...)
-      final fragment = uri.fragment;
-      if (fragment.isNotEmpty) {
-        final params = Uri.splitQueryString(fragment);
-        final accessToken = params['access_token'];
-        
-        if (accessToken != null && accessToken.isNotEmpty) {
+      // Supabase might return tokens in fragment (#) or query params (?)
+      String? accessToken;
+      
+      if (uri.fragment.isNotEmpty) {
+        final params = Uri.splitQueryString(uri.fragment);
+        accessToken = params['access_token'];
+      }
+      
+      if (accessToken == null && uri.queryParameters.containsKey('access_token')) {
+        accessToken = uri.queryParameters['access_token'];
+      }
+
+      if (accessToken != null && accessToken.isNotEmpty) {
+        // Delay navigation slightly to ensure the Navigator is ready, especially on cold start
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           _navigatorKey.currentState?.push(
             MaterialPageRoute(
-              builder: (_) => UpdatePasswordScreen(accessToken: accessToken),
+              builder: (_) => UpdatePasswordScreen(accessToken: accessToken!),
             ),
           );
-        }
+        });
+      } else {
+        debugPrint("Deep link received but no access_token found. URI: $uri");
       }
     }
   }

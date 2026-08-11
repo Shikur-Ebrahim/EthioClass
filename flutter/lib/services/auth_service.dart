@@ -57,7 +57,11 @@ class AuthService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
-        'redirectTo': 'ethioclass://reset-password',
+        // Supabase redirects to this URL after verifying the token.
+        // This page (on our VPS) reads the #access_token fragment via JS
+        // and re-redirects to the ethioclass:// deep link as a query param,
+        // because Android strips URL fragments from deep link intents.
+        'redirectTo': 'https://api.ethioclass.com/auth/callback',
       }),
     );
 

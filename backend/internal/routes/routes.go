@@ -20,6 +20,9 @@ func Register(r *gin.Engine) {
 		authGroup.POST("/login", handlers.LoginHandler)
 		authGroup.POST("/reset-password", handlers.ResetPasswordHandler)
 		authGroup.PUT("/update-password", handlers.UpdatePasswordHandler)
+		// Supabase password-reset redirect target. Reads the #access_token fragment
+		// via JavaScript and redirects to ethioclass:// deep link as a query param.
+		authGroup.GET("/callback", handlers.AuthCallbackHandler)
 	}
 
 	// Future API groups will be registered here:
