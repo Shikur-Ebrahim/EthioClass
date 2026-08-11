@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/EthioClass/backend/internal/auth"
 	"github.com/EthioClass/backend/internal/models"
@@ -31,6 +32,10 @@ func SignupHandler(c *gin.Context) {
 
 	resp, err := auth.Client.Auth.Signup(signupReq)
 	if err != nil {
+		if strings.Contains(err.Error(), "user_already_exists") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "This email is already registered"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

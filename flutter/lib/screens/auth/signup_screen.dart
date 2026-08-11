@@ -188,8 +188,14 @@ class _SignupScreenState extends State<SignupScreen> {
                             ],
                           ),
                         ),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Enter your phone number' : null,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Enter your phone number';
+                          String phone = v.trim();
+                          if (phone.length != 9) return 'Phone number must be exactly 9 digits';
+                          if (!phone.startsWith('9') && !phone.startsWith('7')) return 'Phone number must start with 9 or 7';
+                          if (int.tryParse(phone) == null) return 'Phone number must contain only numbers';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 14),
 
