@@ -55,12 +55,36 @@ class AuthService {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/reset-password'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
+      body: jsonEncode({
+        'email': email,
+        'redirectTo': 'ethioclass://reset-password',
+      }),
     );
 
     if (response.statusCode != 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       throw Exception(data['error'] ?? 'Failed to send reset link');
+    }
+  }
+
+  Future<void> updatePassword({
+    required String newPassword,
+    required String accessToken,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/auth/update-password'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'password': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(data['error'] ?? 'Failed to update password');
     }
   }
 }

@@ -13,5 +13,10 @@ type LoginRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	Email string `json:"email" binding:"required,email"`
+	Email      string `json:"email" binding:"required,email"`
+	RedirectTo string `json:"redirectTo,omitempty"`
+}
+
+type UpdatePasswordRequest struct {
+	Password string `json:"password" binding:"required,min=6"`
 }

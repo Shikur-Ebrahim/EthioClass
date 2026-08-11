@@ -19,6 +19,7 @@ func Register(r *gin.Engine) {
 		authGroup.POST("/signup", handlers.SignupHandler)
 		authGroup.POST("/login", handlers.LoginHandler)
 		authGroup.POST("/reset-password", handlers.ResetPasswordHandler)
+		authGroup.PUT("/update-password", handlers.UpdatePasswordHandler)
 	}
 
 	// Future API groups will be registered here:
