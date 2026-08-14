@@ -30,8 +30,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     Color(0xFF880E4F),
   ];
 
-  // Sample chapters data
-  static const List<_ChapterItem> _chapters = [
+  // Chapters data (now mutable state)
+  List<_ChapterItem> _chapters = [
     _ChapterItem('Physical Quantities and Units', '5 Lessons • 45 min', _ChapterState.free),
     _ChapterItem('Kinematics in One Dimension', '6 Lessons • 1h 10m', _ChapterState.free),
     _ChapterItem('Dynamics', '6 Lessons • 1h 20m', _ChapterState.locked),
@@ -345,7 +345,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (ctx, i) => _ChapterTile(
-                          chapter: _chapters[i], index: i),
+                        chapter: _chapters[i],
+                        index: i,
+                        onTap: () => _handleChapterTap(i),
+                      ),
                       childCount: _chapters.length,
                     ),
                   ),
@@ -410,6 +413,141 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       ),
     );
   }
+
+  void _handleChapterTap(int index) {
+    final chapter = _chapters[index];
+    if (chapter.state == _ChapterState.locked) {
+      _showUnlockDialog();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LessonDetailScreen(
+            chapterTitle: chapter.title,
+            isLocked: false,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showUnlockDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_open_rounded, color: AppColors.primary, size: 30),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Unlock Full Course',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Get full access to all video lessons, notes, and quizzes for this course for just 100 Birr.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMedium,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: AppColors.greyLight, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _unlockAllChapters();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Pay 100 Birr',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _unlockAllChapters() {
+    setState(() {
+      _chapters = _chapters.map((ch) => _ChapterItem(ch.title, ch.info, _ChapterState.free)).toList();
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Course unlocked successfully! 🎉'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 }
 
 // ── Header stat widget ────────────────────────────────────────
@@ -449,25 +587,18 @@ class _HeaderStat extends StatelessWidget {
 class _ChapterTile extends StatelessWidget {
   final _ChapterItem chapter;
   final int index;
+  final VoidCallback onTap;
 
-  const _ChapterTile({required this.chapter, required this.index});
+  const _ChapterTile({
+    required this.chapter,
+    required this.index,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bool isLocked = chapter.state == _ChapterState.locked;
-
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LessonDetailScreen(
-              chapterTitle: chapter.title,
-              isLocked: isLocked,
-            ),
-          ),
-        );
-      },
+      onTap: onTap,
       child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
