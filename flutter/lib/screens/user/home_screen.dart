@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import 'category_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -422,7 +423,18 @@ class _CategoryCard extends StatelessWidget {
     final bg = _bgColors[index % _bgColors.length];
     final iconColor = _iconColors[index % _iconColors.length];
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CategoryDetailScreen(
+            category: cat,
+            headerColor: bg,
+            iconColor: iconColor,
+          ),
+        ),
+      ),
+      child: Container(
       width: 130,
       margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
@@ -479,6 +491,7 @@ class _CategoryCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
