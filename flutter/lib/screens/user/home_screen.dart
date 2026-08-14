@@ -86,7 +86,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // Hamburger menu icon
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Scaffold.of(context).openDrawer();
+                },
                 child: Container(
                   width: 42,
                   height: 42,

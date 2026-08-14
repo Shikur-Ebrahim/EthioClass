@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../widgets/custom_drawer.dart';
 import 'home_screen.dart';
 import 'courses_screen.dart';
 import 'downloads_screen.dart';
@@ -42,6 +43,10 @@ class _MainLayoutState extends State<MainLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: CustomDrawer(
+        userName: widget.userName,
+        userEmail: widget.userEmail,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
