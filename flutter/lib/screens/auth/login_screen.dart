@@ -35,11 +35,19 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      // Extract user name and email from result
-      final user = result['user'] as Map<String, dynamic>?;
-      final userMeta = user?['user_metadata'] as Map<String, dynamic>?;
-      final userName = userMeta?['full_name'] as String? ?? '';
-      final userEmail = user?['email'] as String? ?? _emailController.text.trim();
+      // Safely extract user name and email — always navigate even if parsing fails
+      String userName = '';
+      String userEmail = _emailController.text.trim();
+      try {
+        final user = result['user'];
+        if (user is Map) {
+          userEmail = (user['email'] as String?) ?? userEmail;
+          final meta = user['user_metadata'];
+          if (meta is Map) {
+            userName = (meta['full_name'] as String?) ?? '';
+          }
+        }
+      } catch (_) {}
 
       Navigator.pushAndRemoveUntil(
         context,
