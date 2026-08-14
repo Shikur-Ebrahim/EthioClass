@@ -4,6 +4,7 @@ import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
 import 'category_detail_screen.dart';
+import 'course_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -515,7 +516,17 @@ class _CourseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardColor = _cardColors[index % _cardColors.length];
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CourseDetailScreen(
+            course: course,
+            index: index,
+          ),
+        ),
+      ),
+      child: Container(
       height: 90,
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -589,6 +600,7 @@ class _CourseCard extends StatelessWidget {
           ),
         ],
       ),
+     ),
     );
   }
 

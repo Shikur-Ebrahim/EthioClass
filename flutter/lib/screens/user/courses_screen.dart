@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import 'course_detail_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -61,7 +62,17 @@ class _CoursesScreenState extends State<CoursesScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (_, i) {
               final course = courses[i];
-              return Container(
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CourseDetailScreen(
+                      course: course,
+                      index: i,
+                    ),
+                  ),
+                ),
+                child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(18),
@@ -113,6 +124,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   trailing: const Icon(Icons.chevron_right_rounded,
                       color: AppColors.grey),
                 ),
+               ),
               );
             },
           );
