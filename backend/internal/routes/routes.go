@@ -34,4 +34,11 @@ func Register(r *gin.Engine, db *sql.DB) {
 	r.GET("/lessons", handlers.GetLessonsHandler(db))
 	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
 	r.GET("/questions", handlers.GetQuestionsHandler(db))
+
+	// Payment Routes
+	paymentGroup := r.Group("/payments")
+	{
+		paymentGroup.POST("/initialize", handlers.InitializePaymentHandler(db))
+		paymentGroup.GET("/verify/:tx_ref", handlers.VerifyPaymentHandler(db))
+	}
 }

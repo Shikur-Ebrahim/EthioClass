@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../core/theme.dart';
 import '../../models/course_model.dart';
+import '../../services/payment_service.dart';
 import 'lesson_detail_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -458,9 +460,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                 child: const Icon(Icons.lock_open_rounded, color: AppColors.primary, size: 30),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Unlock Full Course',
-                style: TextStyle(
+              Text(
+                'Unlock ${widget.course.title}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
@@ -468,7 +471,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
               ),
               const SizedBox(height: 12),
               const Text(
-                'Get full access to all video lessons, notes, and quizzes for this course for just 100 Birr.',
+                'Get full access to all video lessons, notes, and quizzes for this course for just 249 Birr.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -504,7 +507,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _unlockAllChapters();
+                        _handlePayment();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -516,7 +519,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Pay 100 Birr',
+                        'Pay 249 Birr',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -534,6 +537,61 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     );
   }
 
+  Future<void> _handlePayment() async {
+    // 1. Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+    );
+
+    try {
+      // 2. Initialize payment
+      // Replace with actual course ID from your DB if you have it
+      final String mockCourseId = "test-course-123"; 
+      final result = await PaymentService.initializePayment(mockCourseId);
+      
+      final txRef = result['tx_ref']!;
+      final checkoutUrl = result['checkout_url']!;
+
+      // Dismiss loading
+      if (mounted) Navigator.pop(context);
+
+      // 3. Launch checkout URL
+      await PaymentService.launchCheckout(checkoutUrl);
+
+      // 4. Show polling verification dialog
+      if (mounted) {
+        _showVerificationDialog(txRef);
+      }
+
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Dismiss loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _showVerificationDialog(String txRef) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return _PaymentVerificationDialog(
+          txRef: txRef,
+          onSuccess: () {
+            Navigator.pop(ctx); // Close dialog
+            _unlockAllChapters();
+          },
+          onCancel: () {
+            Navigator.pop(ctx); // Close dialog
+          },
+        );
+      },
+    );
+  }
+
   void _unlockAllChapters() {
     setState(() {
       _chapters = _chapters.map((ch) => _ChapterItem(ch.title, ch.info, _ChapterState.free)).toList();
@@ -545,6 +603,87 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+// ── Payment Verification Dialog ──────────────────────────────
+class _PaymentVerificationDialog extends StatefulWidget {
+  final String txRef;
+  final VoidCallback onSuccess;
+  final VoidCallback onCancel;
+
+  const _PaymentVerificationDialog({
+    required this.txRef,
+    required this.onSuccess,
+    required this.onCancel,
+  });
+
+  @override
+  State<_PaymentVerificationDialog> createState() => _PaymentVerificationDialogState();
+}
+
+class _PaymentVerificationDialogState extends State<_PaymentVerificationDialog> {
+  Timer? _timer;
+  bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-check every 5 seconds
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _verifyPayment();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _verifyPayment() async {
+    if (_isChecking) return;
+    setState(() => _isChecking = true);
+
+    bool isSuccess = await PaymentService.verifyPayment(widget.txRef);
+    if (isSuccess) {
+      _timer?.cancel();
+      widget.onSuccess();
+    } else {
+      if (mounted) setState(() => _isChecking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 20),
+            const Text(
+              'Waiting for Payment',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Please complete the payment in your browser. We are checking the status automatically.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMedium, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: widget.onCancel,
+              child: const Text('Cancel / Go Back', style: TextStyle(color: Colors.red)),
+            )
+          ],
+        ),
       ),
     );
   }
