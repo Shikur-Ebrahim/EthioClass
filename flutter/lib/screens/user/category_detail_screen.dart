@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/category_model.dart';
+import '../../models/course_model.dart';
+import 'course_detail_screen.dart';
 
 class CategoryDetailScreen extends StatelessWidget {
   final Category category;
@@ -228,7 +230,7 @@ class CategoryDetailScreen extends StatelessWidget {
           // Subjects list
           SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, i) => _SubjectTile(item: subjects[i]),
+              (context, i) => _SubjectTile(item: subjects[i], index: i),
               childCount: subjects.length,
             ),
           ),
@@ -288,11 +290,27 @@ class _Divider extends StatelessWidget {
 // ── Subject tile ───────────────────────────────────────────────
 class _SubjectTile extends StatelessWidget {
   final _SubjectItem item;
-  const _SubjectTile({required this.item});
+  final int index;
+  const _SubjectTile({required this.item, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        // Create a dummy course for preview purposes
+        final dummyCourse = Course(
+          id: 'preview-${item.name}',
+          title: item.name,
+          description: 'Explore the complete ${item.name} course. Learn with high-quality video lessons and practice questions tailored for you.',
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CourseDetailScreen(course: dummyCourse, index: index),
+          ),
+        );
+      },
+      child: Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -343,6 +361,7 @@ class _SubjectTile extends StatelessWidget {
               color: AppColors.grey, size: 22),
         ],
       ),
+     ),
     );
   }
 }
