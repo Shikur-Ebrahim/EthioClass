@@ -454,12 +454,17 @@ class _ChapterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isLocked = chapter.state == _ChapterState.locked;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => LessonDetailScreen(chapterTitle: chapter.title),
+            builder: (_) => LessonDetailScreen(
+              chapterTitle: chapter.title,
+              isLocked: isLocked,
+            ),
           ),
         );
       },

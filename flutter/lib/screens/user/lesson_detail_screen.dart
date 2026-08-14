@@ -3,10 +3,12 @@ import '../../core/theme.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String chapterTitle;
+  final bool isLocked;
 
   const LessonDetailScreen({
     super.key,
     required this.chapterTitle,
+    this.isLocked = false,
   });
 
   @override
@@ -79,22 +81,26 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       ],
                     ),
                   ),
-                  // Play Button Placeholder
+                  // Play Button Placeholder / Lock icon
                   Center(
                     child: Container(
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.9),
+                        color: widget.isLocked ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.9),
                         shape: BoxShape.circle,
-                        boxShadow: [
+                        boxShadow: widget.isLocked ? null : [
                           BoxShadow(
                             color: AppColors.primary.withOpacity(0.5),
                             blurRadius: 16,
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                      child: Icon(
+                        widget.isLocked ? Icons.lock_rounded : Icons.play_arrow_rounded, 
+                        color: Colors.white, 
+                        size: 32,
+                      ),
                     ),
                   ),
                   // Title overlay
@@ -147,13 +153,55 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
 
           // ── Tab Views ────────────────────────────────────────────────
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildVideoTab(),
-                _buildNotesTab(),
-                _buildQuizTab(),
-              ],
+            child: widget.isLocked
+                ? _buildLockedView()
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildVideoTab(),
+                      _buildNotesTab(),
+                      _buildQuizTab(),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLockedView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.greyLight.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.lock_rounded, color: AppColors.grey, size: 40),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Chapter Locked',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Complete previous chapters or upgrade to unlock this content.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textMedium,
+                height: 1.5,
+              ),
             ),
           ),
         ],
