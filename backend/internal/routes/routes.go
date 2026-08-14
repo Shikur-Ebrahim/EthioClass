@@ -1,13 +1,15 @@
 package routes
 
 import (
+	"database/sql"
+
 	"github.com/EthioClass/backend/internal/handlers"
 	"github.com/EthioClass/backend/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 // Register sets up all API routes on the given gin engine.
-func Register(r *gin.Engine) {
+func Register(r *gin.Engine, db *sql.DB) {
 	r.Use(middleware.Logger())
 	r.Use(middleware.CORS())
 
@@ -25,10 +27,7 @@ func Register(r *gin.Engine) {
 		authGroup.GET("/callback", handlers.AuthCallbackHandler)
 	}
 
-	// Future API groups will be registered here:
-	// v1 := r.Group("/api/v1")
-	// v1.Use(middleware.Auth())
-	// {
-	//     v1.GET("/...", handlers....)
-	// }
+	// Public content endpoints — no auth required for browsing
+	r.GET("/categories", handlers.GetCategoriesHandler(db))
+	r.GET("/courses", handlers.GetCoursesHandler(db))
 }

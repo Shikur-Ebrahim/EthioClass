@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
+import '../user/main_layout.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
@@ -34,9 +35,22 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      _showSnack('Welcome back! Login successful.');
-      // TODO: Navigate to home screen after auth state is set up
-      debugPrint('[Auth] Login success: ${result['token']}');
+      // Extract user name and email from result
+      final user = result['user'] as Map<String, dynamic>?;
+      final userMeta = user?['user_metadata'] as Map<String, dynamic>?;
+      final userName = userMeta?['full_name'] as String? ?? '';
+      final userEmail = user?['email'] as String? ?? _emailController.text.trim();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainLayout(
+            userName: userName,
+            userEmail: userEmail,
+          ),
+        ),
+        (route) => false,
+      );
     } catch (e) {
       _showSnack(e.toString().replaceFirst('Exception: ', ''), isError: true);
     } finally {
