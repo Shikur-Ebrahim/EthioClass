@@ -27,7 +27,11 @@ func Register(r *gin.Engine, db *sql.DB) {
 		authGroup.GET("/callback", handlers.AuthCallbackHandler)
 	}
 
-	// Public content endpoints — no auth required for browsing
+	// Course Content Routes
 	r.GET("/categories", handlers.GetCategoriesHandler(db))
+	r.GET("/divisions", handlers.GetDivisionsHandler(db))
 	r.GET("/courses", handlers.GetCoursesHandler(db))
+	r.GET("/lessons", handlers.GetLessonsHandler(db))
+	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
+	r.GET("/questions", handlers.GetQuestionsHandler(db))
 }
