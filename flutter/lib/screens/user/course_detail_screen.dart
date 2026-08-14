@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/course_model.dart';
+import 'lesson_detail_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -453,7 +454,16 @@ class _ChapterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonDetailScreen(chapterTitle: chapter.title),
+          ),
+        );
+      },
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -514,6 +524,7 @@ class _ChapterTile extends StatelessWidget {
           _buildBadge(chapter.state),
         ],
       ),
+    ),
     );
   }
 
