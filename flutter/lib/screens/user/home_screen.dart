@@ -78,56 +78,34 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${_greeting()}, ',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    Text(
-                      _greetingEmoji(),
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                  ],
-                ),
-                Text(
-                  widget.userName.isNotEmpty
-                      ? widget.userName.split(' ').first
-                      : 'Student',
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textDark,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Continue your learning journey',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMedium,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Notification + Avatar
+          // Top row: Menu icon + Notification + Avatar
           Row(
             children: [
+              // Hamburger menu icon
+              GestureDetector(
+                onTap: () {},
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.menu_rounded,
+                      size: 22, color: AppColors.textDark),
+                ),
+              ),
+              const Spacer(),
+              // Notification bell
               Container(
                 width: 42,
                 height: 42,
@@ -163,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 10),
+              // Avatar
               Container(
                 width: 44,
                 height: 44,
@@ -191,6 +170,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+          // Greeting text below top row
+          Row(
+            children: [
+              Text(
+                '${_greeting()}, ',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Text(
+                _greetingEmoji(),
+                style: const TextStyle(fontSize: 22),
+              ),
+            ],
+          ),
+          Text(
+            widget.userName.isNotEmpty
+                ? widget.userName.split(' ').first
+                : 'Student',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textDark,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Continue your learning journey',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textMedium,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
       ),
