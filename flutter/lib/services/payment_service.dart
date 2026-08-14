@@ -5,9 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class PaymentService {
-  // Update this to your actual backend URL when deploying.
-  // For Android emulator, use 10.0.2.2. For physical device, use your PC's IP.
-  static const String baseUrl = 'http://192.168.1.100:8080/api/payments';
+  // Backend API URL - points to your VPS
+  static const String baseUrl = 'https://api.ethioclass.com/payments';
 
   /// Initializes a payment for the given course and returns the checkout URL and transaction reference.
   static Future<Map<String, String>> initializePayment(String courseId) async {

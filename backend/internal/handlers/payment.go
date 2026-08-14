@@ -39,6 +39,11 @@ type ChapaInitResponse struct {
 // InitializePaymentHandler starts the payment process
 func InitializePaymentHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
 		var req InitializePaymentRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
@@ -119,6 +124,11 @@ func InitializePaymentHandler(db *sql.DB) gin.HandlerFunc {
 // VerifyPaymentHandler verifies payment status
 func VerifyPaymentHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
 		txRef := c.Param("tx_ref")
 		if txRef == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "tx_ref is required"})
