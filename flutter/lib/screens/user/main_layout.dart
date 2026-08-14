@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import 'home_screen.dart';
 import 'courses_screen.dart';
+import 'downloads_screen.dart';
+import 'bookmarks_screen.dart';
 import 'profile_screen.dart';
 
 /// MainLayout wraps the bottom nav and manages tab switching.
@@ -30,6 +32,8 @@ class _MainLayoutState extends State<MainLayout> {
     _pages = [
       HomeScreen(userName: widget.userName),
       const CoursesScreen(),
+      const DownloadsScreen(),
+      const BookmarksScreen(),
       ProfileScreen(userName: widget.userName, userEmail: widget.userEmail),
     ];
   }
@@ -55,7 +59,7 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -72,10 +76,22 @@ class _MainLayoutState extends State<MainLayout> {
                   onTap: () => setState(() => _selectedIndex = 1),
                 ),
                 _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
+                  icon: Icons.download_rounded,
+                  label: 'Downloads',
                   selected: _selectedIndex == 2,
                   onTap: () => setState(() => _selectedIndex = 2),
+                ),
+                _NavItem(
+                  icon: Icons.bookmark_border_rounded,
+                  label: 'Bookmarks',
+                  selected: _selectedIndex == 3,
+                  onTap: () => setState(() => _selectedIndex = 3),
+                ),
+                _NavItem(
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  selected: _selectedIndex == 4,
+                  onTap: () => setState(() => _selectedIndex = 4),
                 ),
               ],
             ),
@@ -106,24 +122,24 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 24,
+              size: 22,
               color: selected ? AppColors.primary : AppColors.grey,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                 color: selected ? AppColors.primary : AppColors.grey,
               ),
