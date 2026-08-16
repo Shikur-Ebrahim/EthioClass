@@ -23,10 +23,12 @@ func SignupHandler(c *gin.Context) {
 
 	signupReq := supa.SignupRequest{
 		Email:    req.Email,
+		Phone:    req.PhoneNumber,
 		Password: req.Password,
 		Data: map[string]interface{}{
 			"full_name":    req.FullName,
 			"phone_number": req.PhoneNumber,
+			"device_id":    req.DeviceId,
 		},
 	}
 
@@ -55,8 +57,22 @@ func LoginHandler(c *gin.Context) {
 
 	tokenReq := supa.TokenRequest{
 		GrantType: "password",
-		Email:     req.Email,
 		Password:  req.Password,
+	}
+
+	// Check if the input is a phone number (e.g., starts with +, or only contains digits)
+	isPhone := true
+	for _, c := range req.Email {
+		if c != '+' && (c < '0' || c > '9') {
+			isPhone = false
+			break
+		}
+	}
+
+	if isPhone && len(req.Email) > 0 {
+		tokenReq.Phone = req.Email
+	} else {
+		tokenReq.Email = req.Email
 	}
 
 	resp, err := auth.Client.Auth.Token(tokenReq)
@@ -65,11 +81,67 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	// 1-Device Security Check
+	if req.DeviceId != "" {
+		registeredDeviceID, ok := resp.User.UserMetadata["device_id"].(string)
+		
+		if ok && registeredDeviceID != "" {
+			if registeredDeviceID != req.DeviceId {
+				c.JSON(http.StatusForbidden, gin.H{"error": "This account is already registered to another device. You cannot log in from a different device."})
+				return
+			}
+		} else {
+			// Device ID not set yet, bind it now!
+			err = updateSupabaseUserMetadata(resp.AccessToken, map[string]interface{}{
+				"device_id": req.DeviceId,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to bind device to account"})
+				return
+			}
+			// Update the local struct so it reflects what we just did
+			resp.User.UserMetadata["device_id"] = req.DeviceId
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"token":   resp.AccessToken,
 		"user":    resp.User,
 	})
+}
+
+func updateSupabaseUserMetadata(accessToken string, data map[string]interface{}) error {
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+
+	payload := map[string]interface{}{
+		"data": data,
+	}
+	body, _ := json.Marshal(payload)
+
+	httpReq, err := http.NewRequest("PUT",
+		fmt.Sprintf("%s/auth/v1/user", supabaseURL),
+		bytes.NewBuffer(body),
+	)
+	if err != nil {
+		return err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("apikey", supabaseKey)
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	httpClient := &http.Client{}
+	httpResp, err := httpClient.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode >= 400 {
+		return fmt.Errorf("failed to update user metadata, status: %d", httpResp.StatusCode)
+	}
+	return nil
 }
 
 func ResetPasswordHandler(c *gin.Context) {
@@ -83,11 +155,6 @@ func ResetPasswordHandler(c *gin.Context) {
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 
 	payload := map[string]string{"email": req.Email}
-	if req.RedirectTo != "" {
-		// Pass the redirect URL if provided by the client (e.g. deep link)
-		// Supabase will use this URL as the base for the recovery link in the email
-		// Supabase requires this URL to be registered in the "Redirect URLs" in the dashboard.
-	}
 	body, _ := json.Marshal(payload)
 
 	httpReq, err := http.NewRequest("POST",
@@ -100,7 +167,6 @@ func ResetPasswordHandler(c *gin.Context) {
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("apikey", supabaseKey)
-	// We MUST pass the redirect URL in the query param according to Supabase REST API docs
 	if req.RedirectTo != "" {
 		q := httpReq.URL.Query()
 		q.Add("redirect_to", req.RedirectTo)
@@ -123,8 +189,6 @@ func ResetPasswordHandler(c *gin.Context) {
 			errorMsg = msg
 		} else if msg, ok := errorResponse["message"].(string); ok {
 			errorMsg = msg
-		} else if msg, ok := errorResponse["error_description"].(string); ok {
-			errorMsg = msg
 		}
 		
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: " + errorMsg})
@@ -135,7 +199,6 @@ func ResetPasswordHandler(c *gin.Context) {
 }
 
 func UpdatePasswordHandler(c *gin.Context) {
-	// Require the access token from the client in the Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
@@ -153,7 +216,6 @@ func UpdatePasswordHandler(c *gin.Context) {
 
 	body, _ := json.Marshal(map[string]string{"password": req.Password})
 
-	// Forward the update request to Supabase /auth/v1/user
 	httpReq, err := http.NewRequest("PUT",
 		fmt.Sprintf("%s/auth/v1/user", supabaseURL),
 		bytes.NewBuffer(body),
@@ -180,12 +242,68 @@ func UpdatePasswordHandler(c *gin.Context) {
 		errorMsg := "Unknown error"
 		if msg, ok := errorResponse["msg"].(string); ok {
 			errorMsg = msg
-		} else if msg, ok := errorResponse["message"].(string); ok {
-			errorMsg = msg
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password: " + errorMsg})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+}
+
+func UpdateProfileHandler(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+		return
+	}
+
+	var req models.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+
+	payload := map[string]interface{}{
+		"data": map[string]string{
+			"full_name":    req.FullName,
+			"phone_number": req.PhoneNumber,
+		},
+	}
+	body, _ := json.Marshal(payload)
+
+	httpReq, err := http.NewRequest("PUT",
+		fmt.Sprintf("%s/auth/v1/user", supabaseURL),
+		bytes.NewBuffer(body),
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build request"})
+		return
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("apikey", supabaseKey)
+	httpReq.Header.Set("Authorization", authHeader) // Includes "Bearer ..." from client
+
+	httpClient := &http.Client{}
+	httpResp, err := httpClient.Do(httpReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: network error"})
+		return
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode >= 400 {
+		var errorResponse map[string]interface{}
+		json.NewDecoder(httpResp.Body).Decode(&errorResponse)
+		errorMsg := "Unknown error"
+		if msg, ok := errorResponse["msg"].(string); ok {
+			errorMsg = msg
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: " + errorMsg})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
 }
