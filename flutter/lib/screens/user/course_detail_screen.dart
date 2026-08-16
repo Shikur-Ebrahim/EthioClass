@@ -25,6 +25,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   late TabController _tabController;
   bool _expanded = false;
 
+  String? _prefetchedCheckoutUrl;
+  String? _prefetchedTxRef;
+  bool _isInitializingPayment = false;
+
   static const List<Color> _headerColors = [
     Color(0xFF1B5E20),
     Color(0xFF4527A0),
@@ -48,6 +52,27 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _preInitializePayment();
+  }
+
+  Future<void> _preInitializePayment() async {
+    try {
+      _isInitializingPayment = true;
+      final result = await PaymentService.initializePayment(widget.course.id);
+      if (mounted) {
+        setState(() {
+          _prefetchedTxRef = result['tx_ref'];
+          _prefetchedCheckoutUrl = result['checkout_url'];
+          _isInitializingPayment = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isInitializingPayment = false;
+        });
+      }
+    }
   }
 
   @override
@@ -539,18 +564,44 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _handlePayment() async {
-    if (mounted) {
+    if (_prefetchedCheckoutUrl == null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+      
+      if (!_isInitializingPayment) {
+        await _preInitializePayment();
+      } else {
+        while (_isInitializingPayment) {
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+      }
+      
+      if (mounted) Navigator.pop(context);
+    }
+
+    if (_prefetchedCheckoutUrl != null && _prefetchedTxRef != null && mounted) {
       final isSuccess = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => PaymentWebviewScreen(
             courseId: widget.course.id,
+            checkoutUrl: _prefetchedCheckoutUrl!,
+            txRef: _prefetchedTxRef!,
           ),
         ),
       );
 
       if (isSuccess == true) {
         _unlockAllChapters();
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to connect to payment server.'), backgroundColor: Colors.red),
+        );
       }
     }
   }
