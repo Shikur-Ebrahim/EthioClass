@@ -32,41 +32,24 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (String url) {
-            setState(() {
-              _isLoading = true;
-            });
-          },
-          onPageFinished: (String url) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
-          onWebResourceError: (WebResourceError error) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
+          onPageStarted: (_) => setState(() => _isLoading = true),
+          onPageFinished: (_) => setState(() => _isLoading = false),
+          onWebResourceError: (_) => setState(() => _isLoading = false),
         ),
       )
       ..loadRequest(Uri.parse(widget.checkoutUrl));
 
-    // Poll for payment success
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      _verifyPayment();
-    });
+    // Poll every 4 seconds to check payment success
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _verifyPayment());
   }
 
   Future<void> _verifyPayment() async {
     if (_isChecking) return;
     _isChecking = true;
-
-    bool isSuccess = await PaymentService.verifyPayment(widget.txRef);
-    if (isSuccess) {
+    final bool isSuccess = await PaymentService.verifyPayment(widget.txRef);
+    if (isSuccess && mounted) {
       _timer?.cancel();
-      if (mounted) {
-        Navigator.pop(context, true); // Return true indicating success
-      }
+      Navigator.pop(context, true); // Return true = success
     }
     _isChecking = false;
   }
@@ -82,23 +65,68 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Complete Payment', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Complete Payment',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            Navigator.pop(context, false); // Return false indicating cancellation
-          },
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.pop(context, false),
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.lock_outline_rounded, size: 12, color: AppColors.primary),
+                SizedBox(width: 4),
+                Text(
+                  'Secured by Chapa',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),
           if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            Container(
+              color: Colors.white,
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.primary),
+                    SizedBox(height: 16),
+                    Text(
+                      'Loading payment page...',
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),

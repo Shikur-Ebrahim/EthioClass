@@ -597,8 +597,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 }
 
-}
-
 // ── Header stat widget ────────────────────────────────────────
 class _HeaderStat extends StatelessWidget {
   final IconData icon;
