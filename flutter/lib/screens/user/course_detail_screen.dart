@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../models/course_model.dart';
 import '../../services/payment_service.dart';
 import 'lesson_detail_screen.dart';
+import 'payment_webview_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -555,12 +556,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       // Dismiss loading
       if (mounted) Navigator.pop(context);
 
-      // 3. Launch checkout URL
-      await PaymentService.launchCheckout(checkoutUrl);
-
-      // 4. Show polling verification dialog
+      // 3. Launch embedded webview screen
       if (mounted) {
-        _showVerificationDialog(txRef);
+        final isSuccess = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentWebviewScreen(
+              checkoutUrl: checkoutUrl,
+              txRef: txRef,
+            ),
+          ),
+        );
+
+        if (isSuccess == true) {
+          _unlockAllChapters();
+        }
       }
 
     } catch (e) {
@@ -569,25 +579,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
-  }
-
-  void _showVerificationDialog(String txRef) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return _PaymentVerificationDialog(
-          txRef: txRef,
-          onSuccess: () {
-            Navigator.pop(ctx); // Close dialog
-            _unlockAllChapters();
-          },
-          onCancel: () {
-            Navigator.pop(ctx); // Close dialog
-          },
-        );
-      },
-    );
   }
 
   void _unlockAllChapters() {
@@ -606,85 +597,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 }
 
-// ── Payment Verification Dialog ──────────────────────────────
-class _PaymentVerificationDialog extends StatefulWidget {
-  final String txRef;
-  final VoidCallback onSuccess;
-  final VoidCallback onCancel;
-
-  const _PaymentVerificationDialog({
-    required this.txRef,
-    required this.onSuccess,
-    required this.onCancel,
-  });
-
-  @override
-  State<_PaymentVerificationDialog> createState() => _PaymentVerificationDialogState();
-}
-
-class _PaymentVerificationDialogState extends State<_PaymentVerificationDialog> {
-  Timer? _timer;
-  bool _isChecking = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Auto-check every 5 seconds
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _verifyPayment();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _verifyPayment() async {
-    if (_isChecking) return;
-    setState(() => _isChecking = true);
-
-    bool isSuccess = await PaymentService.verifyPayment(widget.txRef);
-    if (isSuccess) {
-      _timer?.cancel();
-      widget.onSuccess();
-    } else {
-      if (mounted) setState(() => _isChecking = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: AppColors.primary),
-            const SizedBox(height: 20),
-            const Text(
-              'Waiting for Payment',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Please complete the payment in your browser. We are checking the status automatically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMedium, fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: widget.onCancel,
-              child: const Text('Cancel / Go Back', style: TextStyle(color: Colors.red)),
-            )
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ── Header stat widget ────────────────────────────────────────
