@@ -18,7 +18,6 @@ class PaymentWebviewScreen extends StatefulWidget {
 
 class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
   late final WebViewController _controller;
-  bool _isLoading = true;
   bool _isInitializing = true;
   String? _txRef;
   Timer? _timer;
@@ -29,14 +28,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.white)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (_) => setState(() => _isLoading = true),
-          onPageFinished: (_) => setState(() => _isLoading = false),
-          onWebResourceError: (_) => setState(() => _isLoading = false),
-        ),
-      );
+      ..setBackgroundColor(Colors.white);
 
     _initPayment();
   }
@@ -130,7 +122,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
       body: Stack(
         children: [
           if (!_isInitializing) WebViewWidget(controller: _controller),
-          if (_isLoading || _isInitializing)
+          if (_isInitializing)
             Container(
               color: Colors.white,
               child: const Center(
@@ -140,7 +132,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
                     CircularProgressIndicator(color: AppColors.primary),
                     SizedBox(height: 16),
                     Text(
-                      'Loading payment securely...',
+                      'Connecting to payment server...',
                       style: TextStyle(
                         color: AppColors.textMedium,
                         fontSize: 14,
