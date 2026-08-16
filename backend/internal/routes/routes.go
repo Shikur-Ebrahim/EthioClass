@@ -18,8 +18,8 @@ func Register(r *gin.Engine, db *sql.DB) {
 
 	authGroup := r.Group("/auth")
 	{
-		authGroup.POST("/signup", handlers.SignupHandler)
-		authGroup.POST("/login", handlers.LoginHandler)
+		authGroup.POST("/signup", handlers.SignupHandler(db))
+		authGroup.POST("/login", handlers.LoginHandler(db))
 		authGroup.POST("/reset-password", handlers.ResetPasswordHandler)
 		authGroup.PUT("/update-password", handlers.UpdatePasswordHandler)
 		authGroup.PUT("/update-profile", handlers.UpdateProfileHandler)

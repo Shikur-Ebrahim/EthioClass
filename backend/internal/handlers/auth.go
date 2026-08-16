@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,100 +14,110 @@ import (
 	supa "github.com/supabase-community/gotrue-go/types"
 )
 
-func SignupHandler(c *gin.Context) {
-	var req models.SignupRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	signupReq := supa.SignupRequest{
-		Email:    req.Email,
-		Password: req.Password,
-		Data: map[string]interface{}{
-			"full_name":    req.FullName,
-			"phone_number": req.PhoneNumber,
-			"device_id":    req.DeviceId,
-		},
-	}
-
-	resp, err := auth.Client.Auth.Signup(signupReq)
-	if err != nil {
-		if strings.Contains(err.Error(), "user_already_exists") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "This email is already registered"})
+func SignupHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.SignupRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Signup successful",
-		"user":    resp.User,
-	})
+		signupReq := supa.SignupRequest{
+			Email:    req.Email,
+			Password: req.Password,
+			Data: map[string]interface{}{
+				"full_name":    req.FullName,
+				"phone_number": req.PhoneNumber,
+				"device_id":    req.DeviceId,
+			},
+		}
+
+		resp, err := auth.Client.Auth.Signup(signupReq)
+		if err != nil {
+			if strings.Contains(err.Error(), "user_already_exists") {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "This email is already registered"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Signup successful",
+			"user":    resp.User,
+		})
+	}
 }
 
-func LoginHandler(c *gin.Context) {
-	var req models.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	tokenReq := supa.TokenRequest{
-		GrantType: "password",
-		Password:  req.Password,
-	}
-
-	// Check if the input is a phone number (e.g., starts with +, or only contains digits)
-	isPhone := true
-	for _, c := range req.Email {
-		if c != '+' && (c < '0' || c > '9') {
-			isPhone = false
-			break
+func LoginHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.LoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
-	}
 
-	if isPhone && len(req.Email) > 0 {
-		tokenReq.Phone = req.Email
-	} else {
-		tokenReq.Email = req.Email
-	}
-
-	resp, err := auth.Client.Auth.Token(tokenReq)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-		return
-	}
-
-	// 1-Device Security Check
-	if req.DeviceId != "" {
-		registeredDeviceID, ok := resp.User.UserMetadata["device_id"].(string)
-		
-		if ok && registeredDeviceID != "" {
-			if registeredDeviceID != req.DeviceId {
-				c.JSON(http.StatusForbidden, gin.H{"error": "This account is already registered to another device. You cannot log in from a different device."})
-				return
-			}
-		} else {
-			// Device ID not set yet, bind it now!
-			err = updateSupabaseUserMetadata(resp.AccessToken, map[string]interface{}{
-				"device_id": req.DeviceId,
-			})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to bind device to account"})
-				return
-			}
-			// Update the local struct so it reflects what we just did
-			resp.User.UserMetadata["device_id"] = req.DeviceId
+		tokenReq := supa.TokenRequest{
+			GrantType: "password",
+			Password:  req.Password,
 		}
-	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   resp.AccessToken,
-		"user":    resp.User,
-	})
+		// Check if the input is a phone number (e.g., starts with +, or only contains digits)
+		isPhone := true
+		for _, char := range req.Email {
+			if char != '+' && (char < '0' || char > '9') {
+				isPhone = false
+				break
+			}
+		}
+
+		loginEmail := req.Email
+		if isPhone && db != nil {
+			// Look up email by phone number in auth.users
+			var foundEmail string
+			err := db.QueryRowContext(c.Request.Context(), `SELECT email FROM auth.users WHERE raw_user_meta_data->>'phone_number' = $1 LIMIT 1`, req.Email).Scan(&foundEmail)
+			if err == nil && foundEmail != "" {
+				loginEmail = foundEmail
+			}
+		}
+
+		tokenReq.Email = loginEmail
+
+		resp, err := auth.Client.Auth.Token(tokenReq)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+			return
+		}
+
+		// 1-Device Security Check
+		if req.DeviceId != "" {
+			registeredDeviceID, ok := resp.User.UserMetadata["device_id"].(string)
+
+			if ok && registeredDeviceID != "" {
+				if registeredDeviceID != req.DeviceId {
+					c.JSON(http.StatusForbidden, gin.H{"error": "This account is already registered to another device. You cannot log in from a different device."})
+					return
+				}
+			} else {
+				// Device ID not set yet, bind it now!
+				err = updateSupabaseUserMetadata(resp.AccessToken, map[string]interface{}{
+					"device_id": req.DeviceId,
+				})
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to bind device to account"})
+					return
+				}
+				// Update the local struct so it reflects what we just did
+				resp.User.UserMetadata["device_id"] = req.DeviceId
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Login successful",
+			"token":   resp.AccessToken,
+			"user":    resp.User,
+		})
+	}
 }
 
 func updateSupabaseUserMetadata(accessToken string, data map[string]interface{}) error {
@@ -189,7 +199,7 @@ func ResetPasswordHandler(c *gin.Context) {
 		} else if msg, ok := errorResponse["message"].(string); ok {
 			errorMsg = msg
 		}
-		
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email: " + errorMsg})
 		return
 	}
