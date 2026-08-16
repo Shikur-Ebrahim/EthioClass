@@ -38,7 +38,8 @@ func Register(r *gin.Engine, db *sql.DB) {
 	// Payment Routes
 	paymentGroup := r.Group("/payments")
 	{
-		paymentGroup.POST("/initialize", handlers.InitializePaymentHandler(db))
-		paymentGroup.GET("/verify/:tx_ref", handlers.VerifyPaymentHandler(db))
+		paymentGroup.POST("/create", handlers.CreatePaymentHandler(db))
+		paymentGroup.GET("/:tx_ref/status", handlers.GetPaymentStatusHandler(db))
+		paymentGroup.POST("/webhook/chapa", handlers.WebhookHandler(db))
 	}
 }
