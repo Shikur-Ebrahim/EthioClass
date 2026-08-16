@@ -38,13 +38,21 @@ class _LoginScreenState extends State<LoginScreen> {
       // Safely extract user name and email — always navigate even if parsing fails
       String userName = '';
       String userEmail = _emailController.text.trim();
+      String userPhone = '';
+      String accessToken = '';
       try {
+        accessToken = (result['token'] as String?) ?? '';
+        userPhone = (result['phone_number'] as String?) ?? '';
         final user = result['user'];
         if (user is Map) {
           userEmail = (user['email'] as String?) ?? userEmail;
           final meta = user['user_metadata'];
           if (meta is Map) {
             userName = (meta['full_name'] as String?) ?? '';
+            // fallback: phone from metadata if not in profile yet
+            if (userPhone.isEmpty) {
+              userPhone = (meta['phone_number'] as String?) ?? '';
+            }
           }
         }
       } catch (_) {}
@@ -55,6 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (_) => MainLayout(
             userName: userName,
             userEmail: userEmail,
+            userPhone: userPhone,
+            accessToken: accessToken,
           ),
         ),
         (route) => false,

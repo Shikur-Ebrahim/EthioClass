@@ -8,11 +8,15 @@ import 'security_screen.dart';
 class ProfileScreen extends StatelessWidget {
   final String userName;
   final String userEmail;
+  final String userPhone;
+  final String accessToken;
 
   const ProfileScreen({
     super.key,
     required this.userName,
     required this.userEmail,
+    this.userPhone = '',
+    this.accessToken = '',
   });
 
   @override
@@ -125,17 +129,17 @@ class ProfileScreen extends StatelessWidget {
                   iconBgColor: Colors.blue.withOpacity(0.1),
                   iconColor: Colors.blue,
                   onTap: () async {
-                    final result = await Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => PersonalInfoScreen(
                           currentName: userName,
                           currentEmail: userEmail,
-                          currentPhone: '', // Add state to manage phone number in ProfileScreen in the future
+                          currentPhone: userPhone,
+                          accessToken: accessToken,
                         ),
                       ),
                     );
-                    // Handle result if we convert ProfileScreen to Stateful in the future
                   },
                 ),
                 _SettingsItem(
@@ -148,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ChangePasswordScreen(),
+                        builder: (_) => ChangePasswordScreen(accessToken: accessToken),
                       ),
                     );
                   },

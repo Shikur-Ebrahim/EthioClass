@@ -11,11 +11,15 @@ import 'profile_screen.dart';
 class MainLayout extends StatefulWidget {
   final String userName;
   final String userEmail;
+  final String userPhone;
+  final String accessToken;
 
   const MainLayout({
     super.key,
     required this.userName,
     required this.userEmail,
+    this.userPhone = '',
+    this.accessToken = '',
   });
 
   @override
@@ -35,7 +39,7 @@ class _MainLayoutState extends State<MainLayout> {
       const CoursesScreen(),
       const DownloadsScreen(),
       const BookmarksScreen(),
-      ProfileScreen(userName: widget.userName, userEmail: widget.userEmail),
+      ProfileScreen(userName: widget.userName, userEmail: widget.userEmail, userPhone: widget.userPhone, accessToken: widget.accessToken),
     ];
   }
 

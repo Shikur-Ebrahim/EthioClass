@@ -43,6 +43,22 @@ func SignupHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Save phone_number into public.profiles table
+		if db != nil && resp.User.ID.String() != "" {
+			_, dbErr := db.ExecContext(c.Request.Context(),
+				`INSERT INTO public.profiles (id, full_name, phone_number, role)
+				 VALUES ($1, $2, $3, 'student')
+				 ON CONFLICT (id) DO UPDATE SET
+				   full_name = EXCLUDED.full_name,
+				   phone_number = EXCLUDED.phone_number`,
+				resp.User.ID.String(), req.FullName, req.PhoneNumber,
+			)
+			if dbErr != nil {
+				// Non-fatal: log but don't fail the signup
+				fmt.Printf("[SIGNUP] Warning: could not save phone to profiles: %v\n", dbErr)
+			}
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Signup successful",
 			"user":    resp.User,
@@ -113,10 +129,20 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
+		// Fetch phone_number from public.profiles to include in response
+		var phoneNumber string
+		if db != nil {
+			db.QueryRowContext(c.Request.Context(),
+				`SELECT COALESCE(phone_number, '') FROM public.profiles WHERE id = $1`,
+				resp.User.ID.String(),
+			).Scan(&phoneNumber)
+		}
+
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Login successful",
-			"token":   resp.AccessToken,
-			"user":    resp.User,
+			"message":      "Login successful",
+			"token":        resp.AccessToken,
+			"user":         resp.User,
+			"phone_number": phoneNumber,
 		})
 	}
 }
@@ -260,60 +286,80 @@ func UpdatePasswordHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
-func UpdateProfileHandler(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
-		return
-	}
-
-	var req models.UpdateProfileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-
-	payload := map[string]interface{}{
-		"data": map[string]string{
-			"full_name":    req.FullName,
-			"phone_number": req.PhoneNumber,
-		},
-	}
-	body, _ := json.Marshal(payload)
-
-	httpReq, err := http.NewRequest("PUT",
-		fmt.Sprintf("%s/auth/v1/user", supabaseURL),
-		bytes.NewBuffer(body),
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build request"})
-		return
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("apikey", supabaseKey)
-	httpReq.Header.Set("Authorization", authHeader) // Includes "Bearer ..." from client
-
-	httpClient := &http.Client{}
-	httpResp, err := httpClient.Do(httpReq)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: network error"})
-		return
-	}
-	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode >= 400 {
-		var errorResponse map[string]interface{}
-		json.NewDecoder(httpResp.Body).Decode(&errorResponse)
-		errorMsg := "Unknown error"
-		if msg, ok := errorResponse["msg"].(string); ok {
-			errorMsg = msg
+func UpdateProfileHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: " + errorMsg})
-		return
-	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+		var req models.UpdateProfileRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		supabaseURL := os.Getenv("SUPABASE_URL")
+		supabaseKey := os.Getenv("SUPABASE_KEY")
+
+		payload := map[string]interface{}{
+			"data": map[string]string{
+				"full_name":    req.FullName,
+				"phone_number": req.PhoneNumber,
+			},
+		}
+		body, _ := json.Marshal(payload)
+
+		httpReq, err := http.NewRequest("PUT",
+			fmt.Sprintf("%s/auth/v1/user", supabaseURL),
+			bytes.NewBuffer(body),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build request"})
+			return
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq.Header.Set("apikey", supabaseKey)
+		httpReq.Header.Set("Authorization", authHeader)
+
+		httpClient := &http.Client{}
+		httpResp, err := httpClient.Do(httpReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: network error"})
+			return
+		}
+		defer httpResp.Body.Close()
+
+		if httpResp.StatusCode >= 400 {
+			var errorResponse map[string]interface{}
+			json.NewDecoder(httpResp.Body).Decode(&errorResponse)
+			errorMsg := "Unknown error"
+			if msg, ok := errorResponse["msg"].(string); ok {
+				errorMsg = msg
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile: " + errorMsg})
+			return
+		}
+
+		// Also decode user ID from auth response to update public.profiles
+		var authUser struct {
+			ID string `json:"id"`
+		}
+		json.NewDecoder(httpResp.Body).Decode(&authUser)
+
+		// Update public.profiles table with the new name and phone
+		if db != nil && authUser.ID != "" {
+			_, dbErr := db.ExecContext(c.Request.Context(),
+				`UPDATE public.profiles SET full_name = $1, phone_number = $2 WHERE id = $3`,
+				req.FullName, req.PhoneNumber, authUser.ID,
+			)
+			if dbErr != nil {
+				fmt.Printf("[UPDATE_PROFILE] Warning: could not update profiles table: %v\n", dbErr)
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+	}
 }
+

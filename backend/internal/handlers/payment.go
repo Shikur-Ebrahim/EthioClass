@@ -18,14 +18,14 @@ type InitializePaymentRequest struct {
 }
 
 type ChapaInitPayload struct {
-	Amount         string `json:"amount"`
-	Currency       string `json:"currency"`
-	Email          string `json:"email"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	TxRef          string `json:"tx_ref"`
-	CallbackURL    string `json:"callback_url"`
-	ReturnURL      string `json:"return_url"`
+	Amount      string `json:"amount"`
+	Currency    string `json:"currency"`
+	Email       string `json:"email"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	TxRef       string `json:"tx_ref"`
+	CallbackURL string `json:"callback_url"`
+	ReturnURL   string `json:"return_url"`
 }
 
 type ChapaInitResponse struct {
@@ -51,7 +51,7 @@ func InitializePaymentHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Hardcoded user ID for now as we don't have auth middleware yet
-		userID := "00000000-0000-0000-0000-000000000000" 
+		userID := "00000000-0000-0000-0000-000000000000"
 		amount := 249.00
 		txRef := "TX-" + uuid.New().String()
 
@@ -83,7 +83,7 @@ func InitializePaymentHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		payloadBytes, _ := json.Marshal(payload)
-		
+
 		chapaReq, _ := http.NewRequest("POST", "https://api.chapa.co/v1/transaction/initialize", bytes.NewBuffer(payloadBytes))
 		chapaReq.Header.Set("Authorization", "Bearer "+chapaSecret)
 		chapaReq.Header.Set("Content-Type", "application/json")
@@ -115,7 +115,7 @@ func InitializePaymentHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"tx_ref": txRef,
+			"tx_ref":       txRef,
 			"checkout_url": chapaResp.Data.CheckoutURL,
 		})
 	}
@@ -136,7 +136,7 @@ func VerifyPaymentHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		chapaSecret := os.Getenv("CHAPA_SECRET_KEY")
-		
+
 		req, _ := http.NewRequest("GET", "https://api.chapa.co/v1/transaction/verify/"+txRef, nil)
 		req.Header.Set("Authorization", "Bearer "+chapaSecret)
 
@@ -151,7 +151,7 @@ func VerifyPaymentHandler(db *sql.DB) gin.HandlerFunc {
 		body, _ := io.ReadAll(resp.Body)
 		var verifyResp struct {
 			Status string `json:"status"`
-			Data struct {
+			Data   struct {
 				Status string `json:"status"` // "success" or "failed" or "pending"
 			} `json:"data"`
 		}
@@ -160,7 +160,7 @@ func VerifyPaymentHandler(db *sql.DB) gin.HandlerFunc {
 		if verifyResp.Status == "success" && verifyResp.Data.Status == "success" {
 			// Update transaction to success
 			_, err = db.ExecContext(c.Request.Context(), `UPDATE transactions SET status = 'success' WHERE tx_ref = $1`, txRef)
-			
+
 			// Unlock the course for the user
 			var userID, courseID string
 			err = db.QueryRowContext(c.Request.Context(), `SELECT user_id, course_id FROM transactions WHERE tx_ref = $1`, txRef).Scan(&userID, &courseID)

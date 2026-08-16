@@ -14,11 +14,12 @@ import (
 // so the token must be converted to a query param via JavaScript in the browser.
 //
 // Flow:
-//   Supabase recovery email
-//     → https://api.ethioclass.com/auth/callback#access_token=TOKEN
-//     → this HTML page reads #access_token from fragment via JS
-//     → redirects to ethioclass://reset-password?access_token=TOKEN
-//     → Flutter app receives it as a query param and opens UpdatePasswordScreen
+//
+//	Supabase recovery email
+//	  → https://api.ethioclass.com/auth/callback#access_token=TOKEN
+//	  → this HTML page reads #access_token from fragment via JS
+//	  → redirects to ethioclass://reset-password?access_token=TOKEN
+//	  → Flutter app receives it as a query param and opens UpdatePasswordScreen
 func AuthCallbackHandler(c *gin.Context) {
 	html := `<!DOCTYPE html>
 <html>

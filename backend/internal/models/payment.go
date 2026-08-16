@@ -19,16 +19,16 @@ type Transaction struct {
 
 // ChapaInitializeRequest represents the payload sent to Chapa
 type ChapaInitializeRequest struct {
-	Amount         string `json:"amount"`
-	Currency       string `json:"currency"`
-	Email          string `json:"email"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	PhoneNumber    string `json:"phone_number,omitempty"`
-	TxRef          string `json:"tx_ref"`
-	CallbackURL    string `json:"callback_url"`
-	ReturnURL      string `json:"return_url"`
-	Customization  map[string]string `json:"customization"`
+	Amount        string            `json:"amount"`
+	Currency      string            `json:"currency"`
+	Email         string            `json:"email"`
+	FirstName     string            `json:"first_name"`
+	LastName      string            `json:"last_name"`
+	PhoneNumber   string            `json:"phone_number,omitempty"`
+	TxRef         string            `json:"tx_ref"`
+	CallbackURL   string            `json:"callback_url"`
+	ReturnURL     string            `json:"return_url"`
+	Customization map[string]string `json:"customization"`
 }
 
 // ChapaInitializeResponse represents the response from Chapa initialize endpoint
@@ -45,8 +45,8 @@ type ChapaVerifyResponse struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
 	Data    struct {
-		TxRef  string `json:"tx_ref"`
-		Status string `json:"status"`
+		TxRef  string  `json:"tx_ref"`
+		Status string  `json:"status"`
 		Amount float64 `json:"amount"`
 	} `json:"data"`
 }
