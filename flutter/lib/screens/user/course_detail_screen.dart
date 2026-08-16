@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../core/theme.dart';
 import '../../models/course_model.dart';
-import 'payment/checkout_screen.dart';
+import '../../services/payment_service.dart';
 import 'lesson_detail_screen.dart';
+import 'payment_webview_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -537,16 +538,47 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     );
   }
 
-  void _handlePayment() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CheckoutScreen(course: widget.course),
-      ),
-    ).then((_) {
-      // Re-fetch course or chapters if needed, 
-      // but SuccessScreen might pop until first and refresh dashboard anyway
-    });
+  Future<void> _handlePayment() async {
+    // 1. Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+    );
+
+    try {
+      // 2. Initialize payment
+      final result = await PaymentService.initializePayment(widget.course.id);
+      
+      final txRef = result['tx_ref']!;
+      final checkoutUrl = result['checkout_url']!;
+
+      // Dismiss loading
+      if (mounted) Navigator.pop(context);
+
+      // 3. Launch embedded webview screen
+      if (mounted) {
+        final isSuccess = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentWebviewScreen(
+              checkoutUrl: checkoutUrl,
+              txRef: txRef,
+            ),
+          ),
+        );
+
+        if (isSuccess == true) {
+          _unlockAllChapters();
+        }
+      }
+
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Dismiss loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _unlockAllChapters() {

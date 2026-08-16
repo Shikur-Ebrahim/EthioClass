@@ -1,54 +1,61 @@
+// Payment service for Chapa integration
+
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../models/payment_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentService {
+  // Backend API URL - points to your VPS
   static const String baseUrl = 'https://api.ethioclass.com/payments';
 
-  /// Initiates a payment for the given course, using the specified payment method.
-  static Future<PaymentModel> createPayment({
-    required String courseId,
-    required String paymentMethod,
-    String? phoneNumber,
-  }) async {
+  /// Initializes a payment for the given course and returns the checkout URL and transaction reference.
+  static Future<Map<String, String>> initializePayment(String courseId) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/create'),
+        Uri.parse('$baseUrl/initialize'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'course_id': courseId,
-          'payment_method': paymentMethod,
-          if (phoneNumber != null && phoneNumber.isNotEmpty) 'phone_number': phoneNumber,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        return PaymentModel.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to create payment: ${response.body}');
-      }
-    } catch (e) {
-      debugPrint('Payment Creation Error: $e');
-      throw Exception('Could not connect to payment server. Check your internet connection.');
-    }
-  }
-
-  /// Polls the payment status from the EthioClass backend securely.
-  static Future<PaymentStatus> checkPaymentStatus(String txRef) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/$txRef/status'),
+        body: jsonEncode({'course_id': courseId}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return parsePaymentStatus(data['status']);
+        return {
+          'tx_ref': data['tx_ref'],
+          'checkout_url': data['checkout_url'],
+        };
+      } else {
+        throw Exception('Failed to initialize payment: ${response.body}');
       }
-      return PaymentStatus.unknown;
     } catch (e) {
-      debugPrint('Payment Status Error: $e');
-      return PaymentStatus.unknown;
+      print('Payment Initialization Error: $e');
+      throw Exception('Could not connect to payment server. Check your internet connection.');
+    }
+  }
+
+  /// Verifies a payment with the given transaction reference.
+  /// Returns true if successful, false otherwise.
+  static Future<bool> verifyPayment(String txRef) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/verify/$txRef'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['status'] == 'success';
+      }
+      return false;
+    } catch (e) {
+      print('Payment Verification Error: $e');
+      return false;
+    }
+  }
+
+  /// Helper to launch the Chapa checkout URL
+  static Future<void> launchCheckout(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+      throw Exception('Could not launch payment page');
     }
   }
 }
