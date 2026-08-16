@@ -83,6 +83,7 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final Widget? prefixWidget;
+  final bool enabled;
 
   const AppTextField({
     super.key,
@@ -94,6 +95,7 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.prefixWidget,
+    this.enabled = true,
   });
 
   @override
@@ -111,7 +113,8 @@ class _AppTextFieldState extends State<AppTextField> {
       keyboardType: widget.keyboardType,
       validator: widget.validator,
       onChanged: widget.onChanged,
-      style: const TextStyle(
+      enabled: widget.enabled,
+      style: TextStyle(
         fontSize: 15,
         color: AppColors.textDark,
         fontWeight: FontWeight.w500,

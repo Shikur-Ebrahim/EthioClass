@@ -1,9 +1,25 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 import '../../config/api_config.dart';
 
 class AuthService {
   static const String _baseUrl = apiBaseUrl;
+
+  /// Utility to get a unique device identifier
+  static Future<String> _getDeviceId() async {
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      // Using androidId or a combination of manufacturer and model as identifier
+      return '${androidInfo.manufacturer}_${androidInfo.model}_${androidInfo.id}';
+    } else if (Platform.isIOS) {
+      final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      return iosInfo.identifierForVendor ?? 'unknown_ios_device';
+    }
+    return 'unknown_device';
+  }
 
   Future<Map<String, dynamic>> signup({
     required String fullName,
@@ -11,6 +27,8 @@ class AuthService {
     required String phoneNumber,
     required String password,
   }) async {
+    final String deviceId = await _getDeviceId();
+
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/signup'),
       headers: {'Content-Type': 'application/json'},
@@ -19,6 +37,7 @@ class AuthService {
         'email': email,
         'phoneNumber': phoneNumber,
         'password': password,
+        'deviceId': deviceId,
       }),
     );
 
@@ -34,12 +53,15 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final String deviceId = await _getDeviceId();
+
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
         'password': password,
+        'deviceId': deviceId,
       }),
     );
 
@@ -57,10 +79,6 @@ class AuthService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
-        // Supabase redirects to this URL after verifying the token.
-        // This page (on our VPS) reads the #access_token fragment via JS
-        // and re-redirects to the ethioclass:// deep link as a query param,
-        // because Android strips URL fragments from deep link intents.
         'redirectTo': 'https://api.ethioclass.com/auth/callback',
       }),
     );
@@ -90,5 +108,35 @@ class AuthService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       throw Exception(data['error'] ?? 'Failed to update password');
     }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required String fullName,
+    required String phoneNumber,
+    required String accessToken,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/auth/update-profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+      }),
+    );
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      return data;
+    } else {
+      throw Exception(data['error'] ?? 'Failed to update profile');
+    }
+  }
+
+  /// Expose getDeviceId for security screen
+  Future<String> getCurrentDeviceId() async {
+    return await _getDeviceId();
   }
 }

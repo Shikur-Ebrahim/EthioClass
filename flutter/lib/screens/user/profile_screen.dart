@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../auth/login_screen.dart';
+import 'personal_info_screen.dart';
+import 'change_password_screen.dart';
+import 'security_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String userName;
@@ -121,6 +124,19 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'Update your personal details',
                   iconBgColor: Colors.blue.withOpacity(0.1),
                   iconColor: Colors.blue,
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PersonalInfoScreen(
+                          currentName: userName,
+                          currentEmail: userEmail,
+                          currentPhone: '', // Add state to manage phone number in ProfileScreen in the future
+                        ),
+                      ),
+                    );
+                    // Handle result if we convert ProfileScreen to Stateful in the future
+                  },
                 ),
                 _SettingsItem(
                   icon: Icons.lock_rounded,
@@ -128,6 +144,14 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'Update your account password',
                   iconBgColor: Colors.blue.withOpacity(0.1),
                   iconColor: Colors.blue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChangePasswordScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _SettingsItem(
                   icon: Icons.security_rounded,
@@ -136,6 +160,14 @@ class ProfileScreen extends StatelessWidget {
                   iconBgColor: Colors.blue.withOpacity(0.1),
                   iconColor: Colors.blue,
                   showBorder: false,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SecurityScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
