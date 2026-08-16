@@ -539,45 +539,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _handlePayment() async {
-    // 1. Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-    );
-
-    try {
-      // 2. Initialize payment
-      final result = await PaymentService.initializePayment(widget.course.id);
-      
-      final txRef = result['tx_ref']!;
-      final checkoutUrl = result['checkout_url']!;
-
-      // Dismiss loading
-      if (mounted) Navigator.pop(context);
-
-      // 3. Launch embedded webview screen
-      if (mounted) {
-        final isSuccess = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentWebviewScreen(
-              checkoutUrl: checkoutUrl,
-              txRef: txRef,
-            ),
+    if (mounted) {
+      final isSuccess = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentWebviewScreen(
+            courseId: widget.course.id,
           ),
-        );
-
-        if (isSuccess == true) {
-          _unlockAllChapters();
-        }
-      }
-
-    } catch (e) {
-      if (mounted) Navigator.pop(context); // Dismiss loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        ),
       );
+
+      if (isSuccess == true) {
+        _unlockAllChapters();
+      }
     }
   }
 

@@ -5,13 +5,11 @@ import '../../core/theme.dart';
 import '../../services/payment_service.dart';
 
 class PaymentWebviewScreen extends StatefulWidget {
-  final String checkoutUrl;
-  final String txRef;
+  final String courseId;
 
   const PaymentWebviewScreen({
     super.key,
-    required this.checkoutUrl,
-    required this.txRef,
+    required this.courseId,
   });
 
   @override
@@ -21,6 +19,8 @@ class PaymentWebviewScreen extends StatefulWidget {
 class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _isInitializing = true;
+  String? _txRef;
   Timer? _timer;
   bool _isChecking = false;
 
@@ -36,17 +36,39 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
           onPageFinished: (_) => setState(() => _isLoading = false),
           onWebResourceError: (_) => setState(() => _isLoading = false),
         ),
-      )
-      ..loadRequest(Uri.parse(widget.checkoutUrl));
+      );
 
-    // Poll every 4 seconds to check payment success
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _verifyPayment());
+    _initPayment();
+  }
+
+  Future<void> _initPayment() async {
+    try {
+      final result = await PaymentService.initializePayment(widget.courseId);
+      final checkoutUrl = result['checkout_url']!;
+      _txRef = result['tx_ref']!;
+      
+      _controller.loadRequest(Uri.parse(checkoutUrl));
+      
+      setState(() {
+        _isInitializing = false;
+      });
+
+      // Poll every 4 seconds to check payment success
+      _timer = Timer.periodic(const Duration(seconds: 4), (_) => _verifyPayment());
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context, false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Future<void> _verifyPayment() async {
-    if (_isChecking) return;
+    if (_isChecking || _txRef == null) return;
     _isChecking = true;
-    final bool isSuccess = await PaymentService.verifyPayment(widget.txRef);
+    final bool isSuccess = await PaymentService.verifyPayment(_txRef!);
     if (isSuccess && mounted) {
       _timer?.cancel();
       Navigator.pop(context, true); // Return true = success
@@ -107,8 +129,8 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
+          if (!_isInitializing) WebViewWidget(controller: _controller),
+          if (_isLoading || _isInitializing)
             Container(
               color: Colors.white,
               child: const Center(
@@ -118,7 +140,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
                     CircularProgressIndicator(color: AppColors.primary),
                     SizedBox(height: 16),
                     Text(
-                      'Loading payment page...',
+                      'Loading payment securely...',
                       style: TextStyle(
                         color: AppColors.textMedium,
                         fontSize: 14,
