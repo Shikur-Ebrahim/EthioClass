@@ -54,7 +54,7 @@ class PaymentService {
   /// Helper to launch the Chapa checkout URL
   static Future<void> launchCheckout(String url) async {
     final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
       throw Exception('Could not launch payment page');
     }
   }
