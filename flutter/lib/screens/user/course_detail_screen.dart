@@ -547,9 +547,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
     try {
       // 2. Initialize payment
-      // Replace with actual course ID from your DB if you have it
-      final String mockCourseId = "test-course-123"; 
-      final result = await PaymentService.initializePayment(mockCourseId);
+      final result = await PaymentService.initializePayment(widget.course.id);
       
       final txRef = result['tx_ref']!;
       final checkoutUrl = result['checkout_url']!;
