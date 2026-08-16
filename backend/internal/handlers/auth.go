@@ -23,7 +23,6 @@ func SignupHandler(c *gin.Context) {
 
 	signupReq := supa.SignupRequest{
 		Email:    req.Email,
-		Phone:    req.PhoneNumber,
 		Password: req.Password,
 		Data: map[string]interface{}{
 			"full_name":    req.FullName,
