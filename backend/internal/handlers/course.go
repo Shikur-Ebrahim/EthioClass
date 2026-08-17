@@ -133,6 +133,112 @@ func CreateCategoryHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 	}
 }
 
+// UpdateCategoryHandler handles PUT requests to update an existing category.
+func UpdateCategoryHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		categoryID := c.Param("id")
+		if categoryID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID is required"})
+			return
+		}
+
+		// Parse multipart form
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form"})
+			return
+		}
+
+		name := c.Request.FormValue("name")
+		description := c.Request.FormValue("description")
+
+		if strings.TrimSpace(name) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Category name is required"})
+			return
+		}
+
+		// Check if a new image was uploaded
+		file, header, err := c.Request.FormFile("image")
+		var newImageURL *string
+
+		if err == nil {
+			defer file.Close()
+			if r2 == nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Cloudflare R2 is not configured"})
+				return
+			}
+
+			ext := filepath.Ext(header.Filename)
+			if ext == "" {
+				ext = ".png"
+			}
+			key := fmt.Sprintf("categories/%s%s", uuid.New().String(), ext)
+			contentType := header.Header.Get("Content-Type")
+
+			uploadedKey, uploadErr := r2.UploadFile(c.Request.Context(), file, key, contentType)
+			if uploadErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload new image: " + uploadErr.Error()})
+				return
+			}
+			newImageURL = &uploadedKey
+		} else if err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error reading image file: " + err.Error()})
+			return
+		}
+
+		// Update database
+		if newImageURL != nil {
+			_, err = db.ExecContext(c.Request.Context(),
+				`UPDATE categories SET name = $1, description = $2, image_url = $3 WHERE id = $4`,
+				name, description, newImageURL, categoryID,
+			)
+		} else {
+			_, err = db.ExecContext(c.Request.Context(),
+				`UPDATE categories SET name = $1, description = $2 WHERE id = $3`,
+				name, description, categoryID,
+			)
+		}
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update category: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Category updated successfully",
+			"image_url": newImageURL,
+		})
+	}
+}
+
+// DeleteCategoryHandler handles DELETE requests to remove a category.
+func DeleteCategoryHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		categoryID := c.Param("id")
+		if categoryID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID is required"})
+			return
+		}
+
+		_, err := db.ExecContext(c.Request.Context(), `DELETE FROM categories WHERE id = $1`, categoryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete category: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Category deleted successfully"})
+	}
+}
+
 // GetDivisionsHandler fetches divisions, optionally filtered by category_id
 func GetDivisionsHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

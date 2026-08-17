@@ -42,6 +42,8 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	// TODO: Add auth middleware to require admin role
 	{
 		adminGroup.POST("/categories", handlers.CreateCategoryHandler(db, r2))
+		adminGroup.PUT("/categories/:id", handlers.UpdateCategoryHandler(db, r2))
+		adminGroup.DELETE("/categories/:id", handlers.DeleteCategoryHandler(db))
 	}
 
 	// Payment Routes
