@@ -403,15 +403,7 @@ class _CategoryCard extends StatelessWidget {
 
   const _CategoryCard({required this.cat, required this.index});
 
-  static const List<Color> _bgColors = [
-    Color(0xFFE8F5E9), // light green
-    Color(0xFFE3F2FD), // light blue
-    Color(0xFFF3E5F5), // light purple
-    Color(0xFFFFF8E1), // light amber
-    Color(0xFFFFEBEE), // light red
-  ];
-
-  static const List<Color> _iconColors = [
+  static const List<Color> _fallbackColors = [
     Color(0xFF2E7D32),
     Color(0xFF1565C0),
     Color(0xFF6A1B9A),
@@ -421,8 +413,8 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = _bgColors[index % _bgColors.length];
-    final iconColor = _iconColors[index % _iconColors.length];
+    final fallbackColor = _fallbackColors[index % _fallbackColors.length];
+    final hasImage = cat.imageUrl != null && cat.imageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -430,72 +422,115 @@ class _CategoryCard extends StatelessWidget {
         MaterialPageRoute(
           builder: (_) => CategoryDetailScreen(
             category: cat,
-            headerColor: bg,
-            iconColor: iconColor,
+            headerColor: fallbackColor.withOpacity(0.2),
+            iconColor: fallbackColor,
           ),
         ),
       ),
       child: Container(
-      width: 130,
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+        width: 140,
+        height: 130,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: fallbackColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: fallbackColor.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: cat.imageUrl != null && cat.imageUrl!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      cat.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Icon(Icons.school_rounded, color: iconColor, size: 22),
-                    ),
-                  )
-                : Icon(Icons.school_rounded, color: iconColor, size: 22),
-          ),
-          const Spacer(),
-          Text(
-            cat.name,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  cat.description,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Full background image
+            if (hasImage)
+              Image.network(
+                cat.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(color: fallbackColor),
+              )
+            else
+              Container(color: fallbackColor),
+
+            // Dark gradient overlay at the bottom so text is readable
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.65),
+                  ],
+                  stops: const [0.35, 1.0],
                 ),
               ),
-              Icon(Icons.arrow_forward_rounded, size: 14, color: iconColor),
-            ],
-          ),
-        ],
+            ),
+
+            // Category name + description at bottom
+            Positioned(
+              left: 10,
+              right: 10,
+              bottom: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    cat.name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black45)],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (cat.description.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      cat.description,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Small arrow icon top-right
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 12,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
+
 
 // ── COURSE CARD ────────────────────────────────────────────────
 class _CourseCard extends StatelessWidget {
