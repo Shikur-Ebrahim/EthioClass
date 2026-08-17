@@ -299,16 +299,16 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		divisionId := c.Query("division_id")
+		categoryId := c.Query("category_id")
 		var rows *sql.Rows
 		var err error
 
-		if divisionId != "" {
+		if categoryId != "" {
 			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, division_id, title, description, thumbnail_url, created_at FROM courses WHERE division_id = $1 ORDER BY created_at DESC`, divisionId)
+				`SELECT id, category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url, created_at FROM courses WHERE category_id = $1 ORDER BY created_at DESC`, categoryId)
 		} else {
 			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, division_id, title, description, thumbnail_url, created_at FROM courses ORDER BY created_at DESC`)
+				`SELECT id, category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url, created_at FROM courses ORDER BY created_at DESC`)
 		}
 
 		if err != nil {
@@ -318,18 +318,22 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 		defer rows.Close()
 
 		type Course struct {
-			ID           string  `json:"id"`
-			DivisionID   *string `json:"division_id"`
-			Title        string  `json:"title"`
-			Description  string  `json:"description"`
-			ThumbnailURL *string `json:"thumbnail_url"`
-			CreatedAt    *string `json:"created_at"`
+			ID              string  `json:"id"`
+			CategoryID      *string `json:"category_id"`
+			Title           string  `json:"title"`
+			Description     string  `json:"description"`
+			AboutText       *string `json:"about_text"`
+			AboutBullets    *string `json:"about_bullets"` // JSON string
+			InstructorName  *string `json:"instructor_name"`
+			InstructorPhone *string `json:"instructor_phone"`
+			ThumbnailURL    *string `json:"thumbnail_url"`
+			CreatedAt       *string `json:"created_at"`
 		}
 
 		var courses []Course
 		for rows.Next() {
 			var course Course
-			if err := rows.Scan(&course.ID, &course.DivisionID, &course.Title, &course.Description, &course.ThumbnailURL, &course.CreatedAt); err != nil {
+			if err := rows.Scan(&course.ID, &course.CategoryID, &course.Title, &course.Description, &course.AboutText, &course.AboutBullets, &course.InstructorName, &course.InstructorPhone, &course.ThumbnailURL, &course.CreatedAt); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse course: " + err.Error()})
 				return
 			}
@@ -491,5 +495,187 @@ func GetQuestionsHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, questions)
+	}
+}
+
+// CreateCourseHandler handles POST requests to create a new course.
+func CreateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form"})
+			return
+		}
+
+		categoryID := c.Request.FormValue("category_id")
+		title := c.Request.FormValue("title")
+		description := c.Request.FormValue("description")
+		aboutText := c.Request.FormValue("about_text")
+		aboutBullets := c.Request.FormValue("about_bullets") // JSON array string
+		instructorName := c.Request.FormValue("instructor_name")
+		instructorPhone := c.Request.FormValue("instructor_phone")
+
+		if strings.TrimSpace(title) == "" || strings.TrimSpace(categoryID) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID and Title are required"})
+			return
+		}
+
+		if aboutBullets == "" {
+			aboutBullets = "[]"
+		}
+
+		file, header, err := c.Request.FormFile("image")
+		var thumbnailURL *string
+
+		if err == nil {
+			defer file.Close()
+			if r2 == nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Cloudflare R2 is not configured"})
+				return
+			}
+			ext := filepath.Ext(header.Filename)
+			if ext == "" {
+				ext = ".png"
+			}
+			key := fmt.Sprintf("courses/%s%s", uuid.New().String(), ext)
+			contentType := header.Header.Get("Content-Type")
+
+			uploadedKey, uploadErr := r2.UploadFile(c.Request.Context(), file, key, contentType)
+			if uploadErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image: " + uploadErr.Error()})
+				return
+			}
+			thumbnailURL = &uploadedKey
+		} else if err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error reading image file: " + err.Error()})
+			return
+		}
+
+		var courseID string
+		err = db.QueryRowContext(c.Request.Context(),
+			`INSERT INTO courses (category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url) 
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+			categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, thumbnailURL,
+		).Scan(&courseID)
+		
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save course: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Course created successfully",
+			"id": courseID,
+			"thumbnail_url": thumbnailURL,
+		})
+	}
+}
+
+// UpdateCourseHandler handles PUT requests to update a course.
+func UpdateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		courseID := c.Param("id")
+		if courseID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Course ID is required"})
+			return
+		}
+
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
+			return
+		}
+
+		categoryID := c.Request.FormValue("category_id")
+		title := c.Request.FormValue("title")
+		description := c.Request.FormValue("description")
+		aboutText := c.Request.FormValue("about_text")
+		aboutBullets := c.Request.FormValue("about_bullets")
+		instructorName := c.Request.FormValue("instructor_name")
+		instructorPhone := c.Request.FormValue("instructor_phone")
+
+		if strings.TrimSpace(title) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Title is required"})
+			return
+		}
+
+		if aboutBullets == "" {
+			aboutBullets = "[]"
+		}
+
+		file, header, err := c.Request.FormFile("image")
+		var newThumbnailURL *string
+
+		if err == nil {
+			defer file.Close()
+			if r2 == nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "R2 not configured"})
+				return
+			}
+			ext := filepath.Ext(header.Filename)
+			if ext == "" {
+				ext = ".png"
+			}
+			key := fmt.Sprintf("courses/%s%s", uuid.New().String(), ext)
+			contentType := header.Header.Get("Content-Type")
+
+			uploadedKey, uploadErr := r2.UploadFile(c.Request.Context(), file, key, contentType)
+			if uploadErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Upload failed: " + uploadErr.Error()})
+				return
+			}
+			newThumbnailURL = &uploadedKey
+		}
+
+		if newThumbnailURL != nil {
+			_, err = db.ExecContext(c.Request.Context(),
+				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7, thumbnail_url = $8 WHERE id = $9`,
+				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, newThumbnailURL, courseID,
+			)
+		} else {
+			_, err = db.ExecContext(c.Request.Context(),
+				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7 WHERE id = $8`,
+				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, courseID,
+			)
+		}
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update course: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Course updated successfully", "thumbnail_url": newThumbnailURL})
+	}
+}
+
+// DeleteCourseHandler handles DELETE requests to remove a course.
+func DeleteCourseHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		courseID := c.Param("id")
+		if courseID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Course ID is required"})
+			return
+		}
+
+		_, err := db.ExecContext(c.Request.Context(), `DELETE FROM courses WHERE id = $1`, courseID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete course: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Course deleted successfully"})
 	}
 }
