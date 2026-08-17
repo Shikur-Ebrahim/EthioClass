@@ -133,23 +133,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.25),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    widget.category.name,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
                                 const SizedBox(height: 10),
                                 Text(
                                   widget.category.description,
@@ -217,7 +200,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
-                'Divisions / Subjects',
+                'Courses',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
