@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/category_model.dart';
-import '../../models/course_model.dart';
-import 'course_detail_screen.dart';
+import '../../models/division_model.dart';
+import '../../services/course_service.dart';
+import 'courses_screen.dart'; // We should probably navigate to CoursesScreen filtered by division
 
-class CategoryDetailScreen extends StatelessWidget {
+class CategoryDetailScreen extends StatefulWidget {
   final Category category;
   final Color headerColor;
   final Color iconColor;
@@ -16,71 +17,71 @@ class CategoryDetailScreen extends StatelessWidget {
     required this.iconColor,
   });
 
-  // Sample subjects per category — will be replaced with real DB data when backend is deployed
-  List<_SubjectItem> _getSubjects() {
-    final name = category.name.toLowerCase();
-    if (name.contains('grade 12') || name.contains('grad12')) {
-      return const [
-        _SubjectItem('Mathematics', '32 Courses • 480 Videos', Icons.calculate_rounded, Color(0xFFE3F0FF), Color(0xFF2563EB)),
-        _SubjectItem('Physics', '28 Courses • 420 Videos', Icons.science_rounded, Color(0xFFE8F5E9), Color(0xFF16A34A)),
-        _SubjectItem('Chemistry', '26 Courses • 380 Videos', Icons.biotech_rounded, Color(0xFFF3EEFF), Color(0xFF7C3AED)),
-        _SubjectItem('Biology', '24 Courses • 320 Videos', Icons.eco_rounded, Color(0xFFE6F9F0), Color(0xFF059669)),
-        _SubjectItem('English', '20 Courses • 280 Videos', Icons.menu_book_rounded, Color(0xFFFFF3E0), Color(0xFFF97316)),
-        _SubjectItem('Civic', '18 Courses • 240 Videos', Icons.account_balance_rounded, Color(0xFFFFECEC), Color(0xFFDC2626)),
-        _SubjectItem('History', '16 Courses • 200 Videos', Icons.history_edu_rounded, Color(0xFFF5F0FF), Color(0xFF9333EA)),
-      ];
-    } else if (name.contains('freshman') || name.contains('freshima')) {
-      return const [
-        _SubjectItem('Mathematics', '30 Courses • 450 Videos', Icons.calculate_rounded, Color(0xFFE3F0FF), Color(0xFF2563EB)),
-        _SubjectItem('Physics', '26 Courses • 390 Videos', Icons.science_rounded, Color(0xFFE8F5E9), Color(0xFF16A34A)),
-        _SubjectItem('Chemistry', '22 Courses • 310 Videos', Icons.biotech_rounded, Color(0xFFF3EEFF), Color(0xFF7C3AED)),
-        _SubjectItem('Economics', '18 Courses • 250 Videos', Icons.bar_chart_rounded, Color(0xFFFFF3E0), Color(0xFFF97316)),
-        _SubjectItem('English', '20 Courses • 290 Videos', Icons.menu_book_rounded, Color(0xFFFFECEC), Color(0xFFDC2626)),
-        _SubjectItem('Logic', '14 Courses • 180 Videos', Icons.psychology_rounded, Color(0xFFE0F7FA), Color(0xFF0891B2)),
-      ];
-    } else {
-      // TVET
-      return const [
-        _SubjectItem('Electrical Installation', '22 Courses • 310 Videos', Icons.electrical_services_rounded, Color(0xFFFFF3E0), Color(0xFFF97316)),
-        _SubjectItem('Welding & Fabrication', '18 Courses • 260 Videos', Icons.handyman_rounded, Color(0xFFE3F0FF), Color(0xFF2563EB)),
-        _SubjectItem('Plumbing', '16 Courses • 220 Videos', Icons.plumbing_rounded, Color(0xFFE8F5E9), Color(0xFF16A34A)),
-        _SubjectItem('IT Support', '20 Courses • 300 Videos', Icons.computer_rounded, Color(0xFFF3EEFF), Color(0xFF7C3AED)),
-        _SubjectItem('Automotive', '14 Courses • 180 Videos', Icons.car_repair_rounded, Color(0xFFFFECEC), Color(0xFFDC2626)),
-        _SubjectItem('Construction', '12 Courses • 160 Videos', Icons.construction_rounded, Color(0xFFE0F7FA), Color(0xFF0891B2)),
-      ];
+  @override
+  State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
+}
+
+class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
+  bool _isLoading = true;
+  List<Division> _divisions = [];
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDivisions();
+  }
+
+  Future<void> _fetchDivisions() async {
+    try {
+      final divs = await CourseService().getDivisions(categoryId: widget.category.id);
+      if (mounted) {
+        setState(() {
+          _divisions = divs;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
+  // Helper for dynamic UI based on category name
   _CategoryMeta _getMeta() {
-    final name = category.name.toLowerCase();
-    if (name.contains('grade 12') || name.contains('grad12')) {
+    final name = widget.category.name.toLowerCase();
+    if (name.contains('grade')) {
       return const _CategoryMeta(
-        subtitle: 'National Exam Preparation',
-        description: 'Prepare for your university entrance exam with comprehensive Grade 12 materials.',
-        courses: '150+',
-        videos: '2,500+',
-        practiceQs: '15,000+',
-        students: '35K+',
+        subtitle: 'High School curriculum tailored for Ethiopian students.',
+        description: 'Complete high school syllabus covered comprehensively.',
+        courses: '12',
+        videos: '180+',
+        practiceQs: '1.2k',
+        students: '45k',
         icon: Icons.school_rounded,
       );
-    } else if (name.contains('freshman') || name.contains('freshima')) {
+    } else if (name.contains('fresh')) {
       return const _CategoryMeta(
-        subtitle: 'University Entrance',
-        description: 'Prepare yourself for a successful university journey with expert guidance.',
-        courses: '130+',
-        videos: '2,000+',
-        practiceQs: '12,000+',
-        students: '28K+',
+        subtitle: 'University Freshman courses and preparation.',
+        description: 'Essential university freshman materials and courses.',
+        courses: '8',
+        videos: '140+',
+        practiceQs: '800+',
+        students: '25k',
         icon: Icons.account_balance_rounded,
       );
     } else {
       return const _CategoryMeta(
-        subtitle: 'Technical & Vocational',
-        description: 'Build practical skills for a rewarding career in technology and trades.',
-        courses: '100+',
-        videos: '1,430+',
-        practiceQs: '8,000+',
-        students: '18K+',
+        subtitle: 'Technical and Vocational Education Training.',
+        description: 'Practical skills and technical knowledge training.',
+        courses: '15',
+        videos: '220+',
+        practiceQs: '950+',
+        students: '18k',
         icon: Icons.build_rounded,
       );
     }
@@ -88,95 +89,123 @@ class CategoryDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subjects = _getSubjects();
     final meta = _getMeta();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // Header
+          // Custom App Bar
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 280.0,
+            floating: false,
             pinned: true,
-            backgroundColor: headerColor,
+            backgroundColor: widget.headerColor,
+            elevation: 0,
             leading: GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.black.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                child: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white, size: 18),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      headerColor,
-                      iconColor.withOpacity(0.9),
-                    ],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                category.name,
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                meta.subtitle,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.85),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                meta.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.75),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Icon(meta.icon, color: Colors.white, size: 44),
-                        ),
-                      ],
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          widget.headerColor,
+                          widget.headerColor.withOpacity(0.8),
+                          widget.headerColor.withOpacity(0.9),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                  Positioned(
+                    right: -40,
+                    top: -40,
+                    child: Icon(
+                      meta.icon,
+                      size: 200,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  Positioned(
+                    left: 20,
+                    bottom: 40,
+                    right: 20,
+                    child: SafeArea(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.category.name,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    meta.subtitle,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  widget.category.description,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.75),
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Icon(meta.icon, color: Colors.white, size: 44),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -200,7 +229,7 @@ class CategoryDetailScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _StatItem(value: meta.courses, label: 'Courses', icon: Icons.book_rounded, color: iconColor),
+                  _StatItem(value: meta.courses, label: 'Courses', icon: Icons.book_rounded, color: widget.iconColor),
                   _Divider(),
                   _StatItem(value: meta.videos, label: 'Videos', icon: Icons.play_circle_rounded, color: const Color(0xFF7C3AED)),
                   _Divider(),
@@ -213,12 +242,12 @@ class CategoryDetailScreen extends StatelessWidget {
           ),
 
           // Subjects title
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
-                'Subjects',
-                style: const TextStyle(
+                'Divisions / Subjects',
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
@@ -228,12 +257,45 @@ class CategoryDetailScreen extends StatelessWidget {
           ),
 
           // Subjects list
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, i) => _SubjectTile(item: subjects[i], index: i),
-              childCount: subjects.length,
+          if (_isLoading)
+            const SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+            )
+          else if (_errorMessage != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Center(
+                  child: Text('Failed to load subjects: $_errorMessage',
+                      style: const TextStyle(color: AppColors.error)),
+                ),
+              ),
+            )
+          else if (_divisions.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(
+                  child: Text('No subjects found in this category yet.',
+                      style: TextStyle(color: AppColors.grey)),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, i) => _DivisionTile(
+                  division: _divisions[i],
+                  index: i,
+                ),
+                childCount: _divisions.length,
+              ),
             ),
-          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
@@ -242,7 +304,7 @@ class CategoryDetailScreen extends StatelessWidget {
   }
 }
 
-// ── Stat item ──────────────────────────────────────────────────
+// Stats item
 class _StatItem extends StatelessWidget {
   final String value;
   final String label;
@@ -264,7 +326,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w900,
             color: AppColors.textDark,
@@ -287,97 +349,100 @@ class _Divider extends StatelessWidget {
   }
 }
 
-// ── Subject tile ───────────────────────────────────────────────
-class _SubjectTile extends StatelessWidget {
-  final _SubjectItem item;
+// Division tile
+class _DivisionTile extends StatelessWidget {
+  final Division division;
   final int index;
-  const _SubjectTile({required this.item, required this.index});
+  
+  const _DivisionTile({required this.division, required this.index});
+
+  // Cycle through some colors for the icons
+  static const List<Color> _bgColors = [
+    Color(0xFFE3F0FF), Color(0xFFE8F5E9), Color(0xFFF3EEFF), Color(0xFFE6F9F0), Color(0xFFFFF3E0),
+  ];
+  static const List<Color> _iconColors = [
+    Color(0xFF2563EB), Color(0xFF16A34A), Color(0xFF7C3AED), Color(0xFF059669), Color(0xFFF97316),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = _bgColors[index % _bgColors.length];
+    final iconColor = _iconColors[index % _iconColors.length];
+
     return GestureDetector(
       onTap: () {
-        // Create a dummy course for preview purposes
-        final dummyCourse = Course(
-          id: 'preview-${item.name}',
-          title: item.name,
-          description: 'Explore the complete ${item.name} course. Learn with high-quality video lessons and practice questions tailored for you.',
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(course: dummyCourse, index: index),
-          ),
+        // We will just print for now or navigate to CoursesScreen with a filter (if supported)
+        // Or to a DivisionDetailScreen. 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Selected: ${division.name}')),
         );
       },
       child: Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: item.bgColor,
-              borderRadius: BorderRadius.circular(14),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
-            child: Icon(item.icon, color: item.iconColor, size: 26),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: division.imageUrl != null && division.imageUrl!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        division.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(Icons.class_rounded, color: iconColor, size: 26),
+                      ),
+                    )
+                  : Icon(Icons.class_rounded, color: iconColor, size: 26),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    division.name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.info,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textMedium),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Explore subjects and courses',
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textMedium),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded,
-              color: AppColors.grey, size: 22),
-        ],
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.grey, size: 22),
+          ],
+        ),
       ),
-     ),
     );
   }
 }
 
-// ── Data models ───────────────────────────────────────────────
-class _SubjectItem {
-  final String name;
-  final String info;
-  final IconData icon;
-  final Color bgColor;
-  final Color iconColor;
-
-  const _SubjectItem(
-      this.name, this.info, this.icon, this.bgColor, this.iconColor);
-}
-
+// Data models
 class _CategoryMeta {
   final String subtitle;
   final String description;
