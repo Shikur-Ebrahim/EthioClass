@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:app_links/app_links.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/update_password_screen.dart';
 import 'screens/user/main_layout.dart';
@@ -22,66 +21,6 @@ class EthioClassApp extends StatefulWidget {
 
 class _EthioClassAppState extends State<EthioClassApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _initDeepLinks();
-  }
-
-  Future<void> _initDeepLinks() async {
-    _appLinks = AppLinks();
-
-    try {
-      final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
-        _handleDeepLink(initialUri);
-      }
-    } catch (e) {
-      debugPrint("Failed to get initial deep link: $e");
-    }
-
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    }, onError: (err) {
-      debugPrint("Deep link error: $err");
-    });
-  }
-
-  void _handleDeepLink(Uri uri) {
-    if (uri.scheme == 'ethioclass' && uri.host == 'reset-password') {
-      String? accessToken;
-
-      if (uri.fragment.isNotEmpty) {
-        final params = Uri.splitQueryString(uri.fragment);
-        accessToken = params['access_token'];
-      }
-
-      if (accessToken == null && uri.queryParameters.containsKey('access_token')) {
-        accessToken = uri.queryParameters['access_token'];
-      }
-
-      if (accessToken != null && accessToken.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _navigatorKey.currentState?.push(
-            MaterialPageRoute(
-              builder: (_) => UpdatePasswordScreen(accessToken: accessToken!),
-            ),
-          );
-        });
-      } else {
-        debugPrint("Deep link received but no access_token found. URI: $uri");
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
