@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:app_links/app_links.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/update_password_screen.dart';
+import 'screens/user/main_layout.dart';
+import 'services/session_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +34,6 @@ class _EthioClassAppState extends State<EthioClassApp> {
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
 
-    // Check initial link if app was cold started
     try {
       final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
@@ -42,7 +43,6 @@ class _EthioClassAppState extends State<EthioClassApp> {
       debugPrint("Failed to get initial deep link: $e");
     }
 
-    // Listen to incoming links while app is running
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
       _handleDeepLink(uri);
     }, onError: (err) {
@@ -52,20 +52,18 @@ class _EthioClassAppState extends State<EthioClassApp> {
 
   void _handleDeepLink(Uri uri) {
     if (uri.scheme == 'ethioclass' && uri.host == 'reset-password') {
-      // Supabase might return tokens in fragment (#) or query params (?)
       String? accessToken;
-      
+
       if (uri.fragment.isNotEmpty) {
         final params = Uri.splitQueryString(uri.fragment);
         accessToken = params['access_token'];
       }
-      
+
       if (accessToken == null && uri.queryParameters.containsKey('access_token')) {
         accessToken = uri.queryParameters['access_token'];
       }
 
       if (accessToken != null && accessToken.isNotEmpty) {
-        // Delay navigation slightly to ensure the Navigator is ready, especially on cold start
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _navigatorKey.currentState?.push(
             MaterialPageRoute(
@@ -97,7 +95,84 @@ class _EthioClassAppState extends State<EthioClassApp> {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF0F4F8),
       ),
-      home: const OnboardingScreen(),
+      home: const _StartupScreen(),
+    );
+  }
+}
+
+/// Splash/startup screen that checks for existing session.
+/// If logged in → go to MainLayout. If not → go to OnboardingScreen.
+class _StartupScreen extends StatefulWidget {
+  const _StartupScreen();
+
+  @override
+  State<_StartupScreen> createState() => _StartupScreenState();
+}
+
+class _StartupScreenState extends State<_StartupScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    // Small delay to show splash naturally
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    final session = await SessionService.loadSession();
+    
+    if (!mounted) return;
+
+    if (session != null) {
+      // Session exists → go directly to home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainLayout(
+            userName: session['userName'] ?? '',
+            userEmail: session['userEmail'] ?? '',
+            userPhone: session['userPhone'] ?? '',
+            accessToken: session['token'] ?? '',
+          ),
+        ),
+      );
+    } else {
+      // No session → go to onboarding
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Color(0xFFF0F4F8),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.school_rounded, size: 72, color: Color(0xFFFBB024)),
+            SizedBox(height: 16),
+            Text(
+              'EthioClass',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A2B4A),
+                letterSpacing: -0.5,
+              ),
+            ),
+            SizedBox(height: 40),
+            CircularProgressIndicator(
+              color: Color(0xFFFBB024),
+              strokeWidth: 2.5,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

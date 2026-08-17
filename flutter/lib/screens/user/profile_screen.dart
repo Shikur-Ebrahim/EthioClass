@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../services/session_service.dart';
 import '../auth/login_screen.dart';
 import 'personal_info_screen.dart';
 import 'change_password_screen.dart';
@@ -251,7 +252,9 @@ class ProfileScreen extends StatelessWidget {
                   iconBgColor: AppColors.error.withOpacity(0.1),
                   iconColor: AppColors.error,
                   showBorder: false,
-                  onTap: () {
+                  onTap: () async {
+                    await SessionService.clearSession();
+                    if (!context.mounted) return;
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                       (route) => false,

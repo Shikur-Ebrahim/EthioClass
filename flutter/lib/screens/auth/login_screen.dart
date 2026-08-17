@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
+import '../../services/session_service.dart';
 import '../../widgets/auth_widgets.dart';
 import '../user/main_layout.dart';
 import 'forgot_password_screen.dart';
@@ -57,6 +58,15 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } catch (_) {}
 
+      // Save session for persistent login
+      await SessionService.saveSession(
+        token: accessToken,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+      );
+
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
