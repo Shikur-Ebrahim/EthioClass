@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -60,4 +61,23 @@ func (r *R2Client) Ping() {
 		return
 	}
 	log.Println("[R2] Cloudflare R2 connected ✓")
+}
+
+// UploadFile uploads a file to R2 and returns the key.
+func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, contentType string) (string, error) {
+	if r.Client == nil {
+		return "", fmt.Errorf("R2 client not initialized")
+	}
+
+	_, err := r.Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(r.BucketName),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload to R2: %w", err)
+	}
+
+	return key, nil
 }

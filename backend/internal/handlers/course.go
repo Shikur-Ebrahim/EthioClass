@@ -2,9 +2,14 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
+	"github.com/EthioClass/backend/internal/storage"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // GetCategoriesHandler fetches all categories from the Supabase Postgres database.
@@ -50,6 +55,81 @@ func GetCategoriesHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, categories)
+	}
+}
+
+// CreateCategoryHandler handles POST requests to create a new category with an image upload.
+func CreateCategoryHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		// Require multipart form processing
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form"})
+			return
+		}
+
+		name := c.Request.FormValue("name")
+		description := c.Request.FormValue("description")
+
+		if strings.TrimSpace(name) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Category name is required"})
+			return
+		}
+
+		file, header, err := c.Request.FormFile("image")
+		var imageURL *string
+
+		// Handle optional image upload
+		if err == nil {
+			defer file.Close()
+			
+			if r2 == nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Cloudflare R2 is not configured"})
+				return
+			}
+
+			// Generate a unique object key for R2
+			ext := filepath.Ext(header.Filename)
+			if ext == "" {
+				ext = ".png" // Fallback extension
+			}
+			key := fmt.Sprintf("categories/%s%s", uuid.New().String(), ext)
+			contentType := header.Header.Get("Content-Type")
+
+			// Upload to R2
+			uploadedKey, uploadErr := r2.UploadFile(c.Request.Context(), file, key, contentType)
+			if uploadErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image: " + uploadErr.Error()})
+				return
+			}
+			
+			imageURL = &uploadedKey
+		} else if err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error reading image file: " + err.Error()})
+			return
+		}
+
+		// Insert into the database
+		var categoryID string
+		err = db.QueryRowContext(c.Request.Context(),
+			`INSERT INTO categories (name, description, image_url) VALUES ($1, $2, $3) RETURNING id`,
+			name, description, imageURL,
+		).Scan(&categoryID)
+		
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save category to database: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Category created successfully",
+			"id": categoryID,
+			"image_url": imageURL,
+		})
 	}
 }
 

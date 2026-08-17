@@ -44,7 +44,7 @@ func main() {
 	// --- HTTP Server ---
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	routes.Register(router, db)
+	routes.Register(router, db, r2)
 
 	addr := ":" + cfg.Port
 	log.Printf("[SERVER] Listening on %s", addr)

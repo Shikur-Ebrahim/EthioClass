@@ -5,11 +5,12 @@ import (
 
 	"github.com/EthioClass/backend/internal/handlers"
 	"github.com/EthioClass/backend/internal/middleware"
+	"github.com/EthioClass/backend/internal/storage"
 	"github.com/gin-gonic/gin"
 )
 
 // Register sets up all API routes on the given gin engine.
-func Register(r *gin.Engine, db *sql.DB) {
+func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.Use(middleware.Logger())
 	r.Use(middleware.CORS())
 
@@ -35,6 +36,13 @@ func Register(r *gin.Engine, db *sql.DB) {
 	r.GET("/lessons", handlers.GetLessonsHandler(db))
 	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
 	r.GET("/questions", handlers.GetQuestionsHandler(db))
+
+	// Admin Routes
+	adminGroup := r.Group("/admin")
+	// TODO: Add auth middleware to require admin role
+	{
+		adminGroup.POST("/categories", handlers.CreateCategoryHandler(db, r2))
+	}
 
 	// Payment Routes
 	paymentGroup := r.Group("/payments")
