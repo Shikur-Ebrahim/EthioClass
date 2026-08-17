@@ -129,13 +129,14 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		// Fetch phone_number from public.profiles to include in response
+		// Fetch phone_number and role from public.profiles to include in response
 		var phoneNumber string
+		var role string
 		if db != nil {
 			db.QueryRowContext(c.Request.Context(),
-				`SELECT COALESCE(phone_number, '') FROM public.profiles WHERE id = $1`,
+				`SELECT COALESCE(phone_number, ''), COALESCE(role, 'user') FROM public.profiles WHERE id = $1`,
 				resp.User.ID.String(),
-			).Scan(&phoneNumber)
+			).Scan(&phoneNumber, &role)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -143,6 +144,7 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 			"token":        resp.AccessToken,
 			"user":         resp.User,
 			"phone_number": phoneNumber,
+			"role":         role,
 		})
 	}
 }
