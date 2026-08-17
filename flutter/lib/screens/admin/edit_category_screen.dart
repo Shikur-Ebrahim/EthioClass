@@ -6,33 +6,40 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
+import '../../models/category_model.dart';
 
-class AddCategoryScreen extends StatefulWidget {
-  const AddCategoryScreen({super.key});
+class EditCategoryScreen extends StatefulWidget {
+  final Category category;
+  const EditCategoryScreen({super.key, required this.category});
 
   @override
-  State<AddCategoryScreen> createState() => _AddCategoryScreenState();
+  State<EditCategoryScreen> createState() => _EditCategoryScreenState();
 }
 
-class _AddCategoryScreenState extends State<AddCategoryScreen> {
+class _EditCategoryScreenState extends State<EditCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descController = TextEditingController();
-  
-  File? _imageFile;
+  late final TextEditingController _nameController;
+  late final TextEditingController _descController;
+
+  File? _newImageFile;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.category.name);
+    _descController = TextEditingController(text: widget.category.description);
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 50, // Compress to 50% quality
-      maxWidth: 1080, // Limit maximum width to 1080px
+      imageQuality: 50,
+      maxWidth: 1080,
     );
     if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
-      });
+      setState(() => _newImageFile = File(picked.path));
     }
   }
 
@@ -47,38 +54,34 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_imageFile == null) {
-      _showSnack('Please select an image banner', isError: true);
-      return;
-    }
-
     setState(() => _isLoading = true);
     try {
-      final uri = Uri.parse('$apiBaseUrl/admin/categories');
-      final request = http.MultipartRequest('POST', uri);
-      
+      final uri = Uri.parse('$apiBaseUrl/admin/categories/${widget.category.id}');
+      final request = http.MultipartRequest('PUT', uri);
       request.fields['name'] = _nameController.text.trim();
       request.fields['description'] = _descController.text.trim();
-      
-      final mimeTypeData = lookupMimeType(_imageFile!.path, headerBytes: [0xFF, 0xD8])?.split('/');
-      
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          _imageFile!.path,
-          contentType: mimeTypeData != null ? MediaType(mimeTypeData[0], mimeTypeData[1]) : MediaType('image', 'jpeg'),
-        ),
-      );
+
+      if (_newImageFile != null) {
+        final mimeTypeData = lookupMimeType(_newImageFile!.path)?.split('/');
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            _newImageFile!.path,
+            contentType: mimeTypeData != null
+                ? MediaType(mimeTypeData[0], mimeTypeData[1])
+                : MediaType('image', 'jpeg'),
+          ),
+        );
+      }
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 201) {
-        _showSnack('Category created successfully!');
+      if (response.statusCode == 200) {
+        _showSnack('Category updated successfully!');
         if (!mounted) return;
-        Navigator.pop(context, true);
+        Navigator.pop(context, true); // Return true to indicate refresh needed
       } else {
-        _showSnack('Failed to create category: ${response.body}', isError: true);
+        _showSnack('Failed: ${response.body}', isError: true);
       }
     } catch (e) {
       _showSnack('Error: $e', isError: true);
@@ -96,6 +99,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final existingImageUrl = widget.category.imageUrl;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -103,11 +107,8 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
         title: const Text(
-          'Add Category',
-          style: TextStyle(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.bold,
-          ),
+          'Edit Category',
+          style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -117,7 +118,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image Picker Area
+              // Image picker - shows new image if picked, else existing
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -128,40 +129,44 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     border: Border.all(
                       color: AppColors.primary.withOpacity(0.3),
                       width: 2,
-                      style: BorderStyle.solid,
                     ),
-                    image: _imageFile != null
-                        ? DecorationImage(
-                            image: FileImage(_imageFile!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
                   ),
-                  child: _imageFile == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_photo_alternate_rounded,
-                              size: 48,
-                              color: AppColors.primary.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap to upload banner image',
-                              style: TextStyle(
-                                color: AppColors.primary.withOpacity(0.7),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        )
-                      : null,
+                  clipBehavior: Clip.antiAlias,
+                  child: _newImageFile != null
+                      ? Image.file(_newImageFile!, fit: BoxFit.cover)
+                      : (existingImageUrl != null && existingImageUrl.isNotEmpty)
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  existingImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _uploadPlaceholder(),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  right: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'Tap to change',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 11),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : _uploadPlaceholder(),
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Name Field
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
@@ -173,11 +178,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
-
-              // Description Field
               TextFormField(
                 controller: _descController,
                 maxLines: 4,
@@ -190,11 +194,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 32),
-
-              // Submit Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -214,7 +217,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                         ),
                       )
                     : const Text(
-                        'Create Category',
+                        'Save Changes',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -226,6 +229,24 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _uploadPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_photo_alternate_rounded,
+            size: 48, color: AppColors.primary.withOpacity(0.5)),
+        const SizedBox(height: 8),
+        Text(
+          'Tap to upload banner image',
+          style: TextStyle(
+            color: AppColors.primary.withOpacity(0.7),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

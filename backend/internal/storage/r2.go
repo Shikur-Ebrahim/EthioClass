@@ -17,6 +17,7 @@ import (
 type R2Client struct {
 	Client     *s3.Client
 	BucketName string
+	AccountID  string
 }
 
 // New initialises the Cloudflare R2 S3-compatible client.
@@ -44,6 +45,7 @@ func New(accountID, accessKey, secretKey, bucketName string) (*R2Client, error) 
 	return &R2Client{
 		Client:     client,
 		BucketName: bucketName,
+		AccountID:  accountID,
 	}, nil
 }
 
@@ -63,7 +65,7 @@ func (r *R2Client) Ping() {
 	log.Println("[R2] Cloudflare R2 connected ✓")
 }
 
-// UploadFile uploads a file to R2 and returns the key.
+// UploadFile uploads a file to R2 and returns the full public URL.
 func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, contentType string) (string, error) {
 	if r.Client == nil {
 		return "", fmt.Errorf("R2 client not initialized")
@@ -79,5 +81,7 @@ func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, c
 		return "", fmt.Errorf("failed to upload to R2: %w", err)
 	}
 
-	return key, nil
+	// Return the full public URL: https://pub-<accountID>.r2.dev/<key>
+	publicURL := fmt.Sprintf("https://pub-%s.r2.dev/%s", r.AccountID, key)
+	return publicURL, nil
 }
