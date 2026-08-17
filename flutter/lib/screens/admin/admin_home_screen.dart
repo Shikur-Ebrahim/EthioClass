@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../services/session_service.dart';
 import '../auth/login_screen.dart';
 import 'add_category_screen.dart';
+import 'manage_courses_screen.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   final String userName;
@@ -123,6 +124,25 @@ class AdminHomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => const AddCategoryScreen(),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+
+            // Courses Management Card
+            _buildActionCard(
+              context,
+              icon: Icons.menu_book_rounded,
+              title: 'Manage Courses',
+              subtitle: 'Add, edit, and delete courses within categories',
+              color: const Color(0xFF16A34A),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ManageCoursesScreen(),
                   ),
                 );
               },

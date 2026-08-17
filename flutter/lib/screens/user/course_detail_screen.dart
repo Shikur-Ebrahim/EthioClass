@@ -187,17 +187,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                                       color: AppColors.primary,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Center(
-                                      child: Text('A',
-                                          style: TextStyle(
+                                    child: Center(
+                                      child: Text(
+                                          widget.course.instructorName.isNotEmpty
+                                              ? widget.course.instructorName.substring(0, 1).toUpperCase()
+                                              : 'I',
+                                          style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 13,
                                               fontWeight: FontWeight.w800)),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text('Abel Bekele',
-                                      style: TextStyle(
+                                  Text(
+                                      widget.course.instructorName.isNotEmpty
+                                          ? widget.course.instructorName
+                                          : 'Instructor',
+                                      style: const TextStyle(
                                           color: Colors.white70,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600)),
@@ -226,7 +232,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // ── Description ──────────────────────────────────────
+                // ── Description & About ──────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Container(
                     color: AppColors.surface,
@@ -234,43 +240,50 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const Text(
+                          'About this Course',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Text(
-                          description,
-                          maxLines: _expanded ? null : 3,
-                          overflow: _expanded
-                              ? TextOverflow.visible
-                              : TextOverflow.ellipsis,
+                          widget.course.aboutText.isNotEmpty ? widget.course.aboutText : description,
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.textMedium,
                             height: 1.6,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        GestureDetector(
-                          onTap: () =>
-                              setState(() => _expanded = !_expanded),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _expanded ? 'Show less' : 'Show more',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
+                        if (widget.course.aboutBullets.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ...widget.course.aboutBullets.map((bullet) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 2.0),
+                                      child: Icon(Icons.check_circle, color: Color(0xFF2563EB), size: 16),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        bullet,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textDark,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Icon(
-                                _expanded
-                                    ? Icons.keyboard_arrow_up_rounded
-                                    : Icons.keyboard_arrow_down_rounded,
-                                color: AppColors.primary,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
+                              )),
+                        ],
                       ],
                     ),
                   ),
