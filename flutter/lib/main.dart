@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/update_password_screen.dart';
 import 'screens/user/main_layout.dart';
+import 'screens/admin/admin_home_screen.dart';
 import 'services/session_service.dart';
 
 void main() {
@@ -64,18 +65,32 @@ class _StartupScreenState extends State<_StartupScreen> {
     if (!mounted) return;
 
     if (session != null) {
-      // Session exists → go directly to home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MainLayout(
-            userName: session['userName'] ?? '',
-            userEmail: session['userEmail'] ?? '',
-            userPhone: session['userPhone'] ?? '',
-            accessToken: session['token'] ?? '',
+      final userRole = session['userRole'] ?? 'user';
+      
+      if (userRole == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminHomeScreen(
+              userName: session['userName'] ?? '',
+              userEmail: session['userEmail'] ?? '',
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        // Session exists → go directly to home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MainLayout(
+              userName: session['userName'] ?? '',
+              userEmail: session['userEmail'] ?? '',
+              userPhone: session['userPhone'] ?? '',
+              accessToken: session['token'] ?? '',
+            ),
+          ),
+        );
+      }
     } else {
       // No session → go to onboarding
       Navigator.pushReplacement(

@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../services/session_service.dart';
 import '../../widgets/auth_widgets.dart';
 import '../user/main_layout.dart';
+import '../admin/admin_home_screen.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
@@ -41,9 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
       String userEmail = _emailController.text.trim();
       String userPhone = '';
       String accessToken = '';
+      String userRole = 'user';
       try {
         accessToken = (result['token'] as String?) ?? '';
         userPhone = (result['phone_number'] as String?) ?? '';
+        userRole = (result['role'] as String?) ?? 'user';
         final user = result['user'];
         if (user is Map) {
           userEmail = (user['email'] as String?) ?? userEmail;
@@ -64,21 +67,36 @@ class _LoginScreenState extends State<LoginScreen> {
         userName: userName,
         userEmail: userEmail,
         userPhone: userPhone,
+        userRole: userRole,
       );
 
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MainLayout(
-            userName: userName,
-            userEmail: userEmail,
-            userPhone: userPhone,
-            accessToken: accessToken,
+      
+      if (userRole == 'admin') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminHomeScreen(
+              userName: userName,
+              userEmail: userEmail,
+            ),
           ),
-        ),
-        (route) => false,
-      );
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MainLayout(
+              userName: userName,
+              userEmail: userEmail,
+              userPhone: userPhone,
+              accessToken: accessToken,
+            ),
+          ),
+          (route) => false,
+        );
+      }
     } catch (e) {
       _showSnack(e.toString().replaceFirst('Exception: ', ''), isError: true);
     } finally {

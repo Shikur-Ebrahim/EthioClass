@@ -7,6 +7,7 @@ class SessionService {
   static const _keyUserName = 'session_user_name';
   static const _keyUserEmail = 'session_user_email';
   static const _keyUserPhone = 'session_user_phone';
+  static const _keyUserRole = 'session_user_role';
 
   /// Save session after successful login
   static Future<void> saveSession({
@@ -14,12 +15,14 @@ class SessionService {
     required String userName,
     required String userEmail,
     required String userPhone,
+    required String userRole,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyToken, token);
     await prefs.setString(_keyUserName, userName);
     await prefs.setString(_keyUserEmail, userEmail);
     await prefs.setString(_keyUserPhone, userPhone);
+    await prefs.setString(_keyUserRole, userRole);
   }
 
   /// Load existing session. Returns null if no session exists.
@@ -32,6 +35,7 @@ class SessionService {
       'userName': prefs.getString(_keyUserName) ?? '',
       'userEmail': prefs.getString(_keyUserEmail) ?? '',
       'userPhone': prefs.getString(_keyUserPhone) ?? '',
+      'userRole': prefs.getString(_keyUserRole) ?? 'user',
     };
   }
 
@@ -42,6 +46,7 @@ class SessionService {
     await prefs.remove(_keyUserName);
     await prefs.remove(_keyUserEmail);
     await prefs.remove(_keyUserPhone);
+    await prefs.remove(_keyUserRole);
   }
 
   /// Check if a session exists
