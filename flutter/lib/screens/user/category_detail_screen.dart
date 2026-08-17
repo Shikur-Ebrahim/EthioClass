@@ -51,45 +51,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     }
   }
 
-  // Helper for dynamic UI based on category name
-  _CategoryMeta _getMeta() {
-    final name = widget.category.name.toLowerCase();
-    if (name.contains('grade')) {
-      return const _CategoryMeta(
-        subtitle: 'High School curriculum tailored for Ethiopian students.',
-        description: 'Complete high school syllabus covered comprehensively.',
-        courses: '12',
-        videos: '180+',
-        practiceQs: '1.2k',
-        students: '45k',
-        icon: Icons.school_rounded,
-      );
-    } else if (name.contains('fresh')) {
-      return const _CategoryMeta(
-        subtitle: 'University Freshman courses and preparation.',
-        description: 'Essential university freshman materials and courses.',
-        courses: '8',
-        videos: '140+',
-        practiceQs: '800+',
-        students: '25k',
-        icon: Icons.account_balance_rounded,
-      );
-    } else {
-      return const _CategoryMeta(
-        subtitle: 'Technical and Vocational Education Training.',
-        description: 'Practical skills and technical knowledge training.',
-        courses: '15',
-        videos: '220+',
-        practiceQs: '950+',
-        students: '18k',
-        icon: Icons.build_rounded,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final meta = _getMeta();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -118,15 +81,23 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
+                  if (widget.category.imageUrl != null && widget.category.imageUrl!.isNotEmpty)
+                    Image.network(
+                      widget.category.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: widget.headerColor),
+                    )
+                  else
+                    Container(color: widget.headerColor),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [
-                          widget.headerColor,
+                          widget.headerColor.withOpacity(0.3),
                           widget.headerColor.withOpacity(0.8),
-                          widget.headerColor.withOpacity(0.9),
+                          widget.headerColor.withOpacity(0.95),
                         ],
                       ),
                     ),
@@ -135,7 +106,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     right: -40,
                     top: -40,
                     child: Icon(
-                      meta.icon,
+                      Icons.category_rounded,
                       size: 200,
                       color: Colors.white.withOpacity(0.1),
                     ),
@@ -171,7 +142,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    meta.subtitle,
+                                    widget.category.name,
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -199,7 +170,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Icon(meta.icon, color: Colors.white, size: 44),
+                            child: Icon(Icons.category_rounded, color: Colors.white, size: 44),
                           ),
                         ],
                       ),
@@ -229,13 +200,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _StatItem(value: meta.courses, label: 'Courses', icon: Icons.book_rounded, color: widget.iconColor),
+                  _StatItem(value: '0', label: 'Courses', icon: Icons.book_rounded, color: widget.iconColor),
                   _Divider(),
-                  _StatItem(value: meta.videos, label: 'Videos', icon: Icons.play_circle_rounded, color: const Color(0xFF7C3AED)),
+                  _StatItem(value: '0', label: 'Videos', icon: Icons.play_circle_rounded, color: const Color(0xFF7C3AED)),
                   _Divider(),
-                  _StatItem(value: meta.practiceQs, label: 'Practice Qs', icon: Icons.quiz_rounded, color: const Color(0xFF16A34A)),
+                  _StatItem(value: '0', label: 'Practice Qs', icon: Icons.quiz_rounded, color: const Color(0xFF16A34A)),
                   _Divider(),
-                  _StatItem(value: meta.students, label: 'Students', icon: Icons.people_rounded, color: const Color(0xFFF97316)),
+                  _StatItem(value: '0', label: 'Students', icon: Icons.people_rounded, color: const Color(0xFFF97316)),
                 ],
               ),
             ),
@@ -442,23 +413,4 @@ class _DivisionTile extends StatelessWidget {
   }
 }
 
-// Data models
-class _CategoryMeta {
-  final String subtitle;
-  final String description;
-  final String courses;
-  final String videos;
-  final String practiceQs;
-  final String students;
-  final IconData icon;
-
-  const _CategoryMeta({
-    required this.subtitle,
-    required this.description,
-    required this.courses,
-    required this.videos,
-    required this.practiceQs,
-    required this.students,
-    required this.icon,
-  });
-}
+// End of file
