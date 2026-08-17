@@ -24,7 +24,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50, // Compress to 50% quality
+      maxWidth: 1080, // Limit maximum width to 1080px
+    );
     if (picked != null) {
       setState(() {
         _imageFile = File(picked.path);
