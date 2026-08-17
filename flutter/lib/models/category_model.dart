@@ -19,11 +19,20 @@ class Category {
     String? rawUrl = json['image_url'] as String?;
     String? fullUrl;
     if (rawUrl != null && rawUrl.isNotEmpty) {
-      // If it's already a full URL, keep it; otherwise prepend the R2 public base URL
       if (rawUrl.startsWith('http')) {
-        fullUrl = rawUrl;
+        // Old full URLs (possibly wrong r2.dev format) — try to extract key and re-route
+        // Pattern: if it contains 'r2.dev' extract the path after the domain
+        final uri = Uri.tryParse(rawUrl);
+        if (uri != null && rawUrl.contains('r2.dev')) {
+          // Extract everything after the domain as the key
+          final path = uri.path.replaceFirst('/', '');
+          fullUrl = '$apiBaseUrl/media/$path';
+        } else {
+          fullUrl = rawUrl;
+        }
       } else {
-        fullUrl = '$r2PublicUrl/$rawUrl';
+        // Relative key — serve via our backend media proxy
+        fullUrl = '$apiBaseUrl/media/$rawUrl';
       }
     }
     return Category(

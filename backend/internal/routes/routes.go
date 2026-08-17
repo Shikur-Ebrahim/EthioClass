@@ -37,6 +37,9 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
 	r.GET("/questions", handlers.GetQuestionsHandler(db))
 
+	// Media proxy — serves R2 objects through the API
+	r.GET("/media/*key", handlers.MediaProxyHandler(r2))
+
 	// Admin Routes
 	adminGroup := r.Group("/admin")
 	// TODO: Add auth middleware to require admin role

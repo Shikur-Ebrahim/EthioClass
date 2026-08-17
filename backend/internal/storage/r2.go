@@ -65,7 +65,8 @@ func (r *R2Client) Ping() {
 	log.Println("[R2] Cloudflare R2 connected ✓")
 }
 
-// UploadFile uploads a file to R2 and returns the full public URL.
+// UploadFile uploads a file to R2 and returns only the object key (relative path).
+// The full URL is constructed by the caller or served via the /media/ proxy endpoint.
 func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, contentType string) (string, error) {
 	if r.Client == nil {
 		return "", fmt.Errorf("R2 client not initialized")
@@ -81,7 +82,28 @@ func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, c
 		return "", fmt.Errorf("failed to upload to R2: %w", err)
 	}
 
-	// Return the full public URL: https://pub-<accountID>.r2.dev/<key>
-	publicURL := fmt.Sprintf("https://pub-%s.r2.dev/%s", r.AccountID, key)
-	return publicURL, nil
+	// Return just the key; full URL is served via GET /media/*key
+	return key, nil
+}
+
+// GetObject streams an object from R2 by key.
+func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, string, error) {
+	if r.Client == nil {
+		return nil, "", fmt.Errorf("R2 client not initialized")
+	}
+
+	result, err := r.Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(r.BucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get object from R2: %w", err)
+	}
+
+	contentType := "application/octet-stream"
+	if result.ContentType != nil {
+		contentType = *result.ContentType
+	}
+
+	return result.Body, contentType, nil
 }
