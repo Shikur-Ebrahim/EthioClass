@@ -231,17 +231,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // ── Chapter Description ────────────────────────────────────
-          if (desc != null && desc.isNotEmpty)
-            Container(
-              width: double.infinity,
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              child: Text(
-                desc,
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textMedium, height: 1.55),
-              ),
-            ),
 
           // ── Tabs ───────────────────────────────────────────────────
           Container(
@@ -317,17 +306,40 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           )
                         : null,
                   ),
-                  child: l.thumbnailUrl == null
-                      ? const Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20)
-                      : Container(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (l.thumbnailUrl == null)
+                        const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20))
+                      else
+                        Container(
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: isActive
-                              ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
-                              : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                          child: Center(
+                            child: isActive
+                                ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
+                                : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                          ),
                         ),
+                      // Lesson number badge
+                      Positioned(
+                        bottom: 3, left: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isActive ? AppColors.primary : Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${l.lessonNumber}',
+                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -674,6 +686,30 @@ class _QuizCard extends StatelessWidget {
                   ),
                 ),
               )),
+          // Explanation shown after submit
+          if (submitted && question['explanation'] != null && question['explanation'].toString().isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 4, bottom: 4),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withOpacity(0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.2)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lightbulb_rounded, size: 14, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      question['explanation'].toString(),
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF2563EB), height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

@@ -61,6 +61,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.POST("/lessons", handlers.CreateLessonHandler(db, r2))
 		adminGroup.PUT("/lessons/:id", handlers.UpdateLessonHandler(db, r2))
 		adminGroup.DELETE("/lessons/:id", handlers.DeleteLessonHandler(db))
+
+		adminGroup.POST("/quizzes", handlers.CreateQuizHandler(db))
+		adminGroup.PUT("/quizzes/:id", handlers.UpdateQuizHandler(db))
+		adminGroup.DELETE("/quizzes/:id", handlers.DeleteQuizHandler(db))
 	}
 
 	// Payment Routes

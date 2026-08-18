@@ -12,6 +12,7 @@ import '../../models/chapter_model.dart';
 import '../../models/lesson_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import 'manage_quiz_screen.dart';
 
 class ManageLessonsScreen extends StatefulWidget {
   final Chapter chapter;
@@ -210,6 +211,25 @@ class _ManageLessonsScreenState extends State<ManageLessonsScreen> {
                               ]),
                             ),
                             Column(mainAxisSize: MainAxisSize.min, children: [
+                              // Quiz button
+                              GestureDetector(
+                                onTap: () => Navigator.push(context, MaterialPageRoute(
+                                  builder: (_) => ManageQuizScreen(lesson: l),
+                                )),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF7C3AED).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(Icons.quiz_rounded, size: 12, color: Color(0xFF7C3AED)),
+                                    SizedBox(width: 4),
+                                    Text('Quiz', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF7C3AED))),
+                                  ]),
+                                ),
+                              ),
                               IconButton(
                                 icon: const Icon(Icons.edit_rounded, color: Color(0xFF16A34A), size: 20),
                                 onPressed: () => _openEditForm(l),
