@@ -369,16 +369,7 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 		var rows *sql.Rows
 		var err error
 
-		baseQuery := `
-			SELECT 
-				c.id, c.category_id, cat.name as category_name, c.title, c.description, 
-				c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
-				COALESCE((SELECT COUNT(*) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as lesson_count,
-				COALESCE((SELECT SUM(duration_minutes) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as duration_minutes,
-				COALESCE((SELECT COUNT(DISTINCT user_id) FROM payments p WHERE p.course_id = c.id AND p.status = 'success'), 0) as student_count
-			FROM courses c
-			LEFT JOIN categories cat ON c.category_id = cat.id
-		`
+
 
 		if categoryId != "" {
 			rows, err = db.QueryContext(c.Request.Context(), `
