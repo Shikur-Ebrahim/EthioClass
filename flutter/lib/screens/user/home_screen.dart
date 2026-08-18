@@ -559,6 +559,7 @@ class _CourseCard extends StatelessWidget {
           builder: (_) => CourseDetailScreen(
             course: course,
             index: index,
+            categoryName: course.categoryName ?? 'Course',
           ),
         ),
       ),

@@ -69,6 +69,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                     builder: (_) => CourseDetailScreen(
                       course: course,
                       index: i,
+                      categoryName: course.categoryName ?? 'Course',
                     ),
                   ),
                 ),
