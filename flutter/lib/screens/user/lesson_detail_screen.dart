@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
@@ -304,15 +305,29 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             child: Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 60,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: isActive ? AppColors.primary : AppColors.greyLight,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.greyLight,
+                    borderRadius: BorderRadius.circular(8),
+                    image: l.thumbnailUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage('$apiBaseUrl/media/${l.thumbnailUrl!}'),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: isActive
-                      ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
-                      : Icon(Icons.play_arrow_rounded, color: AppColors.grey, size: 20),
+                  child: l.thumbnailUrl == null
+                      ? const Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20)
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: isActive
+                              ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
+                              : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -354,6 +369,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     }
 
     final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
+    
+    // Check if it's a PDF
+    if (notesUrl.toLowerCase().endsWith('.pdf')) {
+      return Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.greyLight),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(11),
+          child: SfPdfViewer.network(notesUrl),
+        ),
+      );
+    }
+
+    // For PPT or other types, keep the open button
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -370,10 +402,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               child: const Icon(Icons.description_rounded, color: Color(0xFFD97706), size: 40),
             ),
             const SizedBox(height: 20),
-            const Text('Notes Available',
+            const Text('Document Available',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
             const SizedBox(height: 8),
-            const Text('Tap below to open the notes document',
+            const Text('Tap below to open the document',
                 style: TextStyle(fontSize: 13, color: AppColors.textMedium), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -382,7 +414,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                 if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
               },
               icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('Open Notes'),
+              label: const Text('Open Document'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD97706),
                 foregroundColor: Colors.white,
