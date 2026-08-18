@@ -42,6 +42,7 @@ class DownloadService {
   Future<void> downloadLesson({
     required Lesson lesson,
     required String courseTitle,
+    required String chapterTitle,
     required Function(double) onProgress,
   }) async {
     try {
@@ -110,6 +111,7 @@ class DownloadService {
         final newDownload = DownloadedLesson(
           lesson: lesson,
           courseTitle: courseTitle,
+          chapterTitle: chapterTitle,
           localVideoPath: localVideoPath,
           localNotesPath: localNotesPath,
           cachedQuizJson: cachedQuizJson,

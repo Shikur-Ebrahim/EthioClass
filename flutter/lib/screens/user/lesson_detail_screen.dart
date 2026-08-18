@@ -14,6 +14,7 @@ import '../../services/download_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 
 class LessonDetailScreen extends StatefulWidget {
+  final String courseTitle;
   final String chapterTitle;
   final bool isLocked;
   final String? thumbnailUrl;
@@ -25,6 +26,7 @@ class LessonDetailScreen extends StatefulWidget {
 
   const LessonDetailScreen({
     super.key,
+    this.courseTitle = 'Course',
     required this.chapterTitle,
     this.isLocked = false,
     this.thumbnailUrl,

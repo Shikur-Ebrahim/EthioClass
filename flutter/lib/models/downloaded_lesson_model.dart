@@ -4,6 +4,7 @@ import 'lesson_model.dart';
 class DownloadedLesson {
   final Lesson lesson;
   final String courseTitle;
+  final String chapterTitle;
   final String localVideoPath;
   final String? localNotesPath;
   final String? cachedQuizJson;
@@ -13,6 +14,7 @@ class DownloadedLesson {
   DownloadedLesson({
     required this.lesson,
     required this.courseTitle,
+    required this.chapterTitle,
     required this.localVideoPath,
     this.localNotesPath,
     this.cachedQuizJson,
@@ -24,6 +26,7 @@ class DownloadedLesson {
     return {
       'lesson': lesson.toJson(),
       'courseTitle': courseTitle,
+      'chapterTitle': chapterTitle,
       'localVideoPath': localVideoPath,
       'localNotesPath': localNotesPath,
       'cachedQuizJson': cachedQuizJson,
@@ -35,7 +38,8 @@ class DownloadedLesson {
   factory DownloadedLesson.fromJson(Map<String, dynamic> json) {
     return DownloadedLesson(
       lesson: Lesson.fromJson(json['lesson']),
-      courseTitle: json['courseTitle'] ?? '',
+      courseTitle: json['courseTitle'] ?? 'Course',
+      chapterTitle: json['chapterTitle'] ?? json['courseTitle'] ?? 'Chapter', // fallback for old data
       localVideoPath: json['localVideoPath'],
       localNotesPath: json['localNotesPath'],
       cachedQuizJson: json['cachedQuizJson'],

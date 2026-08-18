@@ -585,6 +585,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         context,
         MaterialPageRoute(
           builder: (_) => LessonDetailScreen(
+            courseTitle: widget.course.title,
             chapterTitle: chapter.title,
             isLocked: false,
             thumbnailUrl: chapter.thumbnailUrl,
