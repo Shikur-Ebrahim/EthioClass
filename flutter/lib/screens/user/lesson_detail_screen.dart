@@ -419,6 +419,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       ),
                     ],
                   ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -437,45 +440,65 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                           if (_downloadedLessons[l.id] != null) ...[
                             const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes), style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                            Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
+                                style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
                           ] else if (_remoteSizes[l.id] != null) ...[
                             const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            Text(_formatBytes(_remoteSizes[l.id]!), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                          ]
+                            Text(_formatBytes(_remoteSizes[l.id]!),
+                                style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                          ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty) ...[
+                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                            const SizedBox(
+                              width: 10, height: 10,
+                              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
+                            ),
+                          ],
                         ],
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Download button area
                 if (_downloadingProgress[l.id] != null)
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      value: _downloadingProgress[l.id],
-                      strokeWidth: 2.5,
-                      color: AppColors.primary,
-                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                  GestureDetector(
+                    onTap: null,
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: CircularProgressIndicator(
+                              value: _downloadingProgress[l.id],
+                              strokeWidth: 3,
+                              color: const Color(0xFF22C55E), // green
+                              backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
+                            ),
+                          ),
+                          Icon(Icons.download_rounded,
+                              color: const Color(0xFF22C55E), size: 20),
+                        ],
+                      ),
                     ),
                   )
                 else if (_downloadedLessons[l.id] != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFF22C55E).withOpacity(0.12),
+                      shape: BoxShape.circle,
                     ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.download_done_rounded, color: AppColors.primary, size: 14),
-                        SizedBox(width: 4),
-                        Text('Downloaded', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
+                    child: const Icon(Icons.download_done_rounded,
+                        color: Color(0xFF22C55E), size: 20),
                   )
                 else
-                  IconButton(
-                    onPressed: () async {
+                  GestureDetector(
+                    onTap: () async {
                       setState(() { _downloadingProgress[l.id] = 0.0; });
                       try {
                         await DownloadService.instance.downloadLesson(
@@ -489,14 +512,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           _initVideo();
                         }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Download failed: $e')));
                       } finally {
                         setState(() { _downloadingProgress.remove(l.id); });
                       }
                     },
-                    icon: const Icon(Icons.download_rounded, color: AppColors.grey, size: 22),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.greyLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.download_rounded,
+                          color: AppColors.grey, size: 20),
+                    ),
                   ),
               ],
             ),
