@@ -440,12 +440,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── QUIZ TAB ───────────────────────────────────────────────────
+  // ── QUIZ TAB: all lessons in chapter ──────────────────
   Widget _buildQuizTab(Lesson? lesson) {
-    if (lesson == null) {
-      return const Center(child: Text('Select a lesson first', style: TextStyle(color: AppColors.grey)));
+    if (widget.lessons.isEmpty) {
+      return const Center(child: Text('No lessons in this chapter', style: TextStyle(color: AppColors.grey)));
     }
-    return _QuizSection(lessonId: lesson.id);
+    return _ChapterQuizSection(lessons: widget.lessons);
   }
 
   Widget _buildBannerImage(String? thumbUrl) {
@@ -472,130 +472,243 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   Widget _bannerPlaceholder() => Container(color: Colors.black);
 }
 
-// ── QUIZ SECTION ──────────────────────────────────────────────────────────
-class _QuizSection extends StatefulWidget {
-  final String lessonId;
-  const _QuizSection({required this.lessonId});
+// ── CHAPTER QUIZ SECTION (all lessons, sequential) ──────────────────
+class _ChapterQuizSection extends StatefulWidget {
+  final List<Lesson> lessons;
+  const _ChapterQuizSection({required this.lessons});
 
   @override
-  State<_QuizSection> createState() => _QuizSectionState();
+  State<_ChapterQuizSection> createState() => _ChapterQuizSectionState();
 }
 
-class _QuizSectionState extends State<_QuizSection> {
+class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
+  // lessonId -> list of questions
+  Map<String, List<Map<String, dynamic>>> _lessonQuizzes = {};
   bool _isLoading = true;
-  List<Map<String, dynamic>> _questions = [];
-  Map<int, String> _selectedAnswers = {};
-  bool _submitted = false;
+  int _currentLessonGroupIndex = 0;
+
+  // Per lesson group state
+  Map<String, Map<int, String>> _selectedAnswers = {};
+  Map<String, bool> _submitted = {};
 
   @override
   void initState() {
     super.initState();
-    _loadQuiz();
+    _loadAllQuizzes();
   }
 
-  Future<void> _loadQuiz() async {
-    try {
-      final res = await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${widget.lessonId}'));
-      if (res.statusCode == 200 && mounted) {
-        final data = jsonDecode(res.body) as List;
-        setState(() {
-          _questions = data.cast<Map<String, dynamic>>();
-          _isLoading = false;
-        });
-      } else if (mounted) {
-        setState(() => _isLoading = false);
+  Future<void> _loadAllQuizzes() async {
+    final results = <String, List<Map<String, dynamic>>>{};
+    for (final lesson in widget.lessons) {
+      try {
+        final res = await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${lesson.id}'));
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body) as List;
+          results[lesson.id] = data.cast<Map<String, dynamic>>();
+        } else {
+          results[lesson.id] = [];
+        }
+      } catch (_) {
+        results[lesson.id] = [];
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
     }
+    // Filter to only lessons that HAVE quizzes
+    final filtered = Map.fromEntries(
+      results.entries.where((e) => e.value.isNotEmpty),
+    );
+    if (mounted) setState(() { _lessonQuizzes = filtered; _isLoading = false; });
   }
 
-  int get _score => _questions.asMap().entries.where((e) {
-        final q = e.value;
-        return _selectedAnswers[e.key] == q['correct_answer'];
-      }).length;
+  // Lessons that have quizzes, in order
+  List<Lesson> get _lessonsWithQuiz =>
+      widget.lessons.where((l) => (_lessonQuizzes[l.id]?.isNotEmpty ?? false)).toList();
+
+  int get _score {
+    int score = 0;
+    for (final lesson in _lessonsWithQuiz) {
+      final questions = _lessonQuizzes[lesson.id] ?? [];
+      final answers = _selectedAnswers[lesson.id] ?? {};
+      for (int i = 0; i < questions.length; i++) {
+        if (answers[i] == questions[i]['correct_answer']) score++;
+      }
+    }
+    return score;
+  }
+
+  int get _totalQuestions {
+    return _lessonsWithQuiz.fold(0, (sum, l) => sum + (_lessonQuizzes[l.id]?.length ?? 0));
+  }
+
+  bool get _allGroupsDone => _currentLessonGroupIndex >= _lessonsWithQuiz.length;
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-    if (_questions.isEmpty) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+
+    final lessonsWithQuiz = _lessonsWithQuiz;
+
+    if (lessonsWithQuiz.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.quiz_outlined, size: 50, color: AppColors.grey),
+            Icon(Icons.quiz_outlined, size: 60, color: AppColors.grey),
             SizedBox(height: 12),
-            Text('No quiz for this lesson', style: TextStyle(color: AppColors.grey)),
+            Text('No quizzes available yet', style: TextStyle(fontSize: 15, color: AppColors.grey)),
           ],
         ),
       );
     }
+
+    // Final results screen
+    if (_allGroupsDone) {
+      return _buildFinalResults(lessonsWithQuiz);
+    }
+
+    final currentLesson = lessonsWithQuiz[_currentLessonGroupIndex];
+    final questions = _lessonQuizzes[currentLesson.id] ?? [];
+    final answers = _selectedAnswers[currentLesson.id] ?? {};
+    final isSubmitted = _submitted[currentLesson.id] ?? false;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_submitted) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _score >= _questions.length / 2 ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _score >= _questions.length / 2 ? AppColors.success : AppColors.error),
+          // Progress dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(lessonsWithQuiz.length, (i) {
+              final isDone = _submitted[lessonsWithQuiz[i].id] == true;
+              final isCurrent = i == _currentLessonGroupIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isCurrent ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: isDone ? AppColors.success
+                      : isCurrent ? AppColors.primary
+                      : AppColors.greyLight,
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 16),
+
+          // Lesson name header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
               ),
-              child: Column(
-                children: [
-                  Text(
-                    '$_score / ${_questions.length}',
-                    style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: _score >= _questions.length / 2 ? AppColors.success : AppColors.error),
-                  ),
-                  Text(
-                    _score >= _questions.length / 2 ? '🎉 Great job!' : 'Keep practicing!',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                  ),
-                ],
-              ),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                  child: Center(
+                    child: Text('${currentLesson.lessonNumber}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(currentLesson.title,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                ),
+                Text('${_currentLessonGroupIndex + 1}/${lessonsWithQuiz.length}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Score banner if submitted
+          if (isSubmitted) ...[  
+            Builder(builder: (_) {
+              int score = 0;
+              for (int i = 0; i < questions.length; i++) {
+                if (answers[i] == questions[i]['correct_answer']) score++;
+              }
+              final passed = score >= questions.length / 2;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: passed ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: passed ? AppColors.success : AppColors.error),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(passed ? '🎉' : '📖', style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 10),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('$score / ${questions.length} Correct',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900,
+                              color: passed ? AppColors.success : AppColors.error)),
+                      Text(passed ? 'Great job on this lesson!' : 'Review and keep going!',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                    ]),
+                  ],
+                ),
+              );
+            }),
           ],
-          ..._questions.asMap().entries.map((e) {
+
+          // Questions
+          ...questions.asMap().entries.map((e) {
             final q = e.value;
             final idx = e.key;
             return _QuizCard(
               question: q,
               index: idx,
-              selected: _selectedAnswers[idx],
-              submitted: _submitted,
-              onSelect: _submitted
-                  ? null
-                  : (ans) => setState(() => _selectedAnswers[idx] = ans),
+              selected: answers[idx],
+              submitted: isSubmitted,
+              onSelect: isSubmitted ? null : (ans) => setState(() {
+                _selectedAnswers[currentLesson.id] ??= {};
+                _selectedAnswers[currentLesson.id]![idx] = ans;
+              }),
             );
           }),
+
           const SizedBox(height: 16),
-          if (!_submitted)
+
+          // Submit or Next button
+          if (!isSubmitted)
             ElevatedButton(
-              onPressed: _selectedAnswers.length == _questions.length
-                  ? () => setState(() => _submitted = true)
+              onPressed: answers.length == questions.length
+                  ? () => setState(() => _submitted[currentLesson.id] = true)
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                disabledBackgroundColor: AppColors.greyLight,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('Submit Quiz', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('Submit Quiz',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
             )
           else
-            OutlinedButton.icon(
-              onPressed: () => setState(() { _submitted = false; _selectedAnswers = {}; }),
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try Again'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+            ElevatedButton.icon(
+              onPressed: () => setState(() => _currentLessonGroupIndex++),
+              icon: Icon(_currentLessonGroupIndex < lessonsWithQuiz.length - 1
+                  ? Icons.arrow_forward_rounded
+                  : Icons.emoji_events_rounded),
+              label: Text(_currentLessonGroupIndex < lessonsWithQuiz.length - 1
+                  ? 'Next Lesson Quiz'
+                  : 'See Final Results'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
@@ -604,8 +717,93 @@ class _QuizSectionState extends State<_QuizSection> {
       ),
     );
   }
+
+  Widget _buildFinalResults(List<Lesson> lessonsWithQuiz) {
+    final score = _score;
+    final total = _totalQuestions;
+    final passed = score >= total / 2;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 20),
+          Icon(passed ? Icons.emoji_events_rounded : Icons.school_rounded,
+              size: 72, color: passed ? const Color(0xFFFBB024) : AppColors.primary),
+          const SizedBox(height: 16),
+          Text(passed ? 'Chapter Complete! 🎉' : 'Chapter Quiz Done!',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+          const SizedBox(height: 8),
+          Text('$score out of $total correct',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: AppColors.textMedium)),
+          const SizedBox(height: 24),
+          // Per-lesson summary
+          ...lessonsWithQuiz.map((lesson) {
+            final questions = _lessonQuizzes[lesson.id] ?? [];
+            final answers = _selectedAnswers[lesson.id] ?? {};
+            int s = 0;
+            for (int i = 0; i < questions.length; i++) {
+              if (answers[i] == questions[i]['correct_answer']) s++;
+            }
+            final p = s >= questions.length / 2;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: p ? AppColors.success.withOpacity(0.3) : AppColors.error.withOpacity(0.3)),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: p ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(p ? Icons.check_rounded : Icons.close_rounded,
+                        color: p ? AppColors.success : AppColors.error, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Lesson ${lesson.lessonNumber}: ${lesson.title}',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                      Text('$s / ${questions.length} correct',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                    ]),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => setState(() {
+              _currentLessonGroupIndex = 0;
+              _selectedAnswers = {};
+              _submitted = {};
+            }),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry All Quizzes'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
+// ── INDIVIDUAL QUIZ CARD ──────────────────────────────────────
 class _QuizCard extends StatelessWidget {
   final Map<String, dynamic> question;
   final int index;
@@ -715,3 +913,5 @@ class _QuizCard extends StatelessWidget {
     );
   }
 }
+// end of file
+
