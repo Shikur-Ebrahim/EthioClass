@@ -199,7 +199,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    widget.categoryName,
+                                    widget.course.categoryName ?? widget.categoryName,
                                     style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                   ),
                                 ),
@@ -235,11 +235,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                                       style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                                     ),
                                     const SizedBox(width: 16),
-                                    _HeaderStat(icon: Icons.play_lesson_rounded, value: '36', label: 'Lessons'),
+                                    _HeaderStat(icon: Icons.play_lesson_rounded, value: '${widget.course.lessonCount}', label: 'Lessons'),
                                     const SizedBox(width: 14),
-                                    _HeaderStat(icon: Icons.access_time_rounded, value: '18h 45m', label: 'Duration'),
+                                    _HeaderStat(
+                                      icon: Icons.access_time_rounded, 
+                                      value: widget.course.durationMinutes >= 60 
+                                          ? '${widget.course.durationMinutes ~/ 60}h ${widget.course.durationMinutes % 60}m'
+                                          : '${widget.course.durationMinutes}m', 
+                                      label: 'Duration'
+                                    ),
                                     const SizedBox(width: 14),
-                                    _HeaderStat(icon: Icons.people_rounded, value: '12.4K', label: 'Students'),
+                                    _HeaderStat(
+                                      icon: Icons.people_rounded, 
+                                      value: widget.course.studentCount >= 1000 
+                                          ? '${(widget.course.studentCount / 1000).toStringAsFixed(1)}K' 
+                                          : '${widget.course.studentCount}', 
+                                      label: 'Students'
+                                    ),
                                   ],
                                 ),
                               ],

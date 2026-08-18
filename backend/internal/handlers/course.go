@@ -357,7 +357,7 @@ func GetDivisionsHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// GetCoursesHandler fetches courses, optionally filtered by division_id
+// GetCoursesHandler fetches courses, optionally filtered by category_id
 func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if db == nil {
@@ -369,12 +369,21 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 		var rows *sql.Rows
 		var err error
 
+		baseQuery := `
+			SELECT 
+				c.id, c.category_id, cat.name as category_name, c.title, c.description, 
+				c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
+				COALESCE((SELECT COUNT(*) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as lesson_count,
+				COALESCE((SELECT SUM(duration_minutes) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as duration_minutes,
+				COALESCE((SELECT COUNT(DISTINCT user_id) FROM payments p WHERE p.course_id = c.id AND p.status = 'success'), 0) as student_count
+			FROM courses c
+			LEFT JOIN categories cat ON c.category_id = cat.id
+		`
+
 		if categoryId != "" {
-			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url, created_at FROM courses WHERE category_id = $1 ORDER BY created_at DESC`, categoryId)
+			rows, err = db.QueryContext(c.Request.Context(), baseQuery+` WHERE c.category_id = $1 ORDER BY c.created_at DESC`, categoryId)
 		} else {
-			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url, created_at FROM courses ORDER BY created_at DESC`)
+			rows, err = db.QueryContext(c.Request.Context(), baseQuery+` ORDER BY c.created_at DESC`)
 		}
 
 		if err != nil {
@@ -386,6 +395,7 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 		type Course struct {
 			ID              string  `json:"id"`
 			CategoryID      *string `json:"category_id"`
+			CategoryName    *string `json:"category_name"`
 			Title           string  `json:"title"`
 			Description     string  `json:"description"`
 			AboutText       *string `json:"about_text"`
@@ -394,12 +404,19 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 			InstructorPhone *string `json:"instructor_phone"`
 			ThumbnailURL    *string `json:"thumbnail_url"`
 			CreatedAt       *string `json:"created_at"`
+			LessonCount     int     `json:"lesson_count"`
+			DurationMinutes int     `json:"duration_minutes"`
+			StudentCount    int     `json:"student_count"`
 		}
 
 		var courses []Course
 		for rows.Next() {
 			var course Course
-			if err := rows.Scan(&course.ID, &course.CategoryID, &course.Title, &course.Description, &course.AboutText, &course.AboutBullets, &course.InstructorName, &course.InstructorPhone, &course.ThumbnailURL, &course.CreatedAt); err != nil {
+			if err := rows.Scan(
+				&course.ID, &course.CategoryID, &course.CategoryName, &course.Title, &course.Description, 
+				&course.AboutText, &course.AboutBullets, &course.InstructorName, &course.InstructorPhone, &course.ThumbnailURL, &course.CreatedAt,
+				&course.LessonCount, &course.DurationMinutes, &course.StudentCount,
+			); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse course: " + err.Error()})
 				return
 			}
