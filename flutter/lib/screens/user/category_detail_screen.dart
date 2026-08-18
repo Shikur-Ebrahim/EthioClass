@@ -284,6 +284,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   course: _courses[i],
                   index: i,
                   iconColor: widget.iconColor,
+                  categoryName: widget.category.name,
                 ),
                 childCount: _courses.length,
               ),
@@ -346,8 +347,9 @@ class _CourseTile extends StatelessWidget {
   final Course course;
   final int index;
   final Color iconColor;
+  final String categoryName;
 
-  const _CourseTile({required this.course, required this.index, required this.iconColor});
+  const _CourseTile({required this.course, required this.index, required this.iconColor, required this.categoryName});
 
   static const List<Color> _bgColors = [
     Color(0xFFE3F0FF), Color(0xFFE8F5E9), Color(0xFFF3EEFF), Color(0xFFE6F9F0), Color(0xFFFFF3E0),
@@ -364,7 +366,7 @@ class _CourseTile extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index)),
+        MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index, categoryName: categoryName)),
       ),
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
@@ -414,10 +416,12 @@ class _CourseTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (course.instructorName.isNotEmpty)
+                  if (course.description.isNotEmpty)
                     Text(
-                      course.instructorName,
+                      course.description,
                       style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4),

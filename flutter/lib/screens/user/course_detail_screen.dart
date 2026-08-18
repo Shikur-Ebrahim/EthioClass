@@ -12,11 +12,13 @@ import 'payment_webview_screen.dart';
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
   final int index;
+  final String categoryName;
 
   const CourseDetailScreen({
     super.key,
     required this.course,
     required this.index,
+    this.categoryName = 'Course',
   });
 
   @override
@@ -28,20 +30,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   late TabController _tabController;
   int _currentTab = 0;
 
-  String? _prefetchedCheckoutUrl;
-  String? _prefetchedTxRef;
-  bool _isInitializingPayment = false;
-
-  static const List<Color> _headerColors = [
-    Color(0xFF1B5E20),
-    Color(0xFF4527A0),
-    Color(0xFFE65100),
-    Color(0xFF01579B),
-    Color(0xFF880E4F),
-  ];
-
-  List<Chapter> _chapters = [];
   bool _isLoadingChapters = true;
+  List<Chapter> _chapters = [];
+  bool _isInitializingPayment = false;
+  String? _prefetchedTxRef;
+  String? _prefetchedCheckoutUrl;
+
+  final List<Color> _headerColors = [
+    const Color(0xFF0F172A),
+    const Color(0xFF1E3A8A),
+    const Color(0xFF166534),
+    const Color(0xFF831843),
+    const Color(0xFF065F46),
+  ];
 
   @override
   void initState() {
@@ -197,9 +198,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                                     color: AppColors.primary,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Text(
-                                    'Grade 12',
-                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                  child: Text(
+                                    widget.categoryName,
+                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
