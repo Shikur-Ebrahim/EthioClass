@@ -201,7 +201,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         borderRadius: BorderRadius.circular(10),
         child: Image.network(
           '$apiBaseUrl/media/$thumbUrl',
-          width: 48, height: 48, fit: BoxFit.cover,
+          width: 48, height: 48, fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => _courseIcon(),
         ),
       );
@@ -226,7 +226,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           leading: leading,
           title: Text(courseTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
           subtitle: Text('$lessonCount Lessons  •  ${_formatBytes(courseSize)}', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-          children: chapters.entries.map((chapterEntry) => _buildChapterItem(chapterEntry.key, chapterEntry.value)).toList(),
+          children: chapters.entries.map((chapterEntry) => _buildChapterItem(chapterEntry.key, chapterEntry.value, thumbUrl)).toList(),
         ),
       ),
     );
@@ -240,15 +240,28 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     );
   }
 
-  Widget _buildChapterItem(String chapterTitle, List<DownloadedLesson> lessons) {
+  Widget _buildChapterItem(String chapterTitle, List<DownloadedLesson> lessons, String? courseThumbUrl) {
+    Widget leading = const Icon(Icons.menu_book_rounded, color: AppColors.textMedium, size: 20);
+    
+    if (courseThumbUrl != null && courseThumbUrl.isNotEmpty) {
+      leading = ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.network(
+          '$apiBaseUrl/media/$courseThumbUrl',
+          width: 32, height: 32, fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Icon(Icons.menu_book_rounded, color: AppColors.textMedium, size: 20),
+        ),
+      );
+    }
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.only(left: 32, right: 16),
-        leading: const Icon(Icons.menu_book_rounded, color: AppColors.textMedium, size: 20),
+        leading: leading,
         title: Text(chapterTitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
         subtitle: Text('${lessons.length} Lessons', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-        children: lessons.map((dl) => _buildLessonItem(dl)).toList(),
+        children: lessons.map((l) => _buildLessonItem(l)).toList(),
       ),
     );
   }
