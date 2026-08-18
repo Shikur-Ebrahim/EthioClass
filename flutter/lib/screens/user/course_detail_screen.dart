@@ -3,6 +3,8 @@ import 'dart:async';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/course_model.dart';
+import '../../models/chapter_model.dart';
+import '../../services/course_service.dart';
 import '../../services/payment_service.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
@@ -38,15 +40,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     Color(0xFF880E4F),
   ];
 
-  List<_ChapterItem> _chapters = [
-    _ChapterItem('Physical Quantities and Units', '5 Lessons • 45 min', _ChapterState.free),
-    _ChapterItem('Kinematics in One Dimension', '6 Lessons • 1h 10m', _ChapterState.free),
-    _ChapterItem('Dynamics', '6 Lessons • 1h 20m', _ChapterState.locked),
-    _ChapterItem('Work and Energy', '5 Lessons • 55 min', _ChapterState.locked),
-    _ChapterItem('Oscillations and Waves', '7 Lessons • 1h 30m', _ChapterState.locked),
-    _ChapterItem('Electrostatics', '6 Lessons • 1h 05m', _ChapterState.locked),
-    _ChapterItem('Electric Current', '5 Lessons • 50 min', _ChapterState.locked),
-  ];
+  List<Chapter> _chapters = [];
+  bool _isLoadingChapters = true;
 
   @override
   void initState() {
@@ -57,7 +52,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         setState(() => _currentTab = _tabController.index);
       }
     });
+    _loadChapters();
     _preInitializePayment();
+  }
+
+  Future<void> _loadChapters() async {
+    try {
+      final chapters = await CourseService().getChapters(widget.course.id);
+      if (mounted) {
+        setState(() {
+          _chapters = chapters;
+          _isLoadingChapters = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingChapters = false);
+    }
   }
 
   Future<void> _preInitializePayment() async {
@@ -248,15 +258,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Description',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
                         Text(
                           widget.course.description.isNotEmpty
                               ? widget.course.description
@@ -409,12 +410,30 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Widget _buildChaptersTab() {
+    if (_isLoadingChapters) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    if (_chapters.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text('No chapters available yet.', style: TextStyle(color: AppColors.textMedium)),
+        ),
+      );
+    }
+
     return Column(
       children: _chapters.asMap().entries.map((entry) {
         return _ChapterTile(
           chapter: entry.value,
           index: entry.key,
-          onTap: () => _handleChapterTap(entry.key),
+          onTap: () => _handleChapterTap(entry.value),
         );
       }).toList(),
     );
@@ -540,9 +559,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     );
   }
 
-  void _handleChapterTap(int index) {
-    final chapter = _chapters[index];
-    if (chapter.state == _ChapterState.locked) {
+  void _handleChapterTap(Chapter chapter) {
+    if (!chapter.isFree) {
       _showUnlockDialog();
     } else {
       Navigator.push(
@@ -670,7 +688,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   void _unlockAllChapters() {
     setState(() {
-      _chapters = _chapters.map((ch) => _ChapterItem(ch.title, ch.info, _ChapterState.free)).toList();
+      // Optimistically unlock locally
+      // Assuming a reload from backend would happen eventually
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -712,7 +731,7 @@ class _HeaderStat extends StatelessWidget {
 
 // ── Chapter tile ──────────────────────────────────────────────
 class _ChapterTile extends StatelessWidget {
-  final _ChapterItem chapter;
+  final Chapter chapter;
   final int index;
   final VoidCallback onTap;
 
@@ -737,7 +756,7 @@ class _ChapterTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(color: AppColors.greyLight, borderRadius: BorderRadius.circular(10)),
               child: Center(
-                child: Text('${index + 1}',
+                child: Text('${chapter.chapterNumber}',
                     style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textDark, fontSize: 14)),
               ),
             ),
@@ -748,21 +767,24 @@ class _ChapterTile extends StatelessWidget {
                 children: [
                   Text(chapter.title,
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                  const SizedBox(height: 3),
-                  Text(chapter.info, style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                  if (chapter.description != null && chapter.description!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(chapter.description!, style: const TextStyle(fontSize: 11, color: AppColors.textMedium), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            _buildBadge(chapter.state),
+            _buildBadge(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBadge(_ChapterState state) {
-    if (state == _ChapterState.free) {
+  Widget _buildBadge() {
+    if (chapter.isFree) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
@@ -782,13 +804,4 @@ class _ChapterTile extends StatelessWidget {
   }
 }
 
-// ── Data models ────────────────────────────────────────────────
-enum _ChapterState { free, locked }
 
-class _ChapterItem {
-  final String title;
-  final String info;
-  final _ChapterState state;
-
-  const _ChapterItem(this.title, this.info, this.state);
-}

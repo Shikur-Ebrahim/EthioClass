@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/category_model.dart';
+import '../models/chapter_model.dart';
 import '../models/course_model.dart';
 import '../models/division_model.dart';
 import '../models/lesson_model.dart';
@@ -73,6 +74,26 @@ class CourseService {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
         return data
             .map((e) => Course.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Fetches chapters for a specific course.
+  Future<List<Chapter>> getChapters(String courseId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/chapters?course_id=$courseId'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+        return data
+            .map((e) => Chapter.fromJson(e as Map<String, dynamic>))
             .toList();
       }
       return [];

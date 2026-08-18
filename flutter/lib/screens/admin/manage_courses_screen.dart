@@ -10,6 +10,7 @@ import '../../config/api_config.dart';
 import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import 'manage_chapters_screen.dart';
 
 class ManageCoursesScreen extends StatefulWidget {
   const ManageCoursesScreen({super.key});
@@ -181,6 +182,14 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => _CourseTile(
                       course: _courses[i],
+                      onManageChapters: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ManageChaptersScreen(course: _courses[i]),
+                          ),
+                        );
+                      },
                       onEdit: () => _openEditForm(_courses[i]),
                       onDelete: () => _deleteCourse(_courses[i]),
                     ),
@@ -615,10 +624,11 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
 // ── COURSE TILE ────────────────────────────────────────────────────────────
 class _CourseTile extends StatelessWidget {
   final Course course;
+  final VoidCallback onManageChapters;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _CourseTile({required this.course, required this.onEdit, required this.onDelete});
+  const _CourseTile({required this.course, required this.onManageChapters, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -671,16 +681,26 @@ class _CourseTile extends StatelessWidget {
             ),
           ),
           // Actions
-          Column(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.edit_rounded, color: Color(0xFF16A34A), size: 20),
-                onPressed: onEdit,
+                icon: const Icon(Icons.list_alt_rounded, color: Color(0xFF2563EB), size: 22),
+                tooltip: 'Manage Chapters',
+                onPressed: onManageChapters,
               ),
-              IconButton(
-                icon: const Icon(Icons.delete_rounded, color: AppColors.error, size: 20),
-                onPressed: onDelete,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_rounded, color: Color(0xFF16A34A), size: 20),
+                    onPressed: onEdit,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_rounded, color: AppColors.error, size: 20),
+                    onPressed: onDelete,
+                  ),
+                ],
               ),
             ],
           ),

@@ -34,6 +34,7 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.GET("/divisions", handlers.GetDivisionsHandler(db))
 	r.GET("/courses", handlers.GetCoursesHandler(db))
 	r.GET("/lessons", handlers.GetLessonsHandler(db))
+	r.GET("/chapters", handlers.GetChaptersHandler(db))
 	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
 	r.GET("/questions", handlers.GetQuestionsHandler(db))
 
@@ -51,6 +52,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.POST("/courses", handlers.CreateCourseHandler(db, r2))
 		adminGroup.PUT("/courses/:id", handlers.UpdateCourseHandler(db, r2))
 		adminGroup.DELETE("/courses/:id", handlers.DeleteCourseHandler(db))
+
+		adminGroup.POST("/chapters", handlers.CreateChapterHandler(db, r2))
+		adminGroup.PUT("/chapters/:id", handlers.UpdateChapterHandler(db, r2))
+		adminGroup.DELETE("/chapters/:id", handlers.DeleteChapterHandler(db))
 	}
 
 	// Payment Routes
