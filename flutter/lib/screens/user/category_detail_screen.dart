@@ -364,7 +364,7 @@ class _CourseTile extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course)),
+        MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index)),
       ),
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
@@ -389,11 +389,11 @@ class _CourseTile extends StatelessWidget {
                 color: bgColor,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: course.imageUrl != null && course.imageUrl!.isNotEmpty
+              child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(14),
                       child: Image.network(
-                        course.imageUrl!,
+                        course.thumbnailUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Icon(Icons.book_rounded, color: ic, size: 26),
                       ),
@@ -414,35 +414,22 @@ class _CourseTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (course.instructor != null && course.instructor!.isNotEmpty)
+                  if (course.instructorName.isNotEmpty)
                     Text(
-                      course.instructor!,
+                      course.instructorName,
                       style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
                     ),
-                  if (course.price != null && course.price! > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        '${course.price!.toStringAsFixed(0)} ETB',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: iconColor,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF16A34A).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text('Free', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
-                      ),
+                      child: const Text('Free', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
                     ),
+                  ),
                 ],
               ),
             ),
