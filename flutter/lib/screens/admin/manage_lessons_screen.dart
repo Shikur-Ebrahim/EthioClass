@@ -204,7 +204,6 @@ class _ManageLessonsScreenState extends State<ManageLessonsScreen> {
                                 Row(children: [
                                   if (l.videoUrl != null) _badge('Video', const Color(0xFF2563EB)),
                                   if (l.notesUrl != null) ...[const SizedBox(width: 4), _badge('Notes', const Color(0xFFD97706))],
-                                  if (l.isFree) ...[const SizedBox(width: 4), _badge('FREE', AppColors.success)],
                                 ]),
                                 Text('Lesson ${l.lessonNumber} • ${l.durationMinutes} min',
                                     style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
@@ -270,7 +269,6 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
   File? _thumbnailFile;
   File? _videoFile;
   File? _notesFile;
-  bool _isFree = false;
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.lessonToEdit != null;
@@ -283,7 +281,6 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
       _titleCtrl.text = l.title;
       _lessonNumCtrl.text = l.lessonNumber.toString();
       _durationCtrl.text = l.durationMinutes.toString();
-      _isFree = l.isFree;
     } else {
       _lessonNumCtrl.text = widget.nextLessonNumber.toString();
       _durationCtrl.text = '0';
@@ -341,11 +338,9 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
 
       final request = http.MultipartRequest(_isEditing ? 'PUT' : 'POST', uri);
       request.fields['chapter_id'] = widget.chapter.id;
-      request.fields['course_id'] = widget.course.id;
       request.fields['title'] = _titleCtrl.text.trim();
       request.fields['lesson_number'] = _lessonNumCtrl.text.trim();
       request.fields['duration_minutes'] = _durationCtrl.text.trim();
-      request.fields['is_free'] = _isFree.toString();
 
       Future<void> addFile(File file, String field) async {
         final mime = lookupMimeType(file.path)?.split('/');
@@ -529,14 +524,6 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Is Free Toggle ────────────────────
-                SwitchListTile(
-                  title: const Text('Is Free Lesson?', style: TextStyle(fontWeight: FontWeight.bold)),
-                  value: _isFree,
-                  activeColor: const Color(0xFF16A34A),
-                  onChanged: (v) => setState(() => _isFree = v),
-                  contentPadding: EdgeInsets.zero,
-                ),
                 const SizedBox(height: 20),
 
                 ElevatedButton(

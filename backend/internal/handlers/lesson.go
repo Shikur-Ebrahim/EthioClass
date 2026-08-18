@@ -16,14 +16,12 @@ import (
 type LessonRow struct {
 	ID              string  `json:"id"`
 	ChapterID       string  `json:"chapter_id"`
-	CourseID        string  `json:"course_id"`
 	Title           string  `json:"title"`
 	ThumbnailURL    *string `json:"thumbnail_url"`
 	VideoURL        *string `json:"video_url"`
 	NotesURL        *string `json:"notes_url"`
 	LessonNumber    int     `json:"lesson_number"`
 	DurationMinutes int     `json:"duration_minutes"`
-	IsFree          bool    `json:"is_free"`
 	CreatedAt       *string `json:"created_at"`
 }
 
@@ -36,21 +34,16 @@ func GetLessonsHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		chapterId := c.Query("chapter_id")
-		courseId := c.Query("course_id")
 
 		var rows *sql.Rows
 		var err error
 
 		if chapterId != "" {
 			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, chapter_id, course_id, title, thumbnail_url, video_url, notes_url, lesson_number, duration_minutes, is_free, created_at 
+				`SELECT id, chapter_id, title, thumbnail_url, video_url, notes_url, lesson_number, duration_minutes, created_at 
 				 FROM lessons WHERE chapter_id = $1 ORDER BY lesson_number ASC, created_at ASC`, chapterId)
-		} else if courseId != "" {
-			rows, err = db.QueryContext(c.Request.Context(),
-				`SELECT id, chapter_id, course_id, title, thumbnail_url, video_url, notes_url, lesson_number, duration_minutes, is_free, created_at 
-				 FROM lessons WHERE course_id = $1 ORDER BY lesson_number ASC`, courseId)
 		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "chapter_id or course_id is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "chapter_id is required"})
 			return
 		}
 
@@ -63,7 +56,7 @@ func GetLessonsHandler(db *sql.DB) gin.HandlerFunc {
 		var lessons []LessonRow
 		for rows.Next() {
 			var l LessonRow
-			if err := rows.Scan(&l.ID, &l.ChapterID, &l.CourseID, &l.Title, &l.ThumbnailURL, &l.VideoURL, &l.NotesURL, &l.LessonNumber, &l.DurationMinutes, &l.IsFree, &l.CreatedAt); err != nil {
+			if err := rows.Scan(&l.ID, &l.ChapterID, &l.Title, &l.ThumbnailURL, &l.VideoURL, &l.NotesURL, &l.LessonNumber, &l.DurationMinutes, &l.CreatedAt); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Parse error: " + err.Error()})
 				return
 			}
@@ -83,20 +76,18 @@ func CreateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
 			return
 		}
-		if err := c.Request.ParseMultipartForm(100 << 20); err != nil {
+		if err := c.Request.ParseMultipartForm(1000 << 20); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 			return
 		}
 
 		chapterID := strings.TrimSpace(c.Request.FormValue("chapter_id"))
-		courseID := strings.TrimSpace(c.Request.FormValue("course_id"))
 		title := strings.TrimSpace(c.Request.FormValue("title"))
 		lessonNumber, _ := strconv.Atoi(c.Request.FormValue("lesson_number"))
 		durationMinutes, _ := strconv.Atoi(c.Request.FormValue("duration_minutes"))
-		isFree := c.Request.FormValue("is_free") == "true"
 
-		if chapterID == "" || courseID == "" || title == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "chapter_id, course_id, and title are required"})
+		if chapterID == "" || title == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "chapter_id and title are required"})
 			return
 		}
 
@@ -140,9 +131,9 @@ func CreateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 
 		var lessonID string
 		err := db.QueryRowContext(c.Request.Context(),
-			`INSERT INTO lessons (chapter_id, course_id, title, thumbnail_url, video_url, notes_url, lesson_number, duration_minutes, is_free)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-			chapterID, courseID, title, thumbnailURL, videoURL, notesURL, lessonNumber, durationMinutes, isFree,
+			`INSERT INTO lessons (chapter_id, title, thumbnail_url, video_url, notes_url, lesson_number, duration_minutes)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+			chapterID, title, thumbnailURL, videoURL, notesURL, lessonNumber, durationMinutes,
 		).Scan(&lessonID)
 
 		if err != nil {
@@ -161,7 +152,7 @@ func UpdateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 			return
 		}
 		lessonID := c.Param("id")
-		if err := c.Request.ParseMultipartForm(100 << 20); err != nil {
+		if err := c.Request.ParseMultipartForm(1000 << 20); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 			return
 		}
@@ -169,7 +160,6 @@ func UpdateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 		title := strings.TrimSpace(c.Request.FormValue("title"))
 		lessonNumber, _ := strconv.Atoi(c.Request.FormValue("lesson_number"))
 		durationMinutes, _ := strconv.Atoi(c.Request.FormValue("duration_minutes"))
-		isFree := c.Request.FormValue("is_free") == "true"
 
 		// Fetch existing URLs
 		var existingThumb, existingVideo, existingNotes *string
@@ -212,8 +202,8 @@ func UpdateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 		}
 
 		_, err := db.ExecContext(c.Request.Context(),
-			`UPDATE lessons SET title = $1, thumbnail_url = $2, video_url = $3, notes_url = $4, lesson_number = $5, duration_minutes = $6, is_free = $7 WHERE id = $8`,
-			title, thumbnailURL, videoURL, notesURL, lessonNumber, durationMinutes, isFree, lessonID,
+			`UPDATE lessons SET title = $1, thumbnail_url = $2, video_url = $3, notes_url = $4, lesson_number = $5, duration_minutes = $6 WHERE id = $7`,
+			title, thumbnailURL, videoURL, notesURL, lessonNumber, durationMinutes, lessonID,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update: " + err.Error()})

@@ -330,15 +330,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                     ],
                   ),
                 ),
-                if (l.isFree)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: const Text('FREE',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.success)),
-                  ),
               ],
             ),
           ),
