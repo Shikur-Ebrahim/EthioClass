@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../config/api_config.dart';
 import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
@@ -588,7 +589,7 @@ class _CourseCard extends StatelessWidget {
               color: cardColor,
               child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
                   ? Image.network(
-                      course.thumbnailUrl!,
+                      '$apiBaseUrl/media/${course.thumbnailUrl!}',
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _fallbackThumbnail(cardColor),
                     )

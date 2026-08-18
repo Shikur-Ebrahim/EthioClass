@@ -507,7 +507,7 @@ class _CourseTile extends StatelessWidget {
               height: 72,
               child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
                   ? Image.network(
-                      course.thumbnailUrl!,
+                      '$apiBaseUrl/media/${course.thumbnailUrl!}',
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _fallback(),
                     )
