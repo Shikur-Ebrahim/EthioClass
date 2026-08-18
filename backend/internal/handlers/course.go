@@ -348,54 +348,7 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// GetLessonsHandler fetches lessons for a specific course
-func GetLessonsHandler(db *sql.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if db == nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
-			return
-		}
 
-		courseId := c.Query("course_id")
-		if courseId == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "course_id query parameter is required"})
-			return
-		}
-
-		rows, err := db.QueryContext(c.Request.Context(),
-			`SELECT id, course_id, title, thumbnail_url, order_index, created_at FROM lessons WHERE course_id = $1 ORDER BY order_index ASC`, courseId)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch lessons: " + err.Error()})
-			return
-		}
-		defer rows.Close()
-
-		type Lesson struct {
-			ID           string  `json:"id"`
-			CourseID     string  `json:"course_id"`
-			Title        string  `json:"title"`
-			ThumbnailURL *string `json:"thumbnail_url"`
-			OrderIndex   int     `json:"order_index"`
-			CreatedAt    *string `json:"created_at"`
-		}
-
-		var lessons []Lesson
-		for rows.Next() {
-			var lesson Lesson
-			if err := rows.Scan(&lesson.ID, &lesson.CourseID, &lesson.Title, &lesson.ThumbnailURL, &lesson.OrderIndex, &lesson.CreatedAt); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse lesson: " + err.Error()})
-				return
-			}
-			lessons = append(lessons, lesson)
-		}
-
-		if lessons == nil {
-			lessons = []Lesson{}
-		}
-
-		c.JSON(http.StatusOK, lessons)
-	}
-}
 
 // GetLessonMaterialsHandler fetches materials for a specific lesson
 func GetLessonMaterialsHandler(db *sql.DB) gin.HandlerFunc {
