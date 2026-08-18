@@ -351,17 +351,17 @@ class _CourseTile extends StatelessWidget {
 
   const _CourseTile({required this.course, required this.index, required this.iconColor, required this.categoryName});
 
-  static const List<Color> _bgColors = [
-    Color(0xFFE3F0FF), Color(0xFFE8F5E9), Color(0xFFF3EEFF), Color(0xFFE6F9F0), Color(0xFFFFF3E0),
-  ];
-  static const List<Color> _iconColors = [
-    Color(0xFF2563EB), Color(0xFF16A34A), Color(0xFF7C3AED), Color(0xFF059669), Color(0xFFF97316),
+  static const List<Color> _cardColors = [
+    Color(0xFF1B5E20), // dark green
+    Color(0xFF4527A0), // deep purple
+    Color(0xFFE65100), // deep orange
+    Color(0xFF01579B), // deep blue
+    Color(0xFF880E4F), // deep pink
   ];
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = _bgColors[index % _bgColors.length];
-    final ic = _iconColors[index % _iconColors.length];
+    final cardColor = _cardColors[index % _cardColors.length];
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -369,8 +369,8 @@ class _CourseTile extends StatelessWidget {
         MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index, categoryName: categoryName)),
       ),
       child: Container(
+        height: 105,
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
@@ -384,48 +384,55 @@ class _CourseTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(14),
+            // Thumbnail
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
               ),
-              child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        course.thumbnailUrl!,
+              child: Container(
+                width: 105,
+                height: 105,
+                color: cardColor,
+                child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
+                    ? Image.network(
+                        '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(Icons.book_rounded, color: ic, size: 26),
-                      ),
-                    )
-                  : Icon(Icons.book_rounded, color: ic, size: 26),
+                        errorBuilder: (_, __, ___) => const Icon(Icons.school_rounded, color: Colors.white54, size: 36),
+                      )
+                    : const Icon(Icons.school_rounded, color: Colors.white54, size: 36),
+              ),
             ),
             const SizedBox(width: 14),
+            // Info
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (course.description.isNotEmpty)
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      course.description,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
-                      maxLines: 2,
+                      course.title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Container(
+                    const SizedBox(height: 4),
+                    if (course.description.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          course.description,
+                          style: const TextStyle(fontSize: 12, color: AppColors.textMedium, height: 1.2),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    const Spacer(),
+                    Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: const Color(0xFF16A34A).withOpacity(0.1),
@@ -433,14 +440,18 @@ class _CourseTile extends StatelessWidget {
                       ),
                       child: const Text('Free', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 22),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 22),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
