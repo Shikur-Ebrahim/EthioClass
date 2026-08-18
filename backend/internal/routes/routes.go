@@ -31,6 +31,7 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 
 	// Course Content Routes
 	r.GET("/categories", handlers.GetCategoriesHandler(db))
+	r.GET("/category-stats", handlers.GetCategoryStatsHandler(db))
 	r.GET("/divisions", handlers.GetDivisionsHandler(db))
 	r.GET("/courses", handlers.GetCoursesHandler(db))
 	r.GET("/lessons", handlers.GetLessonsHandler(db))

@@ -58,12 +58,17 @@ class CourseService {
     }
   }
 
-  /// Fetches all courses from the backend, optionally filtered by divisionId.
-  Future<List<Course>> getCourses({String? divisionId}) async {
+  /// Fetches all courses from the backend, optionally filtered by divisionId or categoryId.
+  Future<List<Course>> getCourses({String? divisionId, String? categoryId}) async {
     try {
-      final uri = divisionId != null 
-          ? Uri.parse('$_baseUrl/courses?division_id=$divisionId')
-          : Uri.parse('$_baseUrl/courses');
+      Uri uri;
+      if (divisionId != null) {
+        uri = Uri.parse('$_baseUrl/courses?division_id=$divisionId');
+      } else if (categoryId != null) {
+        uri = Uri.parse('$_baseUrl/courses?category_id=$categoryId');
+      } else {
+        uri = Uri.parse('$_baseUrl/courses');
+      }
 
       final response = await http.get(
         uri,

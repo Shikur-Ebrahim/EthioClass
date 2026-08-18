@@ -58,6 +58,72 @@ func GetCategoriesHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+// GetCategoryStatsHandler returns course count, video count, quiz count, student count for a category
+func GetCategoryStatsHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		categoryID := c.Query("category_id")
+		if categoryID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "category_id is required"})
+			return
+		}
+
+		type Stats struct {
+			CourseCount  int `json:"course_count"`
+			VideoCount   int `json:"video_count"`
+			QuizCount    int `json:"quiz_count"`
+			StudentCount int `json:"student_count"`
+		}
+
+		var stats Stats
+
+		// Count courses in this category
+		err := db.QueryRowContext(c.Request.Context(),
+			`SELECT COUNT(*) FROM courses WHERE category_id = $1`, categoryID).Scan(&stats.CourseCount)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count courses: " + err.Error()})
+			return
+		}
+
+		// Count videos (lessons with a video_url) under courses in this category
+		err = db.QueryRowContext(c.Request.Context(),
+			`SELECT COUNT(l.id) FROM lessons l
+			 JOIN chapters ch ON l.chapter_id = ch.id
+			 JOIN courses co ON ch.course_id = co.id
+			 WHERE co.category_id = $1 AND l.video_url IS NOT NULL AND l.video_url != ''`, categoryID).Scan(&stats.VideoCount)
+		if err != nil {
+			stats.VideoCount = 0
+		}
+
+		// Count quiz questions under courses in this category
+		err = db.QueryRowContext(c.Request.Context(),
+			`SELECT COUNT(q.id) FROM quizzes q
+			 JOIN lessons l ON q.lesson_id = l.id
+			 JOIN chapters ch ON l.chapter_id = ch.id
+			 JOIN courses co ON ch.course_id = co.id
+			 WHERE co.category_id = $1`, categoryID).Scan(&stats.QuizCount)
+		if err != nil {
+			stats.QuizCount = 0
+		}
+
+		// Count enrolled students (users who have enrolled in courses in this category)
+		err = db.QueryRowContext(c.Request.Context(),
+			`SELECT COUNT(DISTINCT u.id) FROM users u
+			 JOIN payments p ON p.user_id = u.id
+			 JOIN courses co ON p.course_id = co.id
+			 WHERE co.category_id = $1 AND p.status = 'success'`, categoryID).Scan(&stats.StudentCount)
+		if err != nil {
+			stats.StudentCount = 0
+		}
+
+		c.JSON(http.StatusOK, stats)
+	}
+}
+
 // CreateCategoryHandler handles POST requests to create a new category with an image upload.
 func CreateCategoryHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
