@@ -240,6 +240,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
+                // ── Description ──────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.course.description.isNotEmpty
+                              ? widget.course.description
+                              : 'Complete course for Ethiopian students based on the latest curriculum. Learn with high-quality video lessons and practice questions.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textMedium,
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // ── Progress ─────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Container(
