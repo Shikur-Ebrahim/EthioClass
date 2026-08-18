@@ -458,31 +458,42 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 // Download button area
                 if (_downloadingProgress[l.id] != null)
-                  GestureDetector(
-                    onTap: null,
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: CircularProgressIndicator(
-                              value: _downloadingProgress[l.id],
-                              strokeWidth: 3,
-                              color: const Color(0xFF22C55E), // green
-                              backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
-                            ),
-                          ),
-                          Icon(Icons.download_rounded,
-                              color: const Color(0xFF22C55E), size: 20),
-                        ],
-                      ),
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: _downloadingProgress[l.id]! > 0.01
+                            ? CircularProgressIndicator(
+                                value: _downloadingProgress[l.id],
+                                strokeWidth: 3.5,
+                                color: const Color(0xFF22C55E),
+                                backgroundColor: const Color(0xFF22C55E).withOpacity(0.2),
+                              )
+                            : CircularProgressIndicator(
+                                strokeWidth: 3.5,
+                                color: const Color(0xFF22C55E),
+                                backgroundColor: const Color(0xFF22C55E).withOpacity(0.2),
+                              ),
+                        ),
+                        _downloadingProgress[l.id]! > 0.01
+                          ? Text(
+                              '${(_downloadingProgress[l.id]! * 100).toInt()}%',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF22C55E),
+                              ),
+                            )
+                          : const Icon(Icons.download_rounded,
+                              color: Color(0xFF22C55E), size: 18),
+                      ],
                     ),
                   )
                 else if (_downloadedLessons[l.id] != null)

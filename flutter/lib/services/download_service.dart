@@ -161,24 +161,44 @@ class DownloadService {
     int totalBytes = 0;
     try {
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
-        final videoUrl = '$apiBaseUrl/media/${lesson.videoUrl!}';
-        final response = await _dio.head(videoUrl);
-        final length = response.headers.value(Headers.contentLengthHeader);
-        if (length != null) {
-          totalBytes += int.tryParse(length) ?? 0;
+        final url = '$apiBaseUrl/media/${lesson.videoUrl!}';
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'Range': 'bytes=0-0'},
+        );
+        // R2 returns Content-Range: bytes 0-0/TOTAL_SIZE
+        final contentRange = response.headers['content-range'];
+        if (contentRange != null) {
+          final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
+          if (match != null) {
+            totalBytes += int.tryParse(match.group(1)!) ?? 0;
+          }
+        }
+        // Fallback: Content-Length
+        if (totalBytes == 0) {
+          final cl = response.headers['content-length'];
+          if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
         }
       }
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
-        final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
-        final response = await _dio.head(notesUrl);
-        final length = response.headers.value(Headers.contentLengthHeader);
-        if (length != null) {
-          totalBytes += int.tryParse(length) ?? 0;
+        final url = '$apiBaseUrl/media/${lesson.notesUrl!}';
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'Range': 'bytes=0-0'},
+        );
+        final contentRange = response.headers['content-range'];
+        if (contentRange != null) {
+          final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
+          if (match != null) {
+            totalBytes += int.tryParse(match.group(1)!) ?? 0;
+          }
+        }
+        if (totalBytes == 0) {
+          final cl = response.headers['content-length'];
+          if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
         }
       }
-    } catch (_) {
-      // Ignore errors for HEAD requests
-    }
+    } catch (_) {}
     return totalBytes;
   }
 }
