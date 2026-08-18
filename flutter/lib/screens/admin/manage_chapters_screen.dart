@@ -10,6 +10,7 @@ import '../../config/api_config.dart';
 import '../../models/course_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
+import 'manage_lessons_screen.dart';
 
 class ManageChaptersScreen extends StatefulWidget {
   final Course course;
@@ -209,6 +210,15 @@ class _ManageChaptersScreenState extends State<ManageChaptersScreen> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                IconButton(
+                                  icon: const Icon(Icons.play_lesson_rounded, color: Color(0xFF2563EB), size: 20),
+                                  tooltip: 'Manage Lessons',
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(
+                                      builder: (_) => ManageLessonsScreen(chapter: chap, course: widget.course),
+                                    ));
+                                  },
+                                ),
                                 IconButton(icon: const Icon(Icons.edit_rounded, color: Color(0xFF16A34A), size: 20), onPressed: () => _openEditForm(chap)),
                                 IconButton(icon: const Icon(Icons.delete_rounded, color: AppColors.error, size: 20), onPressed: () => _deleteChapter(chap)),
                               ],

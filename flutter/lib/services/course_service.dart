@@ -102,11 +102,11 @@ class CourseService {
     }
   }
 
-  /// Fetches lessons for a specific course.
-  Future<List<Lesson>> getLessons(String courseId) async {
+  /// Fetches lessons for a specific chapter.
+  Future<List<Lesson>> getLessons(String chapterId) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/lessons?course_id=$courseId'),
+        Uri.parse('$_baseUrl/lessons?chapter_id=$chapterId'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
 

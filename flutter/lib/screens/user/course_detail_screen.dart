@@ -559,10 +559,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     );
   }
 
-  void _handleChapterTap(Chapter chapter) {
+  Future<void> _handleChapterTap(Chapter chapter) async {
     if (!chapter.isFree) {
       _showUnlockDialog();
-    } else {
+      return;
+    }
+    // Fetch lessons for this chapter
+    try {
+      final lessons = await CourseService().getLessons(chapter.id);
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -572,9 +577,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             thumbnailUrl: chapter.thumbnailUrl,
             chapterNumber: chapter.chapterNumber,
             chapterDescription: chapter.description,
+            lessons: lessons,
+            initialLessonIndex: 0,
           ),
         ),
       );
+    } catch (_) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonDetailScreen(
+              chapterTitle: chapter.title,
+              isLocked: false,
+              thumbnailUrl: chapter.thumbnailUrl,
+              chapterNumber: chapter.chapterNumber,
+              chapterDescription: chapter.description,
+            ),
+          ),
+        );
+      }
     }
   }
 

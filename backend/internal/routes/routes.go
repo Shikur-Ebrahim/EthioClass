@@ -37,6 +37,7 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.GET("/chapters", handlers.GetChaptersHandler(db))
 	r.GET("/lesson-materials", handlers.GetLessonMaterialsHandler(db))
 	r.GET("/questions", handlers.GetQuestionsHandler(db))
+	r.GET("/quizzes", handlers.GetQuizzesHandler(db))
 
 	// Media proxy — serves R2 objects through the API
 	r.GET("/media/*key", handlers.MediaProxyHandler(r2))
@@ -56,6 +57,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.POST("/chapters", handlers.CreateChapterHandler(db, r2))
 		adminGroup.PUT("/chapters/:id", handlers.UpdateChapterHandler(db, r2))
 		adminGroup.DELETE("/chapters/:id", handlers.DeleteChapterHandler(db))
+
+		adminGroup.POST("/lessons", handlers.CreateLessonHandler(db, r2))
+		adminGroup.PUT("/lessons/:id", handlers.UpdateLessonHandler(db, r2))
+		adminGroup.DELETE("/lessons/:id", handlers.DeleteLessonHandler(db))
 	}
 
 	// Payment Routes
