@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../config/api_config.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String chapterTitle;
   final bool isLocked;
+  final String? thumbnailUrl;
+  final int chapterNumber;
 
   const LessonDetailScreen({
     super.key,
     required this.chapterTitle,
     this.isLocked = false,
+    this.thumbnailUrl,
+    this.chapterNumber = 1,
   });
 
   @override
@@ -37,7 +42,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // ── Video Player Header ──────────────────────────────────────
+          // ── Chapter Banner Header ──────────────────────────────────────
           Container(
             height: 250,
             width: double.infinity,
@@ -45,20 +50,43 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             child: SafeArea(
               bottom: false,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // Video Placeholder Image / Gradient
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.7),
-                            Colors.black.withOpacity(0.3),
-                            Colors.black,
-                          ],
+                  // Chapter banner image
+                  if (widget.thumbnailUrl != null && widget.thumbnailUrl!.isNotEmpty)
+                    Image.network(
+                      '$apiBaseUrl/media/${widget.thumbnailUrl!}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
+                          ),
                         ),
+                      ),
+                    )
+                  else
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
+                        ),
+                      ),
+                    ),
+                  // Dark overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.25),
+                          Colors.black.withOpacity(0.7),
+                        ],
                       ),
                     ),
                   ),

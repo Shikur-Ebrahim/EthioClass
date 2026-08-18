@@ -566,7 +566,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => LessonDetailScreen(chapterTitle: chapter.title, isLocked: false),
+          builder: (_) => LessonDetailScreen(
+            chapterTitle: chapter.title,
+            isLocked: false,
+            thumbnailUrl: chapter.thumbnailUrl,
+            chapterNumber: chapter.chapterNumber,
+          ),
         ),
       );
     }
@@ -751,13 +756,55 @@ class _ChapterTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(color: AppColors.greyLight, borderRadius: BorderRadius.circular(10)),
-              child: Center(
-                child: Text('${chapter.chapterNumber}',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textDark, fontSize: 14)),
+            // Chapter thumbnail with chapter number overlay
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Background: thumbnail image or gradient fallback
+                    if (chapter.thumbnailUrl != null && chapter.thumbnailUrl!.isNotEmpty)
+                      Image.network(
+                        '$apiBaseUrl/media/${chapter.thumbnailUrl!}',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppColors.primary.withOpacity(0.7), AppColors.primary],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [const Color(0xFF1B5E20), AppColors.primary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    // Dark overlay so number is readable
+                    Container(color: Colors.black.withOpacity(0.35)),
+                    // Chapter number on top
+                    Center(
+                      child: Text(
+                        '${chapter.chapterNumber}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 12),
