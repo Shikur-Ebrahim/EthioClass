@@ -34,4 +34,18 @@ class Lesson {
       createdAt: json['created_at'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'chapter_id': chapterId,
+      'title': title,
+      'thumbnail_url': thumbnailUrl,
+      'video_url': videoUrl,
+      'notes_url': notesUrl,
+      'lesson_number': lessonNumber,
+      'duration_minutes': durationMinutes,
+      'created_at': createdAt,
+    };
+  }
 }

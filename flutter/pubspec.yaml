@@ -24,6 +24,8 @@ dependencies:
   video_player: ^2.9.2
   chewie: ^1.8.5
   syncfusion_flutter_pdfviewer: ^33.2.13
+  path_provider: ^2.1.5
+  dio: ^5.11.0
 
 dev_dependencies:
   flutter_test:

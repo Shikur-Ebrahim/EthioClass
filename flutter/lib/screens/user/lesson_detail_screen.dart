@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,8 @@ import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/lesson_model.dart';
 import '../../models/chapter_model.dart';
+import '../../services/download_service.dart';
+import '../../models/downloaded_lesson_model.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String chapterTitle;
@@ -45,6 +48,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   bool _videoLoading = false;
   bool _videoError = false;
 
+  bool _isDownloaded = false;
+  bool _isDownloading = false;
+  double _downloadProgress = 0.0;
+  DownloadedLesson? _downloadedData;
+
   @override
   void initState() {
     super.initState();
@@ -58,9 +66,29 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
           ? widget.lessons[_currentLessonIndex]
           : null;
 
+  Future<void> _checkDownloadStatus() async {
+    final lesson = _currentLesson;
+    if (lesson == null) return;
+    
+    final downloaded = await DownloadService.instance.getDownloadedLesson(lesson.id);
+    if (mounted) {
+      setState(() {
+        _isDownloaded = downloaded != null;
+        _downloadedData = downloaded;
+        _isDownloading = false;
+        _downloadProgress = 0.0;
+      });
+    }
+  }
+
   Future<void> _initVideo() async {
     final lesson = _currentLesson;
-    if (lesson == null || lesson.videoUrl == null || lesson.videoUrl!.isEmpty) return;
+    if (lesson == null) return;
+    
+    await _checkDownloadStatus();
+
+    // Only abort if no video url AND no local path
+    if ((lesson.videoUrl == null || lesson.videoUrl!.isEmpty) && _downloadedData?.localVideoPath == null) return;
 
     setState(() { _videoLoading = true; _videoError = false; });
 
@@ -68,8 +96,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _videoController?.dispose();
       _chewieController?.dispose();
 
-      final videoUri = Uri.parse('$apiBaseUrl/media/${lesson.videoUrl!}');
-      _videoController = VideoPlayerController.networkUrl(videoUri);
+      if (_isDownloaded && _downloadedData?.localVideoPath != null) {
+        final file = File(_downloadedData!.localVideoPath);
+        if (await file.exists()) {
+          _videoController = VideoPlayerController.file(file);
+        } else {
+          // Fallback to network if local file missing
+          final videoUri = Uri.parse('$apiBaseUrl/media/${lesson.videoUrl!}');
+          _videoController = VideoPlayerController.networkUrl(videoUri);
+        }
+      } else {
+        final videoUri = Uri.parse('$apiBaseUrl/media/${lesson.videoUrl!}');
+        _videoController = VideoPlayerController.networkUrl(videoUri);
+      }
+      
       await _videoController!.initialize();
 
       _chewieController = ChewieController(
@@ -98,6 +138,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _chewieController = null;
       _videoController?.dispose();
       _videoController = null;
+      _isDownloaded = false;
     });
     _initVideo();
   }
@@ -193,10 +234,44 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-                        ),
+                        _isDownloading
+                          ? Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                value: _downloadProgress,
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                                backgroundColor: Colors.white24,
+                              ),
+                            )
+                          : IconButton(
+                              onPressed: () async {
+                                if (_isDownloaded) {
+                                  // Prompt to delete? Or just delete?
+                                  await DownloadService.instance.deleteLesson(_currentLesson!.id);
+                                  _checkDownloadStatus();
+                                } else if (_currentLesson != null) {
+                                  setState(() { _isDownloading = true; });
+                                  try {
+                                    await DownloadService.instance.downloadLesson(
+                                      lesson: _currentLesson!,
+                                      courseTitle: widget.chapterTitle, // Fallback to chapter title
+                                      onProgress: (p) => setState(() => _downloadProgress = p),
+                                    );
+                                    await _checkDownloadStatus();
+                                  } catch (e) {
+                                    setState(() { _isDownloading = false; });
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+                                  }
+                                }
+                              },
+                              icon: Icon(
+                                _isDownloaded ? Icons.download_done_rounded : Icons.download_rounded,
+                                color: _isDownloaded ? AppColors.primary : Colors.white,
+                              ),
+                            ),
                       ],
                     ),
                   ),
@@ -391,6 +466,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       );
     }
 
+    final isLocal = _isDownloaded && _downloadedData?.localNotesPath != null;
     final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
     
     // Check if it's a PDF
@@ -403,7 +479,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(11),
-          child: SfPdfViewer.network(notesUrl),
+          child: isLocal
+            ? SfPdfViewer.file(File(_downloadedData!.localNotesPath!))
+            : SfPdfViewer.network(notesUrl),
         ),
       );
     }
@@ -512,12 +590,18 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
     final results = <String, List<Map<String, dynamic>>>{};
     for (final lesson in widget.lessons) {
       try {
-        final res = await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${lesson.id}'));
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body) as List;
+        final downloaded = await DownloadService.instance.getDownloadedLesson(lesson.id);
+        if (downloaded != null && downloaded.cachedQuizJson != null) {
+          final data = jsonDecode(downloaded.cachedQuizJson!) as List;
           results[lesson.id] = data.cast<Map<String, dynamic>>();
         } else {
-          results[lesson.id] = [];
+          final res = await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${lesson.id}'));
+          if (res.statusCode == 200) {
+            final data = jsonDecode(res.body) as List;
+            results[lesson.id] = data.cast<Map<String, dynamic>>();
+          } else {
+            results[lesson.id] = [];
+          }
         }
       } catch (_) {
         results[lesson.id] = [];
