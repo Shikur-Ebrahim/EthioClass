@@ -48,17 +48,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   bool _videoLoading = false;
   bool _videoError = false;
 
-  bool _isDownloaded = false;
-  bool _isDownloading = false;
-  double _downloadProgress = 0.0;
-  DownloadedLesson? _downloadedData;
+  Map<String, DownloadedLesson> _downloadedLessons = {};
+  Map<String, double> _downloadingProgress = {};
 
   @override
   void initState() {
     super.initState();
     _currentLessonIndex = widget.initialLessonIndex;
     _tabController = TabController(length: 3, vsync: this);
-    _initVideo();
+    _loadAllDownloadStatuses().then((_) => _initVideo());
   }
 
   Lesson? get _currentLesson =>
@@ -66,29 +64,40 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
           ? widget.lessons[_currentLessonIndex]
           : null;
 
-  Future<void> _checkDownloadStatus() async {
-    final lesson = _currentLesson;
-    if (lesson == null) return;
-    
-    final downloaded = await DownloadService.instance.getDownloadedLesson(lesson.id);
+  Future<void> _loadAllDownloadStatuses() async {
+    final allDownloads = await DownloadService.instance.getDownloadedLessons();
+    final Map<String, DownloadedLesson> map = {};
+    for (var dl in allDownloads) {
+      map[dl.lesson.id] = dl;
+    }
     if (mounted) {
       setState(() {
-        _isDownloaded = downloaded != null;
-        _downloadedData = downloaded;
-        _isDownloading = false;
-        _downloadProgress = 0.0;
+        _downloadedLessons = map;
       });
     }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return "0 B";
+    const suffixes = ["B", "KB", "MB", "GB", "TB"];
+    var i = 0;
+    double d = bytes.toDouble();
+    while (d >= 1024 && i < suffixes.length - 1) {
+      d /= 1024;
+      i++;
+    }
+    return '${d.toStringAsFixed(1)} ${suffixes[i]}';
   }
 
   Future<void> _initVideo() async {
     final lesson = _currentLesson;
     if (lesson == null) return;
     
-    await _checkDownloadStatus();
+    final downloadedData = _downloadedLessons[lesson.id];
+    final isDownloaded = downloadedData != null;
 
     // Only abort if no video url AND no local path
-    if ((lesson.videoUrl == null || lesson.videoUrl!.isEmpty) && _downloadedData?.localVideoPath == null) return;
+    if ((lesson.videoUrl == null || lesson.videoUrl!.isEmpty) && downloadedData?.localVideoPath == null) return;
 
     setState(() { _videoLoading = true; _videoError = false; });
 
@@ -96,8 +105,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _videoController?.dispose();
       _chewieController?.dispose();
 
-      if (_isDownloaded && _downloadedData?.localVideoPath != null) {
-        final file = File(_downloadedData!.localVideoPath);
+      if (isDownloaded && downloadedData?.localVideoPath != null) {
+        final file = File(downloadedData!.localVideoPath);
         if (await file.exists()) {
           _videoController = VideoPlayerController.file(file);
         } else {
@@ -138,7 +147,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _chewieController = null;
       _videoController?.dispose();
       _videoController = null;
-      _isDownloaded = false;
     });
     _initVideo();
   }
@@ -234,44 +242,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                         ),
-                        _isDownloading
-                          ? Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                value: _downloadProgress,
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                                backgroundColor: Colors.white24,
-                              ),
-                            )
-                          : IconButton(
-                              onPressed: () async {
-                                if (_isDownloaded) {
-                                  // Prompt to delete? Or just delete?
-                                  await DownloadService.instance.deleteLesson(_currentLesson!.id);
-                                  _checkDownloadStatus();
-                                } else if (_currentLesson != null) {
-                                  setState(() { _isDownloading = true; });
-                                  try {
-                                    await DownloadService.instance.downloadLesson(
-                                      lesson: _currentLesson!,
-                                      courseTitle: widget.chapterTitle, // Fallback to chapter title
-                                      onProgress: (p) => setState(() => _downloadProgress = p),
-                                    );
-                                    await _checkDownloadStatus();
-                                  } catch (e) {
-                                    setState(() { _isDownloading = false; });
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
-                                  }
-                                }
-                              },
-                              icon: Icon(
-                                _isDownloaded ? Icons.download_done_rounded : Icons.download_rounded,
-                                color: _isDownloaded ? AppColors.primary : Colors.white,
-                              ),
-                            ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+                        ),
                       ],
                     ),
                   ),
@@ -438,11 +412,69 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               fontWeight: FontWeight.w700,
                               color: isActive ? AppColors.primary : AppColors.textDark)),
                       const SizedBox(height: 2),
-                      Text('${l.durationMinutes} min',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                      Row(
+                        children: [
+                          Text('${l.durationMinutes} min',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                          if (_downloadedLessons[l.id] != null) ...[
+                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                            Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes), style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                          ]
+                        ],
+                      ),
                     ],
                   ),
                 ),
+                if (_downloadingProgress[l.id] != null)
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      value: _downloadingProgress[l.id],
+                      strokeWidth: 2.5,
+                      color: AppColors.primary,
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                    ),
+                  )
+                else if (_downloadedLessons[l.id] != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.download_done_rounded, color: AppColors.primary, size: 14),
+                        SizedBox(width: 4),
+                        Text('Downloaded', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  )
+                else
+                  IconButton(
+                    onPressed: () async {
+                      setState(() { _downloadingProgress[l.id] = 0.0; });
+                      try {
+                        await DownloadService.instance.downloadLesson(
+                          lesson: l,
+                          courseTitle: widget.chapterTitle, // Fallback to chapter title
+                          onProgress: (p) => setState(() => _downloadingProgress[l.id] = p),
+                        );
+                        await _loadAllDownloadStatuses();
+                        if (l.id == _currentLesson?.id) {
+                          _initVideo();
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+                      } finally {
+                        setState(() { _downloadingProgress.remove(l.id); });
+                      }
+                    },
+                    icon: const Icon(Icons.download_rounded, color: AppColors.grey, size: 22),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
               ],
             ),
           ),
@@ -466,7 +498,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       );
     }
 
-    final isLocal = _isDownloaded && _downloadedData?.localNotesPath != null;
+    final downloadedData = _downloadedLessons[lesson.id];
+    final isLocal = downloadedData != null && downloadedData.localNotesPath != null;
     final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
     
     // Check if it's a PDF
@@ -480,7 +513,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         child: ClipRRect(
           borderRadius: BorderRadius.circular(11),
           child: isLocal
-            ? SfPdfViewer.file(File(_downloadedData!.localNotesPath!))
+            ? SfPdfViewer.file(File(downloadedData.localNotesPath!))
             : SfPdfViewer.network(notesUrl),
         ),
       );
