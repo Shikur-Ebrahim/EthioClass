@@ -480,7 +480,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       try {
                         await DownloadService.instance.downloadLesson(
                           lesson: l,
-                          courseTitle: widget.chapterTitle, // Fallback to chapter title
+                          courseTitle: widget.courseTitle,
+                          chapterTitle: widget.chapterTitle,
                           onProgress: (p) => setState(() => _downloadingProgress[l.id] = p),
                         );
                         await _loadAllDownloadStatuses();
