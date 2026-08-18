@@ -376,22 +376,29 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 				SELECT 
 					c.id, c.category_id, cat.name as category_name, c.title, c.description, 
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
-					COALESCE((SELECT COUNT(*) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as lesson_count,
-					COALESCE((SELECT SUM(l.duration_minutes) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as duration_minutes,
+					COUNT(DISTINCT l.id) as lesson_count,
+					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
 					0 as student_count
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
-				WHERE c.category_id = $1 ORDER BY c.created_at DESC`, categoryId)
+				LEFT JOIN chapters ch ON ch.course_id = c.id
+				LEFT JOIN lessons l ON l.chapter_id = ch.id
+				WHERE c.category_id = $1
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at
+				ORDER BY c.created_at DESC`, categoryId)
 		} else {
 			rows, err = db.QueryContext(c.Request.Context(), `
 				SELECT 
 					c.id, c.category_id, cat.name as category_name, c.title, c.description, 
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
-					COALESCE((SELECT COUNT(*) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as lesson_count,
-					COALESCE((SELECT SUM(l.duration_minutes) FROM lessons l JOIN chapters ch ON l.chapter_id = ch.id WHERE ch.course_id = c.id), 0) as duration_minutes,
+					COUNT(DISTINCT l.id) as lesson_count,
+					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
 					0 as student_count
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
+				LEFT JOIN chapters ch ON ch.course_id = c.id
+				LEFT JOIN lessons l ON l.chapter_id = ch.id
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at
 				ORDER BY c.created_at DESC`)
 		}
 
