@@ -505,6 +505,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           lesson: l,
                           courseTitle: widget.courseTitle,
                           chapterTitle: widget.chapterTitle,
+                          courseThumbnailUrl: widget.thumbnailUrl,
                           onProgress: (p) => setState(() => _downloadingProgress[l.id] = p),
                         );
                         await _loadAllDownloadStatuses();

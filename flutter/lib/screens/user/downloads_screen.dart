@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../config/api_config.dart';
 import '../../services/download_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 import 'lesson_detail_screen.dart';
@@ -27,29 +28,34 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Future<void> _loadDownloads() async {
     setState(() => _isLoading = true);
     final lessons = await DownloadService.instance.getDownloadedLessons();
-    
+
+    // Auto-clear old corrupted downloads where courseTitle == chapterTitle (old broken format)
+    final validLessons = <DownloadedLesson>[];
+    for (final dl in lessons) {
+      if (dl.courseTitle == dl.chapterTitle || dl.courseTitle == 'Course') {
+        // Old corrupted data — delete it silently
+        await DownloadService.instance.deleteLesson(dl.lesson.id);
+      } else {
+        validLessons.add(dl);
+      }
+    }
+
     Map<String, Map<String, List<DownloadedLesson>>> grouped = {};
     int totalB = 0;
-    
-    for (var dl in lessons) {
+
+    for (var dl in validLessons) {
       totalB += dl.sizeBytes;
-      
       final course = dl.courseTitle;
       final chapter = dl.chapterTitle;
-      
-      if (!grouped.containsKey(course)) {
-        grouped[course] = {};
-      }
-      if (!grouped[course]!.containsKey(chapter)) {
-        grouped[course]![chapter] = [];
-      }
+      if (!grouped.containsKey(course)) grouped[course] = {};
+      if (!grouped[course]!.containsKey(chapter)) grouped[course]![chapter] = [];
       grouped[course]![chapter]!.add(dl);
     }
-    
+
     setState(() {
       _groupedDownloads = grouped;
       _totalBytes = totalB;
-      _totalLessons = lessons.length;
+      _totalLessons = validLessons.length;
       _isLoading = false;
     });
   }
@@ -179,11 +185,28 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Widget _buildCourseItem(String courseTitle, Map<String, List<DownloadedLesson>> chapters) {
     int courseSize = 0;
     int lessonCount = 0;
+    String? thumbUrl;
     for (var lessons in chapters.values) {
       lessonCount += lessons.length;
       for (var l in lessons) {
         courseSize += l.sizeBytes;
+        // Grab the first available thumbnail
+        thumbUrl ??= l.courseThumbnailUrl;
       }
+    }
+
+    Widget leading;
+    if (thumbUrl != null && thumbUrl.isNotEmpty) {
+      leading = ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          '$apiBaseUrl/media/$thumbUrl',
+          width: 48, height: 48, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _courseIcon(),
+        ),
+      );
+    } else {
+      leading = _courseIcon();
     }
 
     return Container(
@@ -195,18 +218,25 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3)),
         ],
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        leading: Container(
-          width: 48, height: 48,
-          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-          child: const Icon(Icons.school_rounded, color: AppColors.primary),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          leading: leading,
+          title: Text(courseTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+          subtitle: Text('$lessonCount Lessons  •  ${_formatBytes(courseSize)}', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+          children: chapters.entries.map((chapterEntry) => _buildChapterItem(chapterEntry.key, chapterEntry.value)).toList(),
         ),
-        title: Text(courseTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-        subtitle: Text('$lessonCount Lessons  •  ${_formatBytes(courseSize)}', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-        children: chapters.entries.map((chapterEntry) => _buildChapterItem(chapterEntry.key, chapterEntry.value)).toList(),
       ),
+    );
+  }
+
+  Widget _courseIcon() {
+    return Container(
+      width: 48, height: 48,
+      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      child: const Icon(Icons.school_rounded, color: AppColors.primary),
     );
   }
 
@@ -225,14 +255,21 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Widget _buildLessonItem(DownloadedLesson dl) {
     final lesson = dl.lesson;
+    final hasThumbnail = lesson.thumbnailUrl != null && lesson.thumbnailUrl!.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.only(left: 48, right: 16, bottom: 8),
       child: Row(
         children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: AppColors.greyLight, borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.play_circle_fill_rounded, color: AppColors.primary, size: 22),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: hasThumbnail
+              ? Image.network(
+                  '$apiBaseUrl/media/${lesson.thumbnailUrl!}',
+                  width: 48, height: 40, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _lessonIcon(),
+                )
+              : _lessonIcon(),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -290,6 +327,14 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _lessonIcon() {
+    return Container(
+      width: 48, height: 40,
+      decoration: BoxDecoration(color: AppColors.greyLight, borderRadius: BorderRadius.circular(8)),
+      child: const Icon(Icons.play_circle_fill_rounded, color: AppColors.primary, size: 22),
     );
   }
 }
