@@ -123,7 +123,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         children: [
           // ── Video / Banner Header ──────────────────────────────────
           Container(
-            height: 230,
+            height: 280,
             width: double.infinity,
             color: Colors.black,
             child: SafeArea(
@@ -231,6 +231,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
+          // ── Chapter Description ────────────────────────────────────
+          if (desc != null && desc.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              child: Text(
+                desc,
+                style: const TextStyle(fontSize: 12.5, color: AppColors.textMedium, height: 1.55),
+              ),
+            ),
 
           // ── Tabs ───────────────────────────────────────────────────
           Container(
@@ -630,7 +641,25 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
           ),
           const SizedBox(height: 12),
 
-          // Score banner if submitted
+          // Questions
+          ...questions.asMap().entries.map((e) {
+            final q = e.value;
+            final idx = e.key;
+            return _QuizCard(
+              question: q,
+              index: idx,
+              selected: answers[idx],
+              submitted: isSubmitted,
+              onSelect: isSubmitted ? null : (ans) => setState(() {
+                _selectedAnswers[currentLesson.id] ??= {};
+                _selectedAnswers[currentLesson.id]![idx] = ans;
+              }),
+            );
+          }),
+
+          const SizedBox(height: 16),
+
+          // Score banner if submitted (Moved to bottom)
           if (isSubmitted) ...[  
             Builder(builder: (_) {
               int score = 0;
@@ -639,7 +668,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
               }
               final passed = score >= questions.length / 2;
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: passed ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
@@ -663,24 +692,6 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
               );
             }),
           ],
-
-          // Questions
-          ...questions.asMap().entries.map((e) {
-            final q = e.value;
-            final idx = e.key;
-            return _QuizCard(
-              question: q,
-              index: idx,
-              selected: answers[idx],
-              submitted: isSubmitted,
-              onSelect: isSubmitted ? null : (ans) => setState(() {
-                _selectedAnswers[currentLesson.id] ??= {};
-                _selectedAnswers[currentLesson.id]![idx] = ans;
-              }),
-            );
-          }),
-
-          const SizedBox(height: 16),
 
           // Submit or Next button
           if (!isSubmitted)
