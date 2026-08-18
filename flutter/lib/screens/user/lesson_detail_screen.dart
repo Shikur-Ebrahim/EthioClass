@@ -7,6 +7,7 @@ class LessonDetailScreen extends StatefulWidget {
   final bool isLocked;
   final String? thumbnailUrl;
   final int chapterNumber;
+  final String? chapterDescription;
 
   const LessonDetailScreen({
     super.key,
@@ -14,6 +15,7 @@ class LessonDetailScreen extends StatefulWidget {
     this.isLocked = false,
     this.thumbnailUrl,
     this.chapterNumber = 1,
+    this.chapterDescription,
   });
 
   @override
@@ -152,7 +154,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // ── Tabs ─────────────────────────────────────────────────────
+          // ── Chapter Description ─────────────────────────────────
+          if (widget.chapterDescription != null && widget.chapterDescription!.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+              child: Text(
+                widget.chapterDescription!,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                  height: 1.6,
+                ),
+              ),
+            ),
+
+          // ── Tabs ──────────────────────────────────────────────────
           Container(
             decoration: BoxDecoration(
               color: AppColors.surface,

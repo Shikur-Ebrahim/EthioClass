@@ -571,6 +571,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             isLocked: false,
             thumbnailUrl: chapter.thumbnailUrl,
             chapterNumber: chapter.chapterNumber,
+            chapterDescription: chapter.description,
           ),
         ),
       );
