@@ -50,13 +50,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
 
   Map<String, DownloadedLesson> _downloadedLessons = {};
   Map<String, double> _downloadingProgress = {};
+  Map<String, int> _remoteSizes = {};
 
   @override
   void initState() {
     super.initState();
     _currentLessonIndex = widget.initialLessonIndex;
     _tabController = TabController(length: 3, vsync: this);
-    _loadAllDownloadStatuses().then((_) => _initVideo());
+    _loadAllDownloadStatuses().then((_) {
+      _initVideo();
+      _loadRemoteSizes();
+    });
   }
 
   Lesson? get _currentLesson =>
@@ -73,6 +77,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     if (mounted) {
       setState(() {
         _downloadedLessons = map;
+      });
+    }
+  }
+
+  Future<void> _loadRemoteSizes() async {
+    for (var l in widget.lessons) {
+      if (_downloadedLessons.containsKey(l.id)) continue;
+      DownloadService.instance.getLessonSize(l).then((size) {
+        if (mounted && size > 0) {
+          setState(() {
+            _remoteSizes[l.id] = size;
+          });
+        }
       });
     }
   }
@@ -419,6 +436,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           if (_downloadedLessons[l.id] != null) ...[
                             const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                             Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes), style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                          ] else if (_remoteSizes[l.id] != null) ...[
+                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                            Text(_formatBytes(_remoteSizes[l.id]!), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                           ]
                         ],
                       ),

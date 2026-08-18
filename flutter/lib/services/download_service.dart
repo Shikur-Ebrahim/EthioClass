@@ -152,5 +152,30 @@ class DownloadService {
     final String encodedData = jsonEncode(lessons.map((e) => e.toJson()).toList());
     await prefs.setString(_storageKey, encodedData);
   }
+
+  Future<int> getLessonSize(Lesson lesson) async {
+    int totalBytes = 0;
+    try {
+      if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
+        final videoUrl = '$apiBaseUrl/media/${lesson.videoUrl!}';
+        final response = await _dio.head(videoUrl);
+        final length = response.headers.value(Headers.contentLengthHeader);
+        if (length != null) {
+          totalBytes += int.tryParse(length) ?? 0;
+        }
+      }
+      if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
+        final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
+        final response = await _dio.head(notesUrl);
+        final length = response.headers.value(Headers.contentLengthHeader);
+        if (length != null) {
+          totalBytes += int.tryParse(length) ?? 0;
+        }
+      }
+    } catch (_) {
+      // Ignore errors for HEAD requests
+    }
+    return totalBytes;
+  }
 }
 
