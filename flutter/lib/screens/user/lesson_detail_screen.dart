@@ -419,9 +419,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       ),
                     ],
                   ),
-                      ),
-                    ],
-                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
