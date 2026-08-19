@@ -240,7 +240,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               secondChild: Column(
                 children: [
                   const Divider(height: 1, color: Color(0xFFE8E8E8)),
-                  ...lessons.asMap().entries.map((e) => _buildLessonCard(e.value, e.key + 1)),
+                  ...lessons.asMap().entries.map((e) {
+                    final allCourseLessons = lessons.map((l) => l.lesson).toList();
+                    return _buildLessonCard(e.value, e.key + 1, allCourseLessons, e.key);
+                  }),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -259,7 +262,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     );
   }
 
-  Widget _buildLessonCard(DownloadedLesson dl, int index) {
+  Widget _buildLessonCard(DownloadedLesson dl, int displayIndex, List<Lesson> allCourseLessons, int tapIndex) {
     final lesson = dl.lesson;
     final thumbUrl = lesson.thumbnailUrl ?? dl.courseThumbnailUrl;
 
@@ -269,13 +272,13 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => LessonDetailScreen(
-              lessons: [lesson],
+              lessons: allCourseLessons,
               chapterTitle: dl.chapterTitle,
               chapterDescription: '',
               courseTitle: dl.courseTitle,
               courseThumbnailUrl: dl.courseThumbnailUrl,
               thumbnailUrl: dl.courseThumbnailUrl,
-              initialLessonIndex: 0,
+              initialLessonIndex: tapIndex,
             ),
           ),
         );
