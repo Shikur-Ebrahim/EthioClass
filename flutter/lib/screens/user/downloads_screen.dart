@@ -338,7 +338,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$index. ${lesson.title}',
+                    '$displayIndex. ${lesson.title}',
                     maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark),
                   ),

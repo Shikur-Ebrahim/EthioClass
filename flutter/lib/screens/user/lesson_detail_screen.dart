@@ -364,11 +364,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     if (widget.lessons.isEmpty) {
       return const Center(child: Text('No lessons yet', style: TextStyle(color: AppColors.grey)));
     }
+
+    List<int> orderedIndices = [];
+    if (_currentLessonIndex >= 0 && _currentLessonIndex < widget.lessons.length) {
+      orderedIndices.add(_currentLessonIndex);
+    }
+    for (int i = 0; i < widget.lessons.length; i++) {
+      if (i != _currentLessonIndex) {
+        orderedIndices.add(i);
+      }
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: widget.lessons.length,
+      itemCount: orderedIndices.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) {
+      itemBuilder: (_, listIndex) {
+        final i = orderedIndices[listIndex];
         final l = widget.lessons[i];
         final isActive = i == _currentLessonIndex;
         return GestureDetector(
