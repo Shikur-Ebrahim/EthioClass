@@ -378,22 +378,48 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     );
   }
 
-  void _showDeleteOptions(DownloadedLesson dl) {
+  void _showLessonOptions(BuildContext context, DownloadedLesson dl) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
+      builder: (bottomSheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 10),
             Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
+            
+            if (dl.lesson.notesUrl != null && dl.lesson.notesUrl!.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.description_outlined, color: AppColors.primary),
+                title: const Text('View Notes', style: TextStyle(fontWeight: FontWeight.bold)),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext); // close bottom sheet
+                  // Navigate to LessonDetailScreen directly on the Notes tab
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LessonDetailScreen(
+                        lessons: [dl.lesson],
+                        chapterTitle: dl.chapterTitle,
+                        chapterDescription: '',
+                        courseTitle: dl.courseTitle,
+                        courseThumbnailUrl: dl.courseThumbnailUrl,
+                        thumbnailUrl: dl.courseThumbnailUrl,
+                        initialLessonIndex: 0,
+                        initialTab: 1, // 1 is Notes tab
+                      ),
+                    ),
+                  );
+                },
+              ),
+              
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
               title: const Text('Delete Download', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(bottomSheetContext);
                 _deleteDownload(dl.lesson.id);
               },
             ),

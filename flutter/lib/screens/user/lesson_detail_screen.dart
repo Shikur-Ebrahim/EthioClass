@@ -25,6 +25,7 @@ class LessonDetailScreen extends StatefulWidget {
   // Full lesson list for this chapter (user navigates between them)
   final List<Lesson> lessons;
   final int initialLessonIndex;
+  final int initialTab;
 
   const LessonDetailScreen({
     super.key,
@@ -38,6 +39,7 @@ class LessonDetailScreen extends StatefulWidget {
     this.chapterDescription,
     this.lessons = const [],
     this.initialLessonIndex = 0,
+    this.initialTab = 0,
   });
 
   @override
@@ -63,7 +65,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   void initState() {
     super.initState();
     _currentLessonIndex = widget.initialLessonIndex;
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
     _loadAllDownloadStatuses().then((_) {
       _initVideo();
       _loadRemoteSizes();
