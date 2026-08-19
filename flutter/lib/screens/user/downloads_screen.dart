@@ -46,7 +46,11 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     setState(() {
       _groupedDownloads = grouped;
       _isLoading = false;
-      // All courses start collapsed — user taps to open
+      // If only one course downloaded, auto-expand it
+      // If multiple courses, keep all collapsed so user can tap to open
+      if (grouped.length == 1) {
+        _expandedCourses.add(grouped.keys.first);
+      }
     });
   }
 
