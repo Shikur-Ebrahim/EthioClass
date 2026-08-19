@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/download_service.dart';
 import '../../models/downloaded_lesson_model.dart';
+import '../../models/lesson_model.dart';
 import 'lesson_detail_screen.dart';
 
 class DownloadsScreen extends StatefulWidget {
