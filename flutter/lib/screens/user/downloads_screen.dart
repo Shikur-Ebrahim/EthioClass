@@ -13,9 +13,8 @@ class DownloadsScreen extends StatefulWidget {
 }
 
 class _DownloadsScreenState extends State<DownloadsScreen> {
-  // courseTitle -> List<DownloadedLesson>
   Map<String, List<DownloadedLesson>> _groupedDownloads = {};
-  int _totalBytes = 0;
+  final Set<String> _expandedCourses = {};
   bool _isLoading = true;
 
   @override
@@ -28,11 +27,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     setState(() => _isLoading = true);
     final lessons = await DownloadService.instance.getDownloadedLessons();
 
-    // Auto-clear old corrupted downloads where courseTitle == chapterTitle (old broken format)
     final validLessons = <DownloadedLesson>[];
     for (final dl in lessons) {
       if (dl.courseTitle == dl.chapterTitle || dl.courseTitle == 'Course') {
-        // Old corrupted data — delete it silently
         await DownloadService.instance.deleteLesson(dl.lesson.id);
       } else {
         validLessons.add(dl);
@@ -40,10 +37,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     }
 
     Map<String, List<DownloadedLesson>> grouped = {};
-    int totalB = 0;
-
     for (var dl in validLessons) {
-      totalB += dl.sizeBytes;
       final course = dl.courseTitle;
       if (!grouped.containsKey(course)) grouped[course] = [];
       grouped[course]!.add(dl);
@@ -51,14 +45,17 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
     setState(() {
       _groupedDownloads = grouped;
-      _totalBytes = totalB;
       _isLoading = false;
+      // Auto-expand the first course
+      if (grouped.isNotEmpty && _expandedCourses.isEmpty) {
+        _expandedCourses.add(grouped.keys.first);
+      }
     });
   }
 
   String _formatBytes(int bytes) {
-    if (bytes <= 0) return "0 B";
-    const suffixes = ["B", "KB", "MB", "GB", "TB"];
+    if (bytes <= 0) return '0 B';
+    const suffixes = ['B', 'KB', 'MB', 'GB'];
     var i = 0;
     double d = bytes.toDouble();
     while (d >= 1024 && i < suffixes.length - 1) {
@@ -70,26 +67,21 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   String _formatDuration(int minutes) {
     if (minutes < 60) return '${minutes}m';
-    int h = minutes ~/ 60;
-    int m = minutes % 60;
-    if (m == 0) return '${h}h';
-    return '${h}h ${m}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         title: const Text(
           'Downloads',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textDark,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark),
         ),
         centerTitle: true,
         actions: [
@@ -106,140 +98,149 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               : RefreshIndicator(
                   onRefresh: _loadDownloads,
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 8, bottom: 40),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: _groupedDownloads.length,
                     itemBuilder: (context, index) {
                       final courseTitle = _groupedDownloads.keys.elementAt(index);
                       final lessons = _groupedDownloads[courseTitle]!;
-                      return _buildCourseSection(courseTitle, lessons);
+                      final isExpanded = _expandedCourses.contains(courseTitle);
+                      return _buildCourseAccordion(courseTitle, lessons, isExpanded);
                     },
                   ),
                 ),
     );
   }
 
-  Widget _buildCourseSection(String courseTitle, List<DownloadedLesson> lessons) {
-    int courseSize = lessons.fold(0, (sum, l) => sum + l.sizeBytes);
-    int totalCourseDuration = lessons.fold(0, (sum, l) => sum + l.lesson.durationMinutes);
-    String? thumbUrl = lessons.first.courseThumbnailUrl;
-    
+  Widget _buildCourseAccordion(String courseTitle, List<DownloadedLesson> lessons, bool isExpanded) {
+    final courseSize = lessons.fold(0, (sum, l) => sum + l.sizeBytes);
+    final totalDuration = lessons.fold(0, (sum, l) => sum + l.lesson.durationMinutes);
+    final thumbUrl = lessons.first.courseThumbnailUrl;
+
     int totalCourseLessons = lessons.first.courseTotalLessons;
     if (totalCourseLessons <= 0) totalCourseLessons = 1;
     double progress = lessons.length / totalCourseLessons;
     if (progress > 1.0) progress = 1.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Top Header Card
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Course Logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: thumbUrl != null && thumbUrl.isNotEmpty
-                    ? Image.network(
-                        '$apiBaseUrl/media/$thumbUrl',
-                        width: 110, height: 70, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _defaultCourseIcon(),
-                      )
-                    : _defaultCourseIcon(),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          children: [
+            // ── Course Header Row (tappable) ──
+            InkWell(
+              onTap: () {
+                setState(() {
+                  if (isExpanded) {
+                    _expandedCourses.remove(courseTitle);
+                  } else {
+                    _expandedCourses.add(courseTitle);
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: const BoxDecoration(
+                  // Subtle blue-gray tint to distinguish from white lesson cards
+                  color: Color(0xFFEBF0FB),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      courseTitle, 
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                    // Thumbnail
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: thumbUrl != null && thumbUrl.isNotEmpty
+                          ? Image.network(
+                              '$apiBaseUrl/media/$thumbUrl',
+                              width: 110, height: 68, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _defaultCourseIcon(),
+                            )
+                          : _defaultCourseIcon(),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${lessons.length} Lessons • ${_formatDuration(totalCourseDuration)}', 
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                    const SizedBox(width: 14),
+                    // Title + subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            courseTitle,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${lessons.length} Lessons • ${_formatDuration(totalDuration)} • ${_formatBytes(courseSize)}',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Progress ring + chevron
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 44, height: 44,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: progress,
+                                strokeWidth: 4,
+                                color: AppColors.primary,
+                                backgroundColor: AppColors.primary.withOpacity(0.12),
+                              ),
+                              Text(
+                                '${(progress * 100).toInt()}%',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedRotation(
+                          turns: isExpanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 250),
+                          child: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMedium, size: 20),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              // Circular progress
-              SizedBox(
-                width: 48, height: 48,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 4,
-                      color: AppColors.primary,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                    ),
-                    Text('${(progress * 100).toInt()}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        // "Downloaded Lessons" Header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+
+            // ── Expandable Lessons ──
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 280),
+              crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
                 children: [
-                  const Text('Downloaded Lessons', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  Text('${_formatBytes(courseSize)} Used', style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                  const Divider(height: 1, color: Color(0xFFE8E8E8)),
+                  ...lessons.asMap().entries.map((e) => _buildLessonCard(e.value, e.key + 1)),
+                  const SizedBox(height: 8),
                 ],
               ),
-              const SizedBox(height: 8),
-              Container(
-                height: 3, width: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Divider(height: 1, color: AppColors.greyLight),
-            ],
-          ),
+            ),
+          ],
         ),
-
-        // List of Lessons
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: lessons.length,
-          itemBuilder: (context, index) {
-            return _buildLessonCard(lessons[index], index + 1);
-          },
-        ),
-        const SizedBox(height: 16),
-      ],
+      ),
     );
   }
 
   Widget _defaultCourseIcon() {
     return Container(
-      width: 110, height: 70,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-      ),
+      width: 110, height: 68,
+      color: AppColors.primary.withOpacity(0.1),
       child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 28),
     );
   }
@@ -250,16 +251,15 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
     return InkWell(
       onTap: () {
-        // We do not push to LessonDetailScreen directly from here without Chapter structure,
-        // but we can still push to LessonDetailScreen with this single lesson if needed.
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => LessonDetailScreen(
-              lessons: [lesson], // Just playing this single lesson
+              lessons: [lesson],
               chapterTitle: dl.chapterTitle,
               chapterDescription: '',
               courseTitle: dl.courseTitle,
+              courseThumbnailUrl: dl.courseThumbnailUrl,
               thumbnailUrl: dl.courseThumbnailUrl,
               initialLessonIndex: 0,
             ),
@@ -267,23 +267,20 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3)),
-          ],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
         ),
         child: Row(
           children: [
-            // Thumbnail
+            // Thumbnail with duration badge
             Container(
-              width: 110,
-              height: 70,
+              width: 100, height: 64,
               decoration: BoxDecoration(
-                color: AppColors.greyLight,
+                color: const Color(0xFFE8E8E8),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Stack(
@@ -299,13 +296,12 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                           )
                         : const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)),
                   ),
-                  // Duration Badge
                   Positioned(
                     bottom: 4, right: 4,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withOpacity(0.72),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -317,20 +313,18 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 14),
-            
-            // Title & Details
+            const SizedBox(width: 12),
+            // Title & size
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '$index. ${lesson.title}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Text(
                     '${lesson.durationMinutes}:00 • ${_formatBytes(dl.sizeBytes)}',
                     style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
@@ -338,24 +332,23 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 ],
               ),
             ),
-            
-            // Right Actions
+            // Green check + 3-dots
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 24, height: 24,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF22C55E).withOpacity(0.15),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFDCFCE7),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, color: Color(0xFF22C55E), size: 14),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 GestureDetector(
                   onTap: () => _showDeleteOptions(dl),
                   child: const Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8),
                     child: Icon(Icons.more_vert, color: AppColors.textMedium, size: 20),
                   ),
                 ),
@@ -370,30 +363,26 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   void _showDeleteOptions(DownloadedLesson dl) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete Download', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteDownload(dl.lesson.id);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Delete Download', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _deleteDownload(dl.lesson.id);
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -407,24 +396,11 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.download_done_rounded, size: 80, color: AppColors.primary.withOpacity(0.5)),
+          Icon(Icons.download_done_rounded, size: 80, color: AppColors.primary.withOpacity(0.4)),
           const SizedBox(height: 20),
-          const Text(
-            'No downloads yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
-          ),
+          const Text('No downloads yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 8),
-          const Text(
-            'Videos you download will appear here',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textMedium,
-            ),
-          ),
+          const Text('Videos you download will appear here', style: TextStyle(fontSize: 14, color: AppColors.textMedium)),
         ],
       ),
     );
