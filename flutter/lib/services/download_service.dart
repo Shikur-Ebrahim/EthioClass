@@ -164,18 +164,52 @@ class DownloadService {
     try {
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
         final url = '$apiBaseUrl/media/${lesson.videoUrl!}';
-        final response = await http.head(Uri.parse(url));
-        final cl = response.headers['content-length'];
-        if (cl != null) {
-          totalBytes += int.tryParse(cl) ?? 0;
+        // Try HEAD first (fast)
+        var response = await http.head(Uri.parse(url));
+        var cl = response.headers['content-length'];
+        if (cl != null && int.tryParse(cl) != null && int.parse(cl) > 0) {
+          totalBytes += int.parse(cl);
+        } else {
+          // Fallback: GET with Range header to get Content-Range total
+          final rangeResponse = await http.get(
+            Uri.parse(url),
+            headers: {'Range': 'bytes=0-0'},
+          );
+          final contentRange = rangeResponse.headers['content-range'];
+          if (contentRange != null) {
+            final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
+            if (match != null) {
+              totalBytes += int.tryParse(match.group(1)!) ?? 0;
+            }
+          }
+          if (totalBytes == 0) {
+            cl = rangeResponse.headers['content-length'];
+            if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
+          }
         }
       }
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
         final url = '$apiBaseUrl/media/${lesson.notesUrl!}';
-        final response = await http.head(Uri.parse(url));
-        final cl = response.headers['content-length'];
-        if (cl != null) {
-          totalBytes += int.tryParse(cl) ?? 0;
+        var response = await http.head(Uri.parse(url));
+        var cl = response.headers['content-length'];
+        if (cl != null && int.tryParse(cl) != null && int.parse(cl) > 0) {
+          totalBytes += int.parse(cl);
+        } else {
+          final rangeResponse = await http.get(
+            Uri.parse(url),
+            headers: {'Range': 'bytes=0-0'},
+          );
+          final contentRange = rangeResponse.headers['content-range'];
+          if (contentRange != null) {
+            final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
+            if (match != null) {
+              totalBytes += int.tryParse(match.group(1)!) ?? 0;
+            }
+          }
+          if (totalBytes == 0) {
+            cl = rangeResponse.headers['content-length'];
+            if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
+          }
         }
       }
     } catch (_) {}

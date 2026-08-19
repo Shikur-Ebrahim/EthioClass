@@ -790,7 +790,7 @@ class _ChapterTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.only(right: 14, top: 0, bottom: 0, left: 0),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
@@ -798,12 +798,15 @@ class _ChapterTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Chapter thumbnail with chapter number overlay
+            // Chapter thumbnail - wide rectangle with chapter number badge
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+              ),
               child: SizedBox(
-                width: 56,
-                height: 56,
+                width: 100,
+                height: 72,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -832,16 +835,22 @@ class _ChapterTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Dark overlay so number is readable
-                    Container(color: Colors.black.withOpacity(0.35)),
-                    // Chapter number on top
-                    Center(
-                      child: Text(
-                        '${chapter.chapterNumber}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          fontSize: 18,
+                    // Chapter number badge in bottom-left
+                    Positioned(
+                      bottom: 5, left: 5,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${chapter.chapterNumber}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
@@ -851,17 +860,20 @@ class _ChapterTile extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(chapter.title,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                  if (chapter.description != null && chapter.description!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(chapter.description!, style: const TextStyle(fontSize: 11, color: AppColors.textMedium), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(chapter.title,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                    if (chapter.description != null && chapter.description!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(chapter.description!, style: const TextStyle(fontSize: 11, color: AppColors.textMedium), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 8),
