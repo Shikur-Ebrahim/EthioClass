@@ -97,12 +97,14 @@ class DownloadService {
             options: Options(
               headers: existingBytes > 0 ? {'Range': 'bytes=$existingBytes-'} : null,
               responseType: ResponseType.stream,
+              validateStatus: (status) => status == 200 || status == 206 || status == 416,
             ),
           );
           
           if (response.statusCode == 416) {
             // Range not satisfiable -> file already complete!
             finalSize = existingBytes;
+            reportProgress(progressStart + progressWeight);
             return finalSize;
           }
 
