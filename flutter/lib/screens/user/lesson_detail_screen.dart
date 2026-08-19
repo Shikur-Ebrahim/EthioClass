@@ -55,8 +55,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   bool _videoError = false;
 
   Map<String, DownloadedLesson> _downloadedLessons = {};
-  Map<String, double> _downloadingProgress = {};
   Map<String, int> _remoteSizes = {};
+  // Track local progress for UI refresh trigger
+  final Map<String, double> _downloadingProgress = {};
 
   @override
   void initState() {
@@ -67,6 +68,16 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _initVideo();
       _loadRemoteSizes();
     });
+    // Re-attach to any downloads that are still running
+    for (final lesson in widget.lessons) {
+      if (DownloadService.instance.isDownloading(lesson.id)) {
+        _downloadingProgress[lesson.id] = 0.0;
+        final notifier = DownloadService.instance.progressNotifiers[lesson.id];
+        notifier?.addListener(() {
+          if (mounted) setState(() => _downloadingProgress[lesson.id] = notifier.value);
+        });
+      }
+    }
   }
 
   Lesson? get _currentLesson =>
@@ -503,31 +514,29 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                   GestureDetector(
                     onTap: () async {
                       setState(() { _downloadingProgress[l.id] = 0.0; });
-                      try {
-                        await DownloadService.instance.downloadLesson(
-                          lesson: l,
-                          courseTitle: widget.courseTitle,
-                          chapterTitle: widget.chapterTitle,
-                          courseThumbnailUrl: widget.courseThumbnailUrl ?? widget.thumbnailUrl,
-                          courseTotalLessons: widget.courseTotalLessons,
-                          onProgress: (p) {
-                            if (mounted) {
-                              setState(() => _downloadingProgress[l.id] = p);
-                            }
-                          },
-                        );
+                      // Attach to the progress notifier for live updates
+                      DownloadService.instance.downloadLesson(
+                        lesson: l,
+                        courseTitle: widget.courseTitle,
+                        chapterTitle: widget.chapterTitle,
+                        courseThumbnailUrl: widget.courseThumbnailUrl ?? widget.thumbnailUrl,
+                        courseTotalLessons: widget.courseTotalLessons,
+                        onProgress: (p) {
+                          if (mounted) {
+                            setState(() => _downloadingProgress[l.id] = p);
+                          }
+                        },
+                      ).then((_) async {
                         await _loadAllDownloadStatuses();
-                        if (l.id == _currentLesson?.id) {
-                          _initVideo();
-                        }
-                      } catch (e) {
+                        if (l.id == _currentLesson?.id && mounted) _initVideo();
+                        if (mounted) setState(() { _downloadingProgress.remove(l.id); });
+                      }).catchError((e) {
                         if (mounted) {
+                          setState(() { _downloadingProgress.remove(l.id); });
                           ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Download failed: $e')));
                         }
-                      } finally {
-                        if (mounted) setState(() { _downloadingProgress.remove(l.id); });
-                      }
+                      });
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
