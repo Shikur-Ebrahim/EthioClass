@@ -419,22 +419,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: isActive ? AppColors.primary : AppColors.textDark)),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           Text('${l.durationMinutes} min',
                               style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                          if (_downloadedLessons[l.id] != null) ...[
+                          if (_downloadedLessons[l.id] != null) ...[ 
                             const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                             Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
                                 style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
-                          ] else if (_remoteSizes[l.id] != null) ...[
-                            if (_remoteSizes[l.id]! > 0) ...[
-                              const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                              Text(_formatBytes(_remoteSizes[l.id]!),
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            ]
-                          ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty) ...[
+                          ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
+                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                            Text(_formatBytes(_remoteSizes[l.id]!),
+                                style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                          ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
                             const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                             const SizedBox(
                               width: 10, height: 10,
@@ -443,62 +441,65 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           ],
                         ],
                       ),
+                      // Horizontal progress bar when downloading
+                      if (_downloadingProgress[l.id] != null) ...[
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _downloadingProgress[l.id]! > 0 ? _downloadingProgress[l.id] : null,
+                            backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
+                            color: const Color(0xFF22C55E),
+                            minHeight: 5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _downloadingProgress[l.id]! > 0.01
+                              ? '${(_downloadingProgress[l.id]! * 100).toInt()}%  Downloading...'
+                              : 'Starting...',
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF22C55E), fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                // Download button area
+                // Right-side action button
                 if (_downloadingProgress[l.id] != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF22C55E).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: _downloadingProgress[l.id]! > 0.01
-                              ? CircularProgressIndicator(
-                                  value: _downloadingProgress[l.id],
-                                  strokeWidth: 2,
-                                  color: const Color(0xFF22C55E),
-                                )
-                              : const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF22C55E),
-                                ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _downloadingProgress[l.id]! > 0.01
-                              ? '${(_downloadingProgress[l.id]! * 100).toInt()}%'
-                              : 'Starting',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF22C55E),
-                          ),
-                        ),
-                      ],
+                  // Pause button during download
+                  GestureDetector(
+                    onTap: () {
+                      DownloadService.instance.pauseDownload(l.id);
+                      setState(() { _downloadingProgress.remove(l.id); });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E).withOpacity(0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.pause_rounded, size: 16, color: Color(0xFF22C55E)),
                     ),
                   )
                 else if (_downloadedLessons[l.id] != null)
+                  // Downloaded checkmark
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF22C55E).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text('Downloaded',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF22C55E))),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_rounded, size: 14, color: Color(0xFF22C55E)),
+                        SizedBox(width: 4),
+                        Text('Done', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF22C55E))),
+                      ],
+                    ),
                   )
                 else
+                  // Download / Resume button
                   GestureDetector(
                     onTap: () async {
                       setState(() { _downloadingProgress[l.id] = 0.0; });
@@ -520,10 +521,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           _initVideo();
                         }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Download failed: $e')));
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Download failed: $e')));
+                        }
                       } finally {
-                        setState(() { _downloadingProgress.remove(l.id); });
+                        if (mounted) setState(() { _downloadingProgress.remove(l.id); });
                       }
                     },
                     child: Container(
@@ -532,11 +535,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                         color: AppColors.greyLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Text('Download',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textMedium)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.download_rounded, size: 13, color: AppColors.textMedium),
+                          SizedBox(width: 4),
+                          Text('Download', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMedium)),
+                        ],
+                      ),
                     ),
                   ),
               ],

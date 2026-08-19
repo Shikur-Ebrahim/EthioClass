@@ -11,6 +11,7 @@ import '../config/api_config.dart';
 class DownloadService {
   static const String _storageKey = 'downloaded_lessons';
   final Dio _dio = Dio();
+  final Map<String, CancelToken> _cancelTokens = {};
 
   // Singleton pattern
   DownloadService._privateConstructor();
@@ -39,6 +40,17 @@ class DownloadService {
     }
   }
 
+  final Map<String, bool> _activeDownloads = {};
+
+  void pauseDownload(String lessonId) {
+    _activeDownloads[lessonId] = false;
+  }
+
+  void cancelDownload(String lessonId) {
+    _activeDownloads[lessonId] = false;
+    // We could also delete the partial file here if we wanted
+  }
+
   Future<void> downloadLesson({
     required Lesson lesson,
     required String courseTitle,
@@ -47,9 +59,9 @@ class DownloadService {
     int courseTotalLessons = 1,
     required Function(double) onProgress,
   }) async {
+    _activeDownloads[lesson.id] = true;
     try {
       final dir = await getApplicationDocumentsDirectory();
-      
       String? localVideoPath;
       String? localNotesPath;
       int totalSize = 0;
@@ -58,42 +70,90 @@ class DownloadService {
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
         final videoUrl = '$apiBaseUrl/media/${lesson.videoUrl!}';
         localVideoPath = '${dir.path}/${lesson.id}_video.mp4';
-        
-        await _dio.download(
-          videoUrl,
-          localVideoPath,
-          onReceiveProgress: (received, total) {
-            if (total != -1) {
-              // Video represents 80% of total progress visually
-              onProgress((received / total) * 0.8);
-            }
-          },
-        );
         final file = File(localVideoPath);
+        
+        int downloadedBytes = 0;
         if (await file.exists()) {
-          totalSize += await file.length();
+          downloadedBytes = await file.length();
         }
+
+        final request = http.Request('GET', Uri.parse(videoUrl));
+        if (downloadedBytes > 0) {
+          request.headers['Range'] = 'bytes=$downloadedBytes-';
+        }
+        
+        final response = await http.Client().send(request);
+        
+        // If range request is not supported, it might return 200 OK with full file.
+        // We should handle that by resetting downloadedBytes to 0 and overwriting.
+        var sinkMode = FileMode.append;
+        if (response.statusCode == 200) {
+          downloadedBytes = 0;
+          sinkMode = FileMode.write;
+        } else if (response.statusCode != 206) {
+           throw Exception('Failed to download: HTTP ${response.statusCode}');
+        }
+
+        final totalBytes = downloadedBytes + (response.contentLength ?? 0);
+        final sink = file.openWrite(mode: sinkMode);
+
+        await for (final chunk in response.stream) {
+          if (_activeDownloads[lesson.id] == false) {
+            await sink.close();
+            return; // Paused
+          }
+          sink.add(chunk);
+          downloadedBytes += chunk.length;
+          if (totalBytes > 0) {
+            onProgress((downloadedBytes / totalBytes) * 0.8);
+          }
+        }
+        await sink.close();
+        totalSize += downloadedBytes;
       }
 
       // 2. Download Notes
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
         final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
         localNotesPath = '${dir.path}/${lesson.id}_notes.pdf';
-        
-        await _dio.download(
-          notesUrl,
-          localNotesPath,
-          onReceiveProgress: (received, total) {
-            if (total != -1) {
-              // Notes represents next 10%
-              onProgress(0.8 + (received / total) * 0.1);
-            }
-          },
-        );
         final file = File(localNotesPath);
+        
+        int downloadedBytes = 0;
         if (await file.exists()) {
-          totalSize += await file.length();
+          downloadedBytes = await file.length();
         }
+
+        final request = http.Request('GET', Uri.parse(notesUrl));
+        if (downloadedBytes > 0) {
+          request.headers['Range'] = 'bytes=$downloadedBytes-';
+        }
+        
+        final response = await http.Client().send(request);
+        
+        var sinkMode = FileMode.append;
+        if (response.statusCode == 200) {
+          downloadedBytes = 0;
+          sinkMode = FileMode.write;
+        } else if (response.statusCode != 206) {
+           throw Exception('Failed to download notes: HTTP ${response.statusCode}');
+        }
+
+        final totalBytes = downloadedBytes + (response.contentLength ?? 0);
+        final sink = file.openWrite(mode: sinkMode);
+
+        await for (final chunk in response.stream) {
+          if (_activeDownloads[lesson.id] == false) {
+            await sink.close();
+            return; // Paused
+          }
+          sink.add(chunk);
+          downloadedBytes += chunk.length;
+          if (totalBytes > 0) {
+            onProgress(0.8 + (downloadedBytes / totalBytes) * 0.1);
+          }
+        }
+        await sink.close();
+        totalSize += downloadedBytes;
       }
 
       // 3. Fetch and cache Quiz
@@ -126,7 +186,6 @@ class DownloadService {
         final prefs = await SharedPreferences.getInstance();
         final lessons = await getDownloadedLessons();
         
-        // Remove if already exists to overwrite
         lessons.removeWhere((l) => l.lesson.id == lesson.id);
         lessons.add(newDownload);
         
@@ -135,6 +194,8 @@ class DownloadService {
       }
     } catch (e) {
       throw Exception('Failed to download lesson: $e');
+    } finally {
+      _activeDownloads.remove(lesson.id);
     }
   }
 
@@ -164,28 +225,10 @@ class DownloadService {
     try {
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
         final url = '$apiBaseUrl/media/${lesson.videoUrl!}';
-        // Try HEAD first (fast)
         var response = await http.head(Uri.parse(url));
         var cl = response.headers['content-length'];
         if (cl != null && int.tryParse(cl) != null && int.parse(cl) > 0) {
           totalBytes += int.parse(cl);
-        } else {
-          // Fallback: GET with Range header to get Content-Range total
-          final rangeResponse = await http.get(
-            Uri.parse(url),
-            headers: {'Range': 'bytes=0-0'},
-          );
-          final contentRange = rangeResponse.headers['content-range'];
-          if (contentRange != null) {
-            final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
-            if (match != null) {
-              totalBytes += int.tryParse(match.group(1)!) ?? 0;
-            }
-          }
-          if (totalBytes == 0) {
-            cl = rangeResponse.headers['content-length'];
-            if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
-          }
         }
       }
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
@@ -194,22 +237,6 @@ class DownloadService {
         var cl = response.headers['content-length'];
         if (cl != null && int.tryParse(cl) != null && int.parse(cl) > 0) {
           totalBytes += int.parse(cl);
-        } else {
-          final rangeResponse = await http.get(
-            Uri.parse(url),
-            headers: {'Range': 'bytes=0-0'},
-          );
-          final contentRange = rangeResponse.headers['content-range'];
-          if (contentRange != null) {
-            final match = RegExp(r'/(\d+)$').firstMatch(contentRange);
-            if (match != null) {
-              totalBytes += int.tryParse(match.group(1)!) ?? 0;
-            }
-          }
-          if (totalBytes == 0) {
-            cl = rangeResponse.headers['content-length'];
-            if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
-          }
         }
       }
     } catch (_) {}
