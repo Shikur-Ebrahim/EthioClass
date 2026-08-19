@@ -14,7 +14,7 @@ class DownloadService {
 
   final Dio _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(minutes: 30),
+    receiveTimeout: const Duration(seconds: 15), // Shorter timeout so it catches hangs and retries
   ));
 
   DownloadService._privateConstructor();
@@ -78,7 +78,7 @@ class DownloadService {
     // Helper for robust downloading with auto-retry
     Future<int> downloadWithRetry(String url, String localPath, double progressStart, double progressWeight) async {
       final file = File(localPath);
-      int maxRetries = 10;
+      int maxRetries = 15;
       int retries = 0;
       int finalSize = 0;
       
@@ -122,6 +122,12 @@ class DownloadService {
           
           await sink.close();
           finalSize = existingBytes + received;
+          
+          // Check if stream terminated early without throwing
+          if (totalRemaining > 0 && received < totalRemaining) {
+            throw Exception('Stream terminated early');
+          }
+          
           return finalSize; // Success!
           
         } on DioException catch (e) {

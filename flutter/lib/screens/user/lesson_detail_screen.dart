@@ -71,8 +71,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     // Re-attach to any downloads that are still running
     for (final lesson in widget.lessons) {
       if (DownloadService.instance.isDownloading(lesson.id)) {
-        _downloadingProgress[lesson.id] = 0.0;
         final notifier = DownloadService.instance.progressNotifiers[lesson.id];
+        _downloadingProgress[lesson.id] = notifier?.value ?? 0.0;
         notifier?.addListener(() {
           if (mounted) setState(() => _downloadingProgress[lesson.id] = notifier.value);
         });
