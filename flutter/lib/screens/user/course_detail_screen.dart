@@ -799,6 +799,7 @@ class _ChapterTile extends StatelessWidget {
         child: Row(
           children: [
             // Chapter thumbnail - wide rectangle with chapter number badge
+            // Chapter thumbnail - wide rectangle without overlay
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(14),
@@ -807,12 +808,8 @@ class _ChapterTile extends StatelessWidget {
               child: SizedBox(
                 width: 100,
                 height: 72,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Background: thumbnail image or gradient fallback
-                    if (chapter.thumbnailUrl != null && chapter.thumbnailUrl!.isNotEmpty)
-                      Image.network(
+                child: (chapter.thumbnailUrl != null && chapter.thumbnailUrl!.isNotEmpty)
+                    ? Image.network(
                         '$apiBaseUrl/media/${chapter.thumbnailUrl!}',
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
@@ -825,8 +822,7 @@ class _ChapterTile extends StatelessWidget {
                           ),
                         ),
                       )
-                    else
-                      Container(
+                    : Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [const Color(0xFF1B5E20), AppColors.primary],
@@ -835,27 +831,6 @@ class _ChapterTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Chapter number badge in bottom-left
-                    Positioned(
-                      bottom: 5, left: 5,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${chapter.chapterNumber}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -865,7 +840,7 @@ class _ChapterTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(chapter.title,
+                    Text('${chapter.chapterNumber}. ${chapter.title}',
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                     if (chapter.description != null && chapter.description!.isNotEmpty)
                       Padding(
