@@ -46,10 +46,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     setState(() {
       _groupedDownloads = grouped;
       _isLoading = false;
-      // Auto-expand the first course
-      if (grouped.isNotEmpty && _expandedCourses.isEmpty) {
-        _expandedCourses.add(grouped.keys.first);
-      }
+      // All courses start collapsed — user taps to open
     });
   }
 
@@ -146,41 +143,54 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.only(right: 14, top: 0, bottom: 0, left: 0),
                 decoration: const BoxDecoration(
                   // Subtle blue-gray tint to distinguish from white lesson cards
                   color: Color(0xFFEBF0FB),
                 ),
                 child: Row(
                   children: [
-                    // Thumbnail
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                    // Thumbnail — same style as home page course cards
+                    Container(
+                      width: 72, height: 72,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(0),
+                          bottomLeft: Radius.circular(0),
+                          topRight: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
+                        ),
+                      ),
                       child: thumbUrl != null && thumbUrl.isNotEmpty
                           ? Image.network(
                               '$apiBaseUrl/media/$thumbUrl',
-                              width: 110, height: 68, fit: BoxFit.cover,
+                              width: 72, height: 72,
+                              fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => _defaultCourseIcon(),
                             )
                           : _defaultCourseIcon(),
                     ),
                     const SizedBox(width: 14),
-                    // Title + subtitle
+                    // Title + subtitle + spacing
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            courseTitle,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${lessons.length} Lessons • ${_formatDuration(totalDuration)} • ${_formatBytes(courseSize)}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              courseTitle,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${lessons.length} Lessons • ${_formatDuration(totalDuration)} • ${_formatBytes(courseSize)}',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -239,7 +249,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Widget _defaultCourseIcon() {
     return Container(
-      width: 110, height: 68,
+      width: 72, height: 72,
       color: AppColors.primary.withOpacity(0.1),
       child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 28),
     );
