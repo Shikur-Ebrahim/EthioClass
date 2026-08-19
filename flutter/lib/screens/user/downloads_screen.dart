@@ -141,11 +141,11 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             children: [
               // Course Logo
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: thumbUrl != null && thumbUrl.isNotEmpty
                     ? Image.network(
                         '$apiBaseUrl/media/$thumbUrl',
-                        width: 60, height: 60, fit: BoxFit.contain,
+                        width: 110, height: 70, fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _defaultCourseIcon(),
                       )
                     : _defaultCourseIcon(),
@@ -230,7 +230,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Widget _defaultCourseIcon() {
     return Container(
-      width: 60, height: 60,
+      width: 110, height: 70,
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.1),
       ),
