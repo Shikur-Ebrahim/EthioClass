@@ -11,6 +11,7 @@ class DownloadedLesson {
   final String? cachedQuizJson;
   final int sizeBytes;
   final DateTime downloadedAt;
+  final int courseTotalLessons;
 
   DownloadedLesson({
     required this.lesson,
@@ -22,6 +23,7 @@ class DownloadedLesson {
     this.cachedQuizJson,
     required this.sizeBytes,
     required this.downloadedAt,
+    this.courseTotalLessons = 1,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,27 +31,30 @@ class DownloadedLesson {
       'lesson': lesson.toJson(),
       'courseTitle': courseTitle,
       'chapterTitle': chapterTitle,
-      'courseThumbnailUrl': courseThumbnailUrl,
       'localVideoPath': localVideoPath,
       'localNotesPath': localNotesPath,
       'cachedQuizJson': cachedQuizJson,
       'sizeBytes': sizeBytes,
       'downloadedAt': downloadedAt.toIso8601String(),
+      'courseThumbnailUrl': courseThumbnailUrl,
+      'courseTotalLessons': courseTotalLessons,
     };
   }
 
   factory DownloadedLesson.fromJson(Map<String, dynamic> json) {
     return DownloadedLesson(
-      lesson: Lesson.fromJson(json['lesson']),
+      lesson: Lesson.fromJson(json['lesson'] as Map<String, dynamic>),
       courseTitle: json['courseTitle'] ?? 'Course',
-      chapterTitle: json['chapterTitle'] ?? json['courseTitle'] ?? 'Chapter', // fallback for old data
-      courseThumbnailUrl: json['courseThumbnailUrl'],
-      localVideoPath: json['localVideoPath'],
-      localNotesPath: json['localNotesPath'],
-      cachedQuizJson: json['cachedQuizJson'],
-      sizeBytes: json['sizeBytes'] ?? 0,
-      downloadedAt: DateTime.parse(json['downloadedAt']),
+      chapterTitle: json['chapterTitle'] ?? json['courseTitle'] ?? 'Chapter',
+      courseThumbnailUrl: json['courseThumbnailUrl'] as String?,
+      localVideoPath: json['localVideoPath'] as String?,
+      localNotesPath: json['localNotesPath'] as String?,
+      cachedQuizJson: json['cachedQuizJson'] as String?,
+      sizeBytes: json['sizeBytes'] as int? ?? 0,
+      downloadedAt: json['downloadedAt'] != null 
+          ? DateTime.parse(json['downloadedAt'] as String) 
+          : DateTime.now(),
+      courseTotalLessons: json['courseTotalLessons'] as int? ?? 1,
     );
   }
 }
-

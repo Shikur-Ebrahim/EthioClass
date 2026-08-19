@@ -122,6 +122,11 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     int courseSize = lessons.fold(0, (sum, l) => sum + l.sizeBytes);
     int totalCourseDuration = lessons.fold(0, (sum, l) => sum + l.lesson.durationMinutes);
     String? thumbUrl = lessons.first.courseThumbnailUrl;
+    
+    int totalCourseLessons = lessons.first.courseTotalLessons;
+    if (totalCourseLessons <= 0) totalCourseLessons = 1;
+    double progress = lessons.length / totalCourseLessons;
+    if (progress > 1.0) progress = 1.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,18 +173,19 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                   ],
                 ),
               ),
-              // Circular progress (100% since it's downloaded)
+              // Circular progress
               SizedBox(
                 width: 48, height: 48,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    const CircularProgressIndicator(
-                      value: 1.0,
+                    CircularProgressIndicator(
+                      value: progress,
                       strokeWidth: 4,
                       color: AppColors.primary,
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
                     ),
-                    const Text('100%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                    Text('${(progress * 100).toInt()}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   ],
                 ),
               ),

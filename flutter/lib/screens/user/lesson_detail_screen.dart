@@ -15,6 +15,8 @@ import '../../models/downloaded_lesson_model.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String courseTitle;
+  final String? courseThumbnailUrl;
+  final int courseTotalLessons;
   final String chapterTitle;
   final bool isLocked;
   final String? thumbnailUrl;
@@ -27,6 +29,8 @@ class LessonDetailScreen extends StatefulWidget {
   const LessonDetailScreen({
     super.key,
     this.courseTitle = 'Course',
+    this.courseThumbnailUrl,
+    this.courseTotalLessons = 1,
     required this.chapterTitle,
     this.isLocked = false,
     this.thumbnailUrl,
@@ -518,8 +522,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           lesson: l,
                           courseTitle: widget.courseTitle,
                           chapterTitle: widget.chapterTitle,
-                          courseThumbnailUrl: widget.thumbnailUrl,
-                          onProgress: (p) => setState(() => _downloadingProgress[l.id] = p),
+                          courseThumbnailUrl: widget.courseThumbnailUrl ?? widget.thumbnailUrl,
+                          courseTotalLessons: widget.courseTotalLessons,
+                          onProgress: (p) {
+                            if (mounted) {
+                              setState(() => _downloadingProgress[l.id] = p);
+                            }
+                          },
                         );
                         await _loadAllDownloadStatuses();
                         if (l.id == _currentLesson?.id) {

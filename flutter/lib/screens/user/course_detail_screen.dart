@@ -586,6 +586,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         MaterialPageRoute(
           builder: (_) => LessonDetailScreen(
             courseTitle: widget.course.title,
+            courseThumbnailUrl: widget.course.thumbnailUrl,
+            courseTotalLessons: widget.course.lessonCount,
             chapterTitle: chapter.title,
             isLocked: false,
             thumbnailUrl: chapter.thumbnailUrl,
@@ -602,12 +604,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           context,
           MaterialPageRoute(
             builder: (_) => LessonDetailScreen(
-              chapterTitle: chapter.title,
-              isLocked: false,
-              thumbnailUrl: chapter.thumbnailUrl,
-              chapterNumber: chapter.chapterNumber,
-              chapterDescription: chapter.description,
-            ),
+                courseTitle: widget.course.title,
+                courseThumbnailUrl: widget.course.thumbnailUrl,
+                courseTotalLessons: widget.course.lessonCount,
+                chapterTitle: chapter.title,
+                isLocked: false,
+                thumbnailUrl: chapter.thumbnailUrl,
+                chapterNumber: chapter.chapterNumber,
+                chapterDescription: chapter.description,
+              ),
           ),
         );
       }

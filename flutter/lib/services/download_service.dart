@@ -44,6 +44,7 @@ class DownloadService {
     required String courseTitle,
     required String chapterTitle,
     String? courseThumbnailUrl,
+    int courseTotalLessons = 1,
     required Function(double) onProgress,
   }) async {
     try {
@@ -114,6 +115,7 @@ class DownloadService {
           courseTitle: courseTitle,
           chapterTitle: chapterTitle,
           courseThumbnailUrl: courseThumbnailUrl,
+          courseTotalLessons: courseTotalLessons,
           localVideoPath: localVideoPath,
           localNotesPath: localNotesPath,
           cachedQuizJson: cachedQuizJson,
