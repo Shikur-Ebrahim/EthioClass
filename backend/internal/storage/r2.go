@@ -112,3 +112,30 @@ func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, st
 
 	return result.Body, contentType, size, nil
 }
+
+// HeadObject retrieves metadata for an object without downloading its body.
+func (r *R2Client) HeadObject(ctx context.Context, key string) (string, int64, error) {
+	if r.Client == nil {
+		return "", 0, fmt.Errorf("R2 client not initialized")
+	}
+
+	result, err := r.Client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(r.BucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to head object from R2: %w", err)
+	}
+
+	contentType := "application/octet-stream"
+	if result.ContentType != nil {
+		contentType = *result.ContentType
+	}
+
+	var size int64 = -1
+	if result.ContentLength != nil {
+		size = *result.ContentLength
+	}
+
+	return contentType, size, nil
+}

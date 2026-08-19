@@ -377,8 +377,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 40,
+                  width: 100,
+                  height: 64,
                   decoration: BoxDecoration(
                     color: AppColors.greyLight,
                     borderRadius: BorderRadius.circular(8),
@@ -393,32 +393,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                     fit: StackFit.expand,
                     children: [
                       if (l.thumbnailUrl == null)
-                        const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20))
-                      else
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: isActive
-                                ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
-                                : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
-                          ),
-                        ),
-                      // Lesson number badge
-                      Positioned(
-                        bottom: 3, left: 3,
+                        const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20)),
+                      Center(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isActive ? AppColors.primary : Colors.black.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
                           ),
-                          child: Text(
-                            '${l.lessonNumber}',
-                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
-                          ),
+                          child: isActive
+                              ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
+                              : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -429,7 +414,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l.title,
+                      Text('${l.lessonNumber}. ${l.title}',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

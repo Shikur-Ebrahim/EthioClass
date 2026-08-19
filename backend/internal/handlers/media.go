@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,6 +28,22 @@ func MediaProxyHandler(r2 *storage.R2Client) gin.HandlerFunc {
 			return
 		}
 
+		// Handle HEAD requests specifically to just return headers
+		if c.Request.Method == http.MethodHead {
+			contentType, size, err := r2.HeadObject(c.Request.Context(), key)
+			if err != nil {
+				c.Status(http.StatusNotFound)
+				return
+			}
+			c.Header("Cache-Control", "public, max-age=31536000")
+			c.Header("Content-Type", contentType)
+			if size >= 0 {
+				c.Header("Content-Length", fmt.Sprintf("%d", size))
+			}
+			c.Status(http.StatusOK)
+			return
+		}
+
 		body, contentType, size, err := r2.GetObject(c.Request.Context(), key)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "File not found: " + err.Error()})
@@ -36,6 +53,9 @@ func MediaProxyHandler(r2 *storage.R2Client) gin.HandlerFunc {
 
 		// Stream the object to the client
 		c.Header("Cache-Control", "public, max-age=31536000") // cache for 1 year
+		if size >= 0 {
+			c.Header("Content-Length", fmt.Sprintf("%d", size))
+		}
 		c.DataFromReader(http.StatusOK, size, contentType, body, nil)
 	}
 }
