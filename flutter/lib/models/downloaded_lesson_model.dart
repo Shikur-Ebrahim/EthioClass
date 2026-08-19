@@ -47,7 +47,7 @@ class DownloadedLesson {
       courseTitle: json['courseTitle'] ?? 'Course',
       chapterTitle: json['chapterTitle'] ?? json['courseTitle'] ?? 'Chapter',
       courseThumbnailUrl: json['courseThumbnailUrl'] as String?,
-      localVideoPath: json['localVideoPath'] as String?,
+      localVideoPath: json['localVideoPath'] as String? ?? '',
       localNotesPath: json['localNotesPath'] as String?,
       cachedQuizJson: json['cachedQuizJson'] as String?,
       sizeBytes: json['sizeBytes'] as int? ?? 0,
