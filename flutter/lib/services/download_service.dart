@@ -92,24 +92,46 @@ class DownloadService {
         }
 
         try {
-          await _dio.download(
-            videoUrl,
-            localVideoPath,
-            cancelToken: cancelToken,
-            deleteOnError: false,
-            appendData: existingBytes > 0,
-            options: Options(
-              headers: existingBytes > 0 ? {'Range': 'bytes=$existingBytes-'} : null,
-            ),
-            onReceiveProgress: (received, total) {
+          if (existingBytes > 0) {
+            // Resume: stream into file in append mode
+            final response = await _dio.get<ResponseBody>(
+              videoUrl,
+              cancelToken: cancelToken,
+              options: Options(
+                headers: {'Range': 'bytes=$existingBytes-'},
+                responseType: ResponseType.stream,
+              ),
+            );
+            final sink = file.openWrite(mode: FileMode.append);
+            int received = 0;
+            final total = response.data?.stream != null
+                ? (response.headers.value('content-length') != null
+                    ? int.tryParse(response.headers.value('content-length')!) ?? 0
+                    : 0)
+                : 0;
+            await response.data!.stream.listen((chunk) {
+              sink.add(chunk);
+              received += chunk.length;
               final actualReceived = existingBytes + received;
-              final actualTotal = total > 0 ? existingBytes + total : 0;
-              final progress = actualTotal > 0
-                  ? (actualReceived / actualTotal).clamp(0.0, 0.9)
-                  : 0.05;
-              reportProgress(progress);
-            },
-          );
+              final actualTotal = existingBytes + (total > 0 ? total : received + 1);
+              reportProgress((actualReceived / actualTotal).clamp(0.0, 0.9));
+            }).asFuture();
+            await sink.close();
+          } else {
+            // Fresh download
+            await _dio.download(
+              videoUrl,
+              localVideoPath,
+              cancelToken: cancelToken,
+              deleteOnError: false,
+              onReceiveProgress: (received, total) {
+                final progress = total > 0
+                    ? (received / total).clamp(0.0, 0.9)
+                    : 0.05;
+                reportProgress(progress);
+              },
+            );
+          }
         } on DioException catch (e) {
           if (CancelToken.isCancel(e)) return;
           rethrow;
@@ -128,24 +150,39 @@ class DownloadService {
         if (await file.exists()) existingBytes = await file.length();
 
         try {
-          await _dio.download(
-            notesUrl,
-            localNotesPath,
-            cancelToken: cancelToken,
-            deleteOnError: false,
-            appendData: existingBytes > 0,
-            options: Options(
-              headers: existingBytes > 0 ? {'Range': 'bytes=$existingBytes-'} : null,
-            ),
-            onReceiveProgress: (received, total) {
+          if (existingBytes > 0) {
+            final response = await _dio.get<ResponseBody>(
+              notesUrl,
+              cancelToken: cancelToken,
+              options: Options(
+                headers: {'Range': 'bytes=$existingBytes-'},
+                responseType: ResponseType.stream,
+              ),
+            );
+            final sink = file.openWrite(mode: FileMode.append);
+            final cl = response.headers.value('content-length');
+            final total = cl != null ? (int.tryParse(cl) ?? 0) : 0;
+            int received = 0;
+            await response.data!.stream.listen((chunk) {
+              sink.add(chunk);
+              received += chunk.length;
               final actualReceived = existingBytes + received;
-              final actualTotal = total > 0 ? existingBytes + total : 0;
-              final noteProgress = actualTotal > 0
-                  ? (actualReceived / actualTotal).clamp(0.0, 1.0) * 0.1
-                  : 0.0;
-              reportProgress((0.9 + noteProgress).clamp(0.0, 0.99));
-            },
-          );
+              final actualTotal = existingBytes + (total > 0 ? total : received + 1);
+              reportProgress((0.9 + (actualReceived / actualTotal * 0.1)).clamp(0.0, 0.99));
+            }).asFuture();
+            await sink.close();
+          } else {
+            await _dio.download(
+              notesUrl,
+              localNotesPath,
+              cancelToken: cancelToken,
+              deleteOnError: false,
+              onReceiveProgress: (received, total) {
+                final noteProgress = total > 0 ? (received / total) * 0.1 : 0.0;
+                reportProgress((0.9 + noteProgress).clamp(0.0, 0.99));
+              },
+            );
+          }
         } on DioException catch (e) {
           if (CancelToken.isCancel(e)) return;
           rethrow;
