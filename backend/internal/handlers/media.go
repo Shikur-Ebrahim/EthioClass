@@ -27,7 +27,7 @@ func MediaProxyHandler(r2 *storage.R2Client) gin.HandlerFunc {
 			return
 		}
 
-		body, contentType, err := r2.GetObject(c.Request.Context(), key)
+		body, contentType, size, err := r2.GetObject(c.Request.Context(), key)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "File not found: " + err.Error()})
 			return
@@ -36,6 +36,6 @@ func MediaProxyHandler(r2 *storage.R2Client) gin.HandlerFunc {
 
 		// Stream the object to the client
 		c.Header("Cache-Control", "public, max-age=31536000") // cache for 1 year
-		c.DataFromReader(http.StatusOK, -1, contentType, body, nil)
+		c.DataFromReader(http.StatusOK, size, contentType, body, nil)
 	}
 }

@@ -86,10 +86,10 @@ func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, c
 	return key, nil
 }
 
-// GetObject streams an object from R2 by key.
-func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, string, error) {
+// GetObject streams an object from R2 by key and returns its size.
+func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
 	if r.Client == nil {
-		return nil, "", fmt.Errorf("R2 client not initialized")
+		return nil, "", 0, fmt.Errorf("R2 client not initialized")
 	}
 
 	result, err := r.Client.GetObject(ctx, &s3.GetObjectInput{
@@ -97,7 +97,7 @@ func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, st
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to get object from R2: %w", err)
+		return nil, "", 0, fmt.Errorf("failed to get object from R2: %w", err)
 	}
 
 	contentType := "application/octet-stream"
@@ -105,5 +105,10 @@ func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, st
 		contentType = *result.ContentType
 	}
 
-	return result.Body, contentType, nil
+	var size int64 = -1
+	if result.ContentLength != nil {
+		size = *result.ContentLength
+	}
+
+	return result.Body, contentType, size, nil
 }
