@@ -62,16 +62,80 @@ class DownloadService {
     int courseTotalLessons = 1,
     required Function(double) onProgress,
   }) async {
-    if (_cancelTokens.containsKey(lesson.id)) return;
+    if (_cancelTokens.containsKey(lesson.id)) return; // Already running
 
     final cancelToken = CancelToken();
     _cancelTokens[lesson.id] = cancelToken;
+
     final notifier = ValueNotifier<double>(0.0);
     progressNotifiers[lesson.id] = notifier;
 
     void reportProgress(double p) {
       notifier.value = p;
       onProgress(p);
+    }
+
+    // Helper for robust downloading with auto-retry
+    Future<int> downloadWithRetry(String url, String localPath, double progressStart, double progressWeight) async {
+      final file = File(localPath);
+      int maxRetries = 10;
+      int retries = 0;
+      int finalSize = 0;
+      
+      while (retries < maxRetries) {
+        if (cancelToken.isCancelled) return finalSize;
+        
+        int existingBytes = 0;
+        if (await file.exists()) {
+          existingBytes = await file.length();
+        }
+
+        try {
+          final response = await _dio.get<ResponseBody>(
+            url,
+            cancelToken: cancelToken,
+            options: Options(
+              headers: existingBytes > 0 ? {'Range': 'bytes=$existingBytes-'} : null,
+              responseType: ResponseType.stream,
+            ),
+          );
+          
+          if (response.statusCode == 416) {
+            // Range not satisfiable -> file already complete!
+            finalSize = existingBytes;
+            return finalSize;
+          }
+
+          final sink = file.openWrite(mode: FileMode.append);
+          int received = 0;
+          final clHeader = response.headers.value('content-length');
+          final totalRemaining = clHeader != null ? (int.tryParse(clHeader) ?? 0) : 0;
+          
+          await response.data!.stream.listen((chunk) {
+            sink.add(chunk);
+            received += chunk.length;
+            final actualReceived = existingBytes + received;
+            final actualTotal = existingBytes + (totalRemaining > 0 ? totalRemaining : received + 1);
+            final localProgress = (actualReceived / actualTotal).clamp(0.0, 1.0);
+            reportProgress(progressStart + (localProgress * progressWeight));
+          }).asFuture();
+          
+          await sink.close();
+          finalSize = existingBytes + received;
+          return finalSize; // Success!
+          
+        } on DioException catch (e) {
+          if (CancelToken.isCancel(e)) return finalSize;
+          retries++;
+          if (retries >= maxRetries) rethrow;
+          await Future.delayed(const Duration(seconds: 2)); // Wait before retry
+        } catch (e) {
+          retries++;
+          if (retries >= maxRetries) rethrow;
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      }
+      return finalSize;
     }
 
     try {
@@ -84,118 +148,20 @@ class DownloadService {
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
         final videoUrl = '$apiBaseUrl/media/${lesson.videoUrl!}';
         localVideoPath = '${dir.path}/${lesson.id}_video.mp4';
-        final file = File(localVideoPath);
-
-        int existingBytes = 0;
-        if (await file.exists()) {
-          existingBytes = await file.length();
-        }
-
-        try {
-          if (existingBytes > 0) {
-            // Resume: stream into file in append mode
-            final response = await _dio.get<ResponseBody>(
-              videoUrl,
-              cancelToken: cancelToken,
-              options: Options(
-                headers: {'Range': 'bytes=$existingBytes-'},
-                responseType: ResponseType.stream,
-              ),
-            );
-            final sink = file.openWrite(mode: FileMode.append);
-            int received = 0;
-            final total = response.data?.stream != null
-                ? (response.headers.value('content-length') != null
-                    ? int.tryParse(response.headers.value('content-length')!) ?? 0
-                    : 0)
-                : 0;
-            await response.data!.stream.listen((chunk) {
-              sink.add(chunk);
-              received += chunk.length;
-              final actualReceived = existingBytes + received;
-              final actualTotal = existingBytes + (total > 0 ? total : received + 1);
-              reportProgress((actualReceived / actualTotal).clamp(0.0, 0.9));
-            }).asFuture();
-            await sink.close();
-          } else {
-            // Fresh download
-            await _dio.download(
-              videoUrl,
-              localVideoPath,
-              cancelToken: cancelToken,
-              deleteOnError: false,
-              onReceiveProgress: (received, total) {
-                final progress = total > 0
-                    ? (received / total).clamp(0.0, 0.9)
-                    : 0.05;
-                reportProgress(progress);
-              },
-            );
-          }
-        } on DioException catch (e) {
-          if (CancelToken.isCancel(e)) return;
-          rethrow;
-        }
-
-        if (await file.exists()) totalSize += await file.length();
+        totalSize += await downloadWithRetry(videoUrl, localVideoPath, 0.0, 0.85);
       }
 
       // 2. Download Notes
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
         final notesUrl = '$apiBaseUrl/media/${lesson.notesUrl!}';
         localNotesPath = '${dir.path}/${lesson.id}_notes.pdf';
-        final file = File(localNotesPath);
-
-        int existingBytes = 0;
-        if (await file.exists()) existingBytes = await file.length();
-
-        try {
-          if (existingBytes > 0) {
-            final response = await _dio.get<ResponseBody>(
-              notesUrl,
-              cancelToken: cancelToken,
-              options: Options(
-                headers: {'Range': 'bytes=$existingBytes-'},
-                responseType: ResponseType.stream,
-              ),
-            );
-            final sink = file.openWrite(mode: FileMode.append);
-            final cl = response.headers.value('content-length');
-            final total = cl != null ? (int.tryParse(cl) ?? 0) : 0;
-            int received = 0;
-            await response.data!.stream.listen((chunk) {
-              sink.add(chunk);
-              received += chunk.length;
-              final actualReceived = existingBytes + received;
-              final actualTotal = existingBytes + (total > 0 ? total : received + 1);
-              reportProgress((0.9 + (actualReceived / actualTotal * 0.1)).clamp(0.0, 0.99));
-            }).asFuture();
-            await sink.close();
-          } else {
-            await _dio.download(
-              notesUrl,
-              localNotesPath,
-              cancelToken: cancelToken,
-              deleteOnError: false,
-              onReceiveProgress: (received, total) {
-                final noteProgress = total > 0 ? (received / total) * 0.1 : 0.0;
-                reportProgress((0.9 + noteProgress).clamp(0.0, 0.99));
-              },
-            );
-          }
-        } on DioException catch (e) {
-          if (CancelToken.isCancel(e)) return;
-          rethrow;
-        }
-
-        if (await file.exists()) totalSize += await file.length();
+        totalSize += await downloadWithRetry(notesUrl, localNotesPath, 0.85, 0.14);
       }
 
       // 3. Cache Quiz
       String? cachedQuizJson;
       try {
-        final quizResponse =
-            await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${lesson.id}'));
+        final quizResponse = await http.get(Uri.parse('$apiBaseUrl/quizzes?lesson_id=${lesson.id}'));
         if (quizResponse.statusCode == 200) cachedQuizJson = quizResponse.body;
       } catch (_) {}
 
@@ -220,8 +186,7 @@ class DownloadService {
         final lessons = await getDownloadedLessons();
         lessons.removeWhere((l) => l.lesson.id == lesson.id);
         lessons.add(newDownload);
-        await prefs.setString(
-            _storageKey, jsonEncode(lessons.map((e) => e.toJson()).toList()));
+        await prefs.setString(_storageKey, jsonEncode(lessons.map((e) => e.toJson()).toList()));
       }
     } catch (e) {
       throw Exception('Failed to download lesson: $e');
@@ -253,14 +218,15 @@ class DownloadService {
   Future<int> getLessonSize(Lesson lesson) async {
     int totalBytes = 0;
     try {
+      final nocache = '?t=${DateTime.now().millisecondsSinceEpoch}';
       if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
-        final url = '$apiBaseUrl/media/${lesson.videoUrl!}';
+        final url = '$apiBaseUrl/media/${lesson.videoUrl!}$nocache';
         final response = await http.head(Uri.parse(url));
         final cl = response.headers['content-length'];
         if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
       }
       if (lesson.notesUrl != null && lesson.notesUrl!.isNotEmpty) {
-        final url = '$apiBaseUrl/media/${lesson.notesUrl!}';
+        final url = '$apiBaseUrl/media/${lesson.notesUrl!}$nocache';
         final response = await http.head(Uri.parse(url));
         final cl = response.headers['content-length'];
         if (cl != null) totalBytes += int.tryParse(cl) ?? 0;
