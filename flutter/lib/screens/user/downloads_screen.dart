@@ -364,7 +364,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 ),
                 const SizedBox(width: 2),
                 GestureDetector(
-                  onTap: () => _showDeleteOptions(dl),
+                  onTap: () => _showLessonOptions(context, dl),
                   child: const Padding(
                     padding: EdgeInsets.all(8),
                     child: Icon(Icons.more_vert, color: AppColors.textMedium, size: 20),
