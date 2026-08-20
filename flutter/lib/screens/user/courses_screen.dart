@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 110,
+      expandedHeight: 165,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.navy,
@@ -154,31 +154,64 @@ class _CoursesScreenState extends State<CoursesScreen> {
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Explore Courses',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
-                        const SizedBox(height: 3),
-                        Text('${_allCourses.length} courses available',
-                            style: const TextStyle(fontSize: 12, color: Colors.white60)),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Explore Courses',
+                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                            const SizedBox(height: 3),
+                            Text('${_allCourses.length} courses available',
+                                style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            _toggleBtn(Icons.view_list_rounded, !_isGridView, () => setState(() => _isGridView = false)),
+                            _toggleBtn(Icons.grid_view_rounded, _isGridView, () => setState(() => _isGridView = true)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  // Search bar — visible on load, collapses on scroll
                   Container(
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
                     ),
-                    child: Row(
-                      children: [
-                        _toggleBtn(Icons.view_list_rounded, !_isGridView, () => setState(() => _isGridView = false)),
-                        _toggleBtn(Icons.grid_view_rounded, _isGridView, () => setState(() => _isGridView = true)),
-                      ],
+                    child: TextField(
+                      controller: _searchCtrl,
+                      style: const TextStyle(color: AppColors.textDark, fontSize: 14),
+                      cursorColor: AppColors.primary,
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      decoration: InputDecoration(
+                        hintText: 'Search courses, instructors...',
+                        hintStyle: const TextStyle(color: AppColors.grey, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.grey, size: 20),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
+                                child: const Icon(Icons.close_rounded, color: AppColors.grey, size: 18))
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
                   ),
                 ],
@@ -188,42 +221,12 @@ class _CoursesScreenState extends State<CoursesScreen> {
         ),
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(140),
+        preferredSize: const Size.fromHeight(90),
         child: Container(
           color: AppColors.navy,
           child: Column(
             children: [
-              // ── Search bar (always visible) ──────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Container(
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    cursorColor: AppColors.primary,
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: InputDecoration(
-                      hintText: 'Search courses, instructors...',
-                      hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
-                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.white70, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? GestureDetector(
-                              onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
-                              child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18))
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
-              // ── Category chips ──────────────────────────────
+              // Category chips
               SizedBox(
                 height: 38,
                 child: ListView.separated(
@@ -256,7 +259,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   },
                 ),
               ),
-              // ── Sort row ────────────────────────────────────
+              // Sort row
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Row(
