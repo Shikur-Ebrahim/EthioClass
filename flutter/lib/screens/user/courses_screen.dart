@@ -3,9 +3,12 @@ import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/course_model.dart';
 import '../../models/category_model.dart';
+import '../../models/chapter_model.dart';
+import '../../models/lesson_model.dart';
 import '../../services/course_service.dart';
 import '../../services/progress_service.dart';
 import 'course_detail_screen.dart';
+import 'lesson_detail_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -108,14 +111,79 @@ class _CoursesScreenState extends State<CoursesScreen> {
     return n.toString();
   }
 
-  void _openCourse(Course course, int i, {bool autoPlay = false}) {
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => CourseDetailScreen(
-        course: course, index: i,
-        categoryName: course.categoryName ?? 'Course',
-        autoPlayLast: autoPlay,
-      ),
-    ));
+  void _openCourse(Course course, int i, {bool autoPlay = false}) async {
+    if (!autoPlay) {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => CourseDetailScreen(
+          course: course, index: i,
+          categoryName: course.categoryName ?? 'Course',
+          autoPlayLast: false,
+        ),
+      ));
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+    );
+
+    try {
+      final chapters = await CourseService().getChapters(course.id);
+      if (chapters.isEmpty) throw Exception('No chapters');
+
+      final lastWatched = ProgressService.instance.getLastWatched(course.id);
+      Chapter targetChapter;
+      int targetLessonIndex = 0;
+
+      if (lastWatched != null) {
+        final String lastChapterId = lastWatched['chapterId'] as String;
+        final int lastLessonIndex = lastWatched['lessonIndex'] as int;
+
+        final foundChapter = chapters.cast<Chapter?>().firstWhere(
+          (c) => c?.id == lastChapterId,
+          orElse: () => null,
+        );
+
+        targetChapter = foundChapter ?? chapters.first;
+        targetLessonIndex = foundChapter != null ? lastLessonIndex : 0;
+      } else {
+        targetChapter = chapters.first;
+      }
+
+      final lessons = await CourseService().getLessons(targetChapter.id);
+      final safeIndex = targetLessonIndex < lessons.length ? targetLessonIndex : 0;
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LessonDetailScreen(
+            courseId: course.id,
+            courseTitle: course.title,
+            courseThumbnailUrl: course.thumbnailUrl,
+            courseTotalLessons: course.lessonCount,
+            chapterTitle: targetChapter.title,
+            isLocked: false,
+            thumbnailUrl: targetChapter.thumbnailUrl,
+            chapterNumber: targetChapter.chapterNumber,
+            chapterDescription: targetChapter.description,
+            lessons: lessons,
+            initialLessonIndex: safeIndex,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not resume course: $e')),
+      );
+    }
   }
 
   @override
