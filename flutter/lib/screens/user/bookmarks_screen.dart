@@ -101,8 +101,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildLessonsTab(filteredLessons),
                         _buildCoursesTab(filteredCourses),
+                        _buildLessonsTab(filteredLessons),
                       ],
                     ),
             ),
@@ -222,8 +222,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           dividerColor: Colors.transparent,
           tabs: [
-            Tab(text: 'Lessons (${_lessons.length})'),
             Tab(text: 'Courses (${_courses.length})'),
+            Tab(text: 'Lessons (${_lessons.length})'),
           ],
         ),
       ),
