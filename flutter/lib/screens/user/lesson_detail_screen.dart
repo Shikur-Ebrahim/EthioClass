@@ -459,7 +459,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
                                   color: isActive ? AppColors.primary : (isCompleted ? AppColors.grey : AppColors.textDark))),
                           const SizedBox(height: 4),
                           Row(
