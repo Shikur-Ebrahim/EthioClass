@@ -414,6 +414,29 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                   );
                 },
               ),
+
+            ListTile(
+              leading: const Icon(Icons.quiz_outlined, color: Colors.orange),
+              title: const Text('Take Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(bottomSheetContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LessonDetailScreen(
+                      lessons: [dl.lesson],
+                      chapterTitle: dl.chapterTitle,
+                      chapterDescription: '',
+                      courseTitle: dl.courseTitle,
+                      courseThumbnailUrl: dl.courseThumbnailUrl,
+                      thumbnailUrl: dl.courseThumbnailUrl,
+                      initialLessonIndex: 0,
+                      initialTab: 2, // 2 is Quiz tab
+                    ),
+                  ),
+                );
+              },
+            ),
               
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
