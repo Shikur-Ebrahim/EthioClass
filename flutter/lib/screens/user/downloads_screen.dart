@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/download_service.dart';
@@ -15,8 +15,11 @@ class DownloadsScreen extends StatefulWidget {
 
 class _DownloadsScreenState extends State<DownloadsScreen> {
   Map<String, List<DownloadedLesson>> _groupedDownloads = {};
+  Map<String, List<DownloadedLesson>> _filtered = {};
   final Set<String> _expandedCourses = {};
   bool _isLoading = true;
+  String _searchQuery = '';
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -24,10 +27,15 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     _loadDownloads();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadDownloads() async {
     setState(() => _isLoading = true);
     final lessons = await DownloadService.instance.getDownloadedLessons();
-
     final validLessons = <DownloadedLesson>[];
     for (final dl in lessons) {
       if (dl.courseTitle == dl.chapterTitle || dl.courseTitle == 'Course') {
@@ -36,21 +44,32 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         validLessons.add(dl);
       }
     }
-
     Map<String, List<DownloadedLesson>> grouped = {};
     for (var dl in validLessons) {
       final course = dl.courseTitle;
       if (!grouped.containsKey(course)) grouped[course] = [];
       grouped[course]!.add(dl);
     }
-
     setState(() {
       _groupedDownloads = grouped;
+      _filtered = grouped;
       _isLoading = false;
-      // If only one course downloaded, auto-expand it
-      // If multiple courses, keep all collapsed so user can tap to open
-      if (grouped.length == 1) {
-        _expandedCourses.add(grouped.keys.first);
+      if (grouped.length == 1) _expandedCourses.add(grouped.keys.first);
+    });
+  }
+
+  void _applySearch(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filtered = _groupedDownloads;
+      } else {
+        _filtered = {};
+        for (final entry in _groupedDownloads.entries) {
+          if (entry.key.toLowerCase().contains(query.toLowerCase())) {
+            _filtered[entry.key] = entry.value;
+          }
+        }
       }
     });
   }
@@ -60,10 +79,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     const suffixes = ['B', 'KB', 'MB', 'GB'];
     var i = 0;
     double d = bytes.toDouble();
-    while (d >= 1024 && i < suffixes.length - 1) {
-      d /= 1024;
-      i++;
-    }
+    while (d >= 1024 && i < suffixes.length - 1) { d /= 1024; i++; }
     return '${d.toStringAsFixed(1)} ${suffixes[i]}';
   }
 
@@ -74,178 +90,261 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     return m == 0 ? '${h}h' : '${h}h ${m}m';
   }
 
+  int get _totalLessons => _groupedDownloads.values.fold(0, (s, l) => s + l.length);
+  int get _totalBytes => _groupedDownloads.values.expand((l) => l).fold(0, (s, dl) => s + dl.sizeBytes);
+  int get _totalMinutes => _groupedDownloads.values.expand((l) => l).fold(0, (s, dl) => s + dl.lesson.durationMinutes);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        title: const Text(
-          'Downloads',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.textDark),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _groupedDownloads.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadDownloads,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _groupedDownloads.length,
-                    itemBuilder: (context, index) {
-                      final courseTitle = _groupedDownloads.keys.elementAt(index);
-                      final lessons = _groupedDownloads[courseTitle]!;
-                      final isExpanded = _expandedCourses.contains(courseTitle);
-                      return _buildCourseAccordion(courseTitle, lessons, isExpanded);
-                    },
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [_buildSliverHeader()],
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : _groupedDownloads.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: _loadDownloads,
+                    color: AppColors.primary,
+                    child: _filtered.isEmpty
+                        ? _buildNoResults()
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 24),
+                            itemCount: _filtered.length,
+                            itemBuilder: (context, index) {
+                              final courseTitle = _filtered.keys.elementAt(index);
+                              final lessons = _filtered[courseTitle]!;
+                              final isExpanded = _expandedCourses.contains(courseTitle);
+                              return _buildCourseCard(courseTitle, lessons, isExpanded);
+                            },
+                          ),
                   ),
-                ),
+      ),
     );
   }
 
-  Widget _buildCourseAccordion(String courseTitle, List<DownloadedLesson> lessons, bool isExpanded) {
+  Widget _buildSliverHeader() {
+    return SliverToBoxAdapter(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Downloads', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                          SizedBox(height: 2),
+                          Text('Your offline library', style: TextStyle(fontSize: 13, color: Colors.white54)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.storage_rounded, color: AppColors.primary, size: 16),
+                          const SizedBox(width: 6),
+                          Text(_formatBytes(_totalBytes),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (!_isLoading && _groupedDownloads.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: Row(
+                    children: [
+                      _buildStatChip(Icons.folder_outlined, '${_groupedDownloads.length}', 'Courses'),
+                      const SizedBox(width: 10),
+                      _buildStatChip(Icons.play_circle_outline_rounded, '$_totalLessons', 'Lessons'),
+                      const SizedBox(width: 10),
+                      _buildStatChip(Icons.timer_outlined, _formatDuration(_totalMinutes), 'Duration'),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: _applySearch,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Search downloaded courses...',
+                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
+                      prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.6), size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.6), size: 18),
+                              onPressed: () { _searchCtrl.clear(); _applySearch(''); },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(IconData icon, String value, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.12)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 16),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourseCard(String courseTitle, List<DownloadedLesson> lessons, bool isExpanded) {
     final courseSize = lessons.fold(0, (sum, l) => sum + l.sizeBytes);
     final totalDuration = lessons.fold(0, (sum, l) => sum + l.lesson.durationMinutes);
     final thumbUrl = lessons.first.courseThumbnailUrl;
-
     int totalCourseLessons = lessons.first.courseTotalLessons;
     if (totalCourseLessons <= 0) totalCourseLessons = 1;
     double progress = lessons.length / totalCourseLessons;
     if (progress > 1.0) progress = 1.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Column(
           children: [
-            // ── Course Header Row (tappable) ──
             InkWell(
               onTap: () {
                 setState(() {
-                  if (isExpanded) {
-                    _expandedCourses.remove(courseTitle);
-                  } else {
-                    _expandedCourses.add(courseTitle);
-                  }
+                  if (isExpanded) { _expandedCourses.remove(courseTitle); }
+                  else { _expandedCourses.add(courseTitle); }
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.only(right: 14, top: 0, bottom: 0, left: 0),
-                decoration: const BoxDecoration(
-                  // Subtle blue-gray tint to distinguish from white lesson cards
-                  color: Color(0xFFEBF0FB),
-                ),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
                 child: Row(
                   children: [
-                    // Thumbnail — same style as home page course cards
-                    Container(
-                      width: 72, height: 72,
-                      clipBehavior: Clip.hardEdge,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(0),
-                          bottomLeft: Radius.circular(0),
-                          topRight: Radius.circular(8),
-                          bottomRight: Radius.circular(8),
-                        ),
-                      ),
+                    SizedBox(
+                      width: 90, height: 80,
                       child: thumbUrl != null && thumbUrl.isNotEmpty
-                          ? Image.network(
-                              '$apiBaseUrl/media/$thumbUrl',
-                              width: 72, height: 72,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _defaultCourseIcon(),
-                            )
+                          ? Image.network('$apiBaseUrl/media/$thumbUrl', fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _defaultCourseIcon())
                           : _defaultCourseIcon(),
                     ),
                     const SizedBox(width: 14),
-                    // Title + subtitle + spacing
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              courseTitle,
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            Text(courseTitle,
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark),
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Icon(Icons.play_circle_outline, size: 12, color: AppColors.textMedium),
+                                const SizedBox(width: 4),
+                                Text('${lessons.length} lessons', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.timer_outlined, size: 12, color: AppColors.textMedium),
+                                const SizedBox(width: 4),
+                                Text(_formatDuration(totalDuration), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress, minHeight: 5,
+                                backgroundColor: AppColors.primary.withOpacity(0.12),
+                                color: AppColors.primary,
+                              ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${lessons.length} Lessons • ${_formatDuration(totalDuration)} • ${_formatBytes(courseSize)}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
-                            ),
+                            Text('${(progress * 100).toInt()}% downloaded  •  ${_formatBytes(courseSize)}',
+                                style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    // Progress ring + chevron
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: 44, height: 44,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CircularProgressIndicator(
-                                value: progress,
-                                strokeWidth: 4,
-                                color: AppColors.primary,
-                                backgroundColor: AppColors.primary.withOpacity(0.12),
-                              ),
-                              Text(
-                                '${(progress * 100).toInt()}%',
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        AnimatedRotation(
-                          turns: isExpanded ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 250),
-                          child: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMedium, size: 20),
-                        ),
-                      ],
+                    AnimatedRotation(
+                      turns: isExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMedium, size: 22),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // ── Expandable Lessons ──
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 280),
               crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               firstChild: const SizedBox.shrink(),
               secondChild: Column(
                 children: [
-                  const Divider(height: 1, color: Color(0xFFE8E8E8)),
+                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                  const SizedBox(height: 4),
                   ...lessons.asMap().entries.map((e) {
                     final allCourseLessons = lessons.map((l) => l.lesson).toList();
-                    return _buildLessonCard(e.value, e.key + 1, allCourseLessons, e.key);
+                    return _buildLessonTile(e.value, e.key + 1, allCourseLessons, e.key);
                   }),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),
@@ -257,120 +356,110 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Widget _defaultCourseIcon() {
     return Container(
-      width: 72, height: 72,
-      color: AppColors.primary.withOpacity(0.1),
-      child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 28),
+      width: 90, height: 80,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary.withOpacity(0.7), AppColors.primary],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Icon(Icons.school_rounded, color: Colors.white, size: 30),
     );
   }
 
-  Widget _buildLessonCard(DownloadedLesson dl, int displayIndex, List<Lesson> allCourseLessons, int tapIndex) {
+  Widget _buildLessonTile(DownloadedLesson dl, int displayIndex, List<Lesson> allCourseLessons, int tapIndex) {
     final lesson = dl.lesson;
     final thumbUrl = lesson.thumbnailUrl ?? dl.courseThumbnailUrl;
 
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LessonDetailScreen(
-              lessons: allCourseLessons,
-              chapterTitle: dl.chapterTitle,
-              chapterDescription: '',
-              courseTitle: dl.courseTitle,
-              courseThumbnailUrl: dl.courseThumbnailUrl,
-              thumbnailUrl: dl.courseThumbnailUrl,
-              initialLessonIndex: tapIndex,
-            ),
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => LessonDetailScreen(
+            lessons: allCourseLessons,
+            chapterTitle: dl.chapterTitle,
+            chapterDescription: '',
+            courseTitle: dl.courseTitle,
+            courseThumbnailUrl: dl.courseThumbnailUrl,
+            thumbnailUrl: dl.courseThumbnailUrl,
+            initialLessonIndex: tapIndex,
           ),
-        );
+        ));
       },
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: const Color(0xFFF8F9FA),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
         ),
         child: Row(
           children: [
-            // Thumbnail with duration badge
             Container(
-              width: 100, height: 64,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              width: 88, height: 60,
+              decoration: BoxDecoration(color: const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(10)),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: thumbUrl != null && thumbUrl.isNotEmpty
-                        ? Image.network(
-                            '$apiBaseUrl/media/$thumbUrl',
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)),
-                          )
+                        ? Image.network('$apiBaseUrl/media/$thumbUrl', fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)))
                         : const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)),
+                  ),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), shape: BoxShape.circle),
+                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                    ),
                   ),
                   Positioned(
                     bottom: 4, right: 4,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.72),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${lesson.durationMinutes}:00',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.72), borderRadius: BorderRadius.circular(4)),
+                      child: Text('${lesson.durationMinutes}m',
+                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            // Title & size
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '$displayIndex. ${lesson.title}',
-                    maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark),
-                  ),
+                  Text('$displayIndex. ${lesson.title}',
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                   const SizedBox(height: 5),
-                  Text(
-                    '${lesson.durationMinutes}:00 • ${_formatBytes(dl.sizeBytes)}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMedium),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(6)),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.download_done_rounded, size: 10, color: Color(0xFF16A34A)),
+                            SizedBox(width: 3),
+                            Text('Offline', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(_formatBytes(dl.sizeBytes), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                    ],
                   ),
                 ],
               ),
             ),
-            // Green check + 3-dots
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 24, height: 24,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFDCFCE7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Color(0xFF22C55E), size: 14),
-                ),
-                const SizedBox(width: 2),
-                GestureDetector(
-                  onTap: () => _showLessonOptions(context, dl),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Icon(Icons.more_vert, color: AppColors.textMedium, size: 20),
-                  ),
-                ),
-              ],
+            GestureDetector(
+              onTap: () => _showLessonOptions(context, dl),
+              child: const Padding(padding: EdgeInsets.all(8), child: Icon(Icons.more_vert, color: AppColors.textMedium, size: 20)),
             ),
           ],
         ),
@@ -381,73 +470,72 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   void _showLessonOptions(BuildContext context, DownloadedLesson dl) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (bottomSheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 20),
-            
-            if (dl.lesson.notesUrl != null && dl.lesson.notesUrl!.isNotEmpty)
+      backgroundColor: Colors.transparent,
+      builder: (bsc) => Container(
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(dl.lesson.title, textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 4),
+              if (dl.lesson.notesUrl != null && dl.lesson.notesUrl!.isNotEmpty)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
+                  ),
+                  title: const Text('View Notes', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: const Text('Open PDF notes for this lesson', style: TextStyle(fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(bsc);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => LessonDetailScreen(
+                      lessons: [dl.lesson], chapterTitle: dl.chapterTitle, chapterDescription: '',
+                      courseTitle: dl.courseTitle, courseThumbnailUrl: dl.courseThumbnailUrl,
+                      thumbnailUrl: dl.courseThumbnailUrl, initialLessonIndex: 0, initialTab: 1,
+                    )));
+                  },
+                ),
               ListTile(
-                leading: const Icon(Icons.description_outlined, color: AppColors.primary),
-                title: const Text('View Notes', style: TextStyle(fontWeight: FontWeight.bold)),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.quiz_outlined, color: Colors.orange, size: 20),
+                ),
+                title: const Text('Take Quiz', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Test your knowledge', style: TextStyle(fontSize: 11)),
                 onTap: () {
-                  Navigator.pop(bottomSheetContext); // close bottom sheet
-                  // Navigate to LessonDetailScreen directly on the Notes tab
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LessonDetailScreen(
-                        lessons: [dl.lesson],
-                        chapterTitle: dl.chapterTitle,
-                        chapterDescription: '',
-                        courseTitle: dl.courseTitle,
-                        courseThumbnailUrl: dl.courseThumbnailUrl,
-                        thumbnailUrl: dl.courseThumbnailUrl,
-                        initialLessonIndex: 0,
-                        initialTab: 1, // 1 is Notes tab
-                      ),
-                    ),
-                  );
+                  Navigator.pop(bsc);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => LessonDetailScreen(
+                    lessons: [dl.lesson], chapterTitle: dl.chapterTitle, chapterDescription: '',
+                    courseTitle: dl.courseTitle, courseThumbnailUrl: dl.courseThumbnailUrl,
+                    thumbnailUrl: dl.courseThumbnailUrl, initialLessonIndex: 0, initialTab: 2,
+                  )));
                 },
               ),
-
-            ListTile(
-              leading: const Icon(Icons.quiz_outlined, color: Colors.orange),
-              title: const Text('Take Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(bottomSheetContext);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LessonDetailScreen(
-                      lessons: [dl.lesson],
-                      chapterTitle: dl.chapterTitle,
-                      chapterDescription: '',
-                      courseTitle: dl.courseTitle,
-                      courseThumbnailUrl: dl.courseThumbnailUrl,
-                      thumbnailUrl: dl.courseThumbnailUrl,
-                      initialLessonIndex: 0,
-                      initialTab: 2, // 2 is Quiz tab
-                    ),
-                  ),
-                );
-              },
-            ),
-              
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete Download', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(bottomSheetContext);
-                _deleteDownload(dl.lesson.id);
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                ),
+                title: const Text('Delete Download', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Remove from offline storage', style: TextStyle(fontSize: 11)),
+                onTap: () { Navigator.pop(bsc); _deleteDownload(dl.lesson.id); },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -460,14 +548,38 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Widget _buildEmptyState() {
     return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 110, height: 110,
+              decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.08), shape: BoxShape.circle),
+              child: Icon(Icons.download_for_offline_outlined, size: 56, color: AppColors.primary.withOpacity(0.6)),
+            ),
+            const SizedBox(height: 24),
+            const Text('No Downloads Yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+            const SizedBox(height: 10),
+            const Text('Download lessons from any course to\nwatch them offline anytime.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.6)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoResults() {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.download_done_rounded, size: 80, color: AppColors.primary.withOpacity(0.4)),
-          const SizedBox(height: 20),
-          const Text('No downloads yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          const SizedBox(height: 8),
-          const Text('Videos you download will appear here', style: TextStyle(fontSize: 14, color: AppColors.textMedium)),
+          Icon(Icons.search_off_rounded, size: 60, color: AppColors.grey.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          const Text('No results found', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+          const SizedBox(height: 6),
+          Text('No downloads match "$_searchQuery"', style: const TextStyle(fontSize: 13, color: AppColors.textMedium)),
         ],
       ),
     );
