@@ -4,6 +4,7 @@ import '../../config/api_config.dart';
 import '../../models/course_model.dart';
 import '../../models/category_model.dart';
 import '../../services/course_service.dart';
+import '../../services/progress_service.dart';
 import 'course_detail_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
@@ -128,7 +129,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 ? _buildError()
                 : _filtered.isEmpty
                     ? _buildEmpty()
-                    : _isGridView ? _buildGrid() : _buildList(),
+                    : _buildScrollableBody(),
       ),
     );
   }
