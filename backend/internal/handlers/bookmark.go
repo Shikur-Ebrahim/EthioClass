@@ -151,11 +151,17 @@ func GetBookmarksHandler(db *sql.DB) gin.HandlerFunc {
 		// 1. Fetch bookmarked courses
 		cRows, err := db.QueryContext(c.Request.Context(),
 			`SELECT c.id, c.category_id, cat.name as category_name, c.title, c.description, 
-			        c.instructor_name, c.thumbnail_url, c.lesson_count, c.duration_minutes
+			        c.instructor_name, c.thumbnail_url,
+			        COUNT(DISTINCT l.id) as lesson_count,
+			        COALESCE(SUM(l.duration_minutes), 0) as duration_minutes
 			 FROM bookmarked_courses bc
 			 JOIN courses c ON bc.course_id = c.id
 			 LEFT JOIN categories cat ON c.category_id = cat.id
-			 WHERE bc.user_id = $1 ORDER BY bc.created_at DESC`, userID)
+			 LEFT JOIN chapters ch ON ch.course_id = c.id
+			 LEFT JOIN lessons l ON l.chapter_id = ch.id
+			 WHERE bc.user_id = $1
+			 GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.instructor_name, c.thumbnail_url
+			 ORDER BY MAX(bc.created_at) DESC`, userID)
 		
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch course bookmarks: " + err.Error()})
