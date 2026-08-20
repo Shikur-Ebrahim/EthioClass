@@ -35,7 +35,10 @@ class _MainLayoutState extends State<MainLayout> {
   void initState() {
     super.initState();
     _pages = [
-      HomeScreen(userName: widget.userName),
+      HomeScreen(
+        userName: widget.userName,
+        onGoToCourses: () => setState(() => _selectedIndex = 1),
+      ),
       const CoursesScreen(),
       const DownloadsScreen(),
       const BookmarksScreen(),

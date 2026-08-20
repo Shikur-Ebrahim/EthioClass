@@ -4,12 +4,14 @@ import '../../config/api_config.dart';
 import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import 'all_categories_screen.dart';
 import 'category_detail_screen.dart';
 import 'course_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
-  const HomeScreen({super.key, required this.userName});
+  final VoidCallback? onGoToCourses;
+  const HomeScreen({super.key, required this.userName, this.onGoToCourses});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -135,11 +137,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (_isSearching) ...[
                   _buildSearchResults(),
                 ] else ...[
-                  _buildSectionHeader('Explore Categories', onViewAll: () {}),
+                  _buildSectionHeader('Explore Categories', onViewAll: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const AllCategoriesScreen(),
+                    ));
+                  }),
                   const SizedBox(height: 14),
                   _buildCategories(),
                   const SizedBox(height: 28),
-                  _buildSectionHeader('All Courses', onViewAll: () {}),
+                  _buildSectionHeader('All Courses', onViewAll: () {
+                    widget.onGoToCourses?.call();
+                  }),
                   const SizedBox(height: 14),
                   _buildCourses(),
                 ],
