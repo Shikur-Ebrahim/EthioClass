@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/category_model.dart';
 import '../../services/course_service.dart';
@@ -186,7 +186,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           padding: const EdgeInsets.all(16),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2, crossAxisSpacing: 14,
-                            mainAxisSpacing: 14, childAspectRatio: 0.85,
+                            mainAxisSpacing: 14, childAspectRatio: 0.75,
                           ),
                           itemCount: _filtered.length,
                           itemBuilder: (ctx, i) {
@@ -250,7 +250,7 @@ class _CategoryGridCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: SizedBox(
-              height: 110, width: double.infinity,
+              height: 100, width: double.infinity,
               child: category.imageUrl != null && category.imageUrl!.isNotEmpty
                   ? Image.network(category.imageUrl!, fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _buildGradientBanner())
