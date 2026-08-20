@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/course_model.dart';
@@ -37,6 +38,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   String? _prefetchedTxRef;
   String? _prefetchedCheckoutUrl;
 
+  // Wishlist
+  bool _isWishlisted = false;
+
   final List<Color> _headerColors = [
     const Color(0xFF0F172A),
     const Color(0xFF1E3A8A),
@@ -56,6 +60,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     _loadChapters();
     _preInitializePayment();
+    _loadWishlistState();
+  }
+
+  Future<void> _loadWishlistState() async {
+    final prefs = await _SharedPrefsHelper.get();
+    final wishlist = prefs.getStringList('wishlist_courses') ?? [];
+    if (mounted) {
+      setState(() => _isWishlisted = wishlist.contains(widget.course.id));
+    }
+  }
+
+  Future<void> _toggleWishlist() async {
+    final prefs = await _SharedPrefsHelper.get();
+    final wishlist = List<String>.from(prefs.getStringList('wishlist_courses') ?? []);
+    if (_isWishlisted) {
+      wishlist.remove(widget.course.id);
+    } else {
+      wishlist.add(widget.course.id);
+    }
+    await prefs.setStringList('wishlist_courses', wishlist);
+    if (mounted) {
+      setState(() => _isWishlisted = !_isWishlisted);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isWishlisted ? '❤️ Added to wishlist' : 'Removed from wishlist'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: _isWishlisted ? AppColors.primary : AppColors.grey,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   Future<void> _loadChapters() async {
@@ -384,20 +420,29 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             ),
             child: Row(
               children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.greyLight,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.greyLight),
+                GestureDetector(
+                  onTap: _toggleWishlist,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: _isWishlisted ? Colors.red.withOpacity(0.1) : AppColors.greyLight,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _isWishlisted ? Colors.red.withOpacity(0.3) : AppColors.greyLight,
+                      ),
+                    ),
+                    child: Icon(
+                      _isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: _isWishlisted ? Colors.red : AppColors.textDark,
+                    ),
                   ),
-                  child: const Icon(Icons.favorite_border_rounded, color: AppColors.textDark),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: _continueLearning,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -749,7 +794,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   void _unlockAllChapters() {
     setState(() {
       // Optimistically unlock locally
-      // Assuming a reload from backend would happen eventually
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -759,6 +803,76 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  Future<void> _continueLearning() async {
+    if (_chapters.isEmpty) {
+      // Chapters not loaded yet, try to load them first
+      if (_isLoadingChapters) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Loading chapters...'), duration: Duration(seconds: 1)),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No chapters available yet.')),
+      );
+      return;
+    }
+
+    // Find the first unlocked chapter
+    final chapter = _chapters.first;
+
+    try {
+      final lessons = await CourseService().getLessons(chapter.id);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LessonDetailScreen(
+            courseId: widget.course.id,
+            courseTitle: widget.course.title,
+            courseThumbnailUrl: widget.course.thumbnailUrl,
+            courseTotalLessons: widget.course.lessonCount,
+            chapterTitle: chapter.title,
+            isLocked: false,
+            thumbnailUrl: chapter.thumbnailUrl,
+            chapterNumber: chapter.chapterNumber,
+            chapterDescription: chapter.description,
+            lessons: lessons,
+            initialLessonIndex: 0,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonDetailScreen(
+              courseId: widget.course.id,
+              courseTitle: widget.course.title,
+              courseThumbnailUrl: widget.course.thumbnailUrl,
+              courseTotalLessons: widget.course.lessonCount,
+              chapterTitle: chapter.title,
+              isLocked: false,
+              thumbnailUrl: chapter.thumbnailUrl,
+              chapterNumber: chapter.chapterNumber,
+              chapterDescription: chapter.description,
+            ),
+          ),
+        );
+      }
+    }
+  }
+}
+
+// ── SharedPrefs Helper ────────────────────────────────────────
+class _SharedPrefsHelper {
+  static SharedPreferences? _instance;
+  static Future<SharedPreferences> get() async {
+    _instance ??= await SharedPreferences.getInstance();
+    return _instance!;
   }
 }
 
