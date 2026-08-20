@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/course_model.dart';
@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 110,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.navy,
@@ -153,62 +153,32 @@ class _CoursesScreenState extends State<CoursesScreen> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Explore Courses',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
-                            const SizedBox(height: 4),
-                            Text('${_allCourses.length} courses available',
-                                style: const TextStyle(fontSize: 13, color: Colors.white60)),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            _toggleBtn(Icons.view_list_rounded, !_isGridView, () => setState(() => _isGridView = false)),
-                            _toggleBtn(Icons.grid_view_rounded, _isGridView, () => setState(() => _isGridView = true)),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Explore Courses',
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                        const SizedBox(height: 3),
+                        Text('${_allCourses.length} courses available',
+                            style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 14),
                   Container(
-                    height: 44,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: TextField(
-                      controller: _searchCtrl,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      cursorColor: AppColors.primary,
-                      onChanged: (v) => setState(() => _searchQuery = v),
-                      decoration: InputDecoration(
-                        hintText: 'Search courses, instructors...',
-                        hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? GestureDetector(
-                                onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
-                                child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18))
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+                    child: Row(
+                      children: [
+                        _toggleBtn(Icons.view_list_rounded, !_isGridView, () => setState(() => _isGridView = false)),
+                        _toggleBtn(Icons.grid_view_rounded, _isGridView, () => setState(() => _isGridView = true)),
+                      ],
                     ),
                   ),
                 ],
@@ -218,15 +188,46 @@ class _CoursesScreenState extends State<CoursesScreen> {
         ),
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(90),
+        preferredSize: const Size.fromHeight(140),
         child: Container(
           color: AppColors.navy,
           child: Column(
             children: [
+              // ── Search bar (always visible) ──────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    cursorColor: AppColors.primary,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search courses, instructors...',
+                      hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.white70, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
+                              child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18))
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+              // ── Category chips ──────────────────────────────
               SizedBox(
-                height: 46,
+                height: 38,
                 child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   scrollDirection: Axis.horizontal,
                   itemCount: _categories.length + 1,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -238,7 +239,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       onTap: () => setState(() => _selectedCategoryId = isAll ? null : cat!.id),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                         decoration: BoxDecoration(
                           color: selected ? AppColors.primary : Colors.white.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(20),
@@ -255,8 +256,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   },
                 ),
               ),
+              // ── Sort row ────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Row(
                   children: [
                     Text('${_filtered.length} course${_filtered.length == 1 ? '' : 's'}',
@@ -401,7 +403,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       child: GridView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.72),
+          crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.88),
         itemCount: courses.length,
         itemBuilder: (_, i) => _buildGridCard(courses[i], i),
       ),
@@ -425,37 +427,36 @@ class _CoursesScreenState extends State<CoursesScreen> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
               child: _buildThumbnail(course, color, width: double.infinity, height: 110),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(course.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
-                    const SizedBox(height: 4),
-                    if (course.instructorName.isNotEmpty)
-                      Text(course.instructorName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 10, color: AppColors.grey)),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        if (course.lessonCount > 0) ...[
-                          const Icon(Icons.play_circle_outline_rounded, size: 11, color: AppColors.primary),
-                          const SizedBox(width: 2),
-                          Text('${course.lessonCount}', style: const TextStyle(fontSize: 10, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
-                          const Spacer(),
-                        ],
-                        if (course.studentCount > 0)
-                          Row(children: [
-                            const Icon(Icons.group_outlined, size: 11, color: AppColors.grey),
-                            const SizedBox(width: 2),
-                            Text(_formatCount(course.studentCount), style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
-                          ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(course.title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
+                  const SizedBox(height: 4),
+                  if (course.instructorName.isNotEmpty)
+                    Text(course.instructorName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (course.lessonCount > 0) ...[
+                        const Icon(Icons.play_circle_outline_rounded, size: 11, color: AppColors.primary),
+                        const SizedBox(width: 2),
+                        Text('${course.lessonCount} lessons', style: const TextStyle(fontSize: 10, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
                       ],
-                    ),
-                  ],
-                ),
+                      const Spacer(),
+                      if (course.studentCount > 0)
+                        Row(children: [
+                          const Icon(Icons.group_outlined, size: 11, color: AppColors.grey),
+                          const SizedBox(width: 2),
+                          Text(_formatCount(course.studentCount), style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
+                        ]),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
