@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 240,
+      expandedHeight: 215,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.navy,
@@ -186,28 +186,27 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   // Search bar — visible on load, collapses on scroll
                   Container(
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.white.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
                     ),
                     child: TextField(
                       controller: _searchCtrl,
-                      style: const TextStyle(color: AppColors.textDark, fontSize: 14),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       cursorColor: AppColors.primary,
                       onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search courses, instructors...',
-                        hintStyle: const TextStyle(color: AppColors.grey, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.grey, size: 20),
+                        hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? GestureDetector(
                                 onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
-                                child: const Icon(Icons.close_rounded, color: AppColors.grey, size: 18))
+                                child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18))
                             : null,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -449,6 +448,12 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         const Icon(Icons.play_circle_outline_rounded, size: 11, color: AppColors.primary),
                         const SizedBox(width: 2),
                         Text('${course.lessonCount} lessons', style: const TextStyle(fontSize: 10, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
+                      ],
+                      if (course.durationMinutes > 0) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.access_time_rounded, size: 11, color: AppColors.grey),
+                        const SizedBox(width: 2),
+                        Text(_formatDuration(course.durationMinutes), style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
                       ],
                       const Spacer(),
                       if (course.studentCount > 0)
