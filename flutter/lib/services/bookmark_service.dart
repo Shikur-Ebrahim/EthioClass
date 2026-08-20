@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -28,7 +28,7 @@ class BookmarkService {
   }) async {
     final userId = await _getUserId();
     final response = await http.post(
-      Uri.parse('\/bookmarks/lessons'),
+      Uri.parse('$_baseUrl/bookmarks/lessons'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'user_id': userId,
@@ -45,7 +45,7 @@ class BookmarkService {
   Future<void> removeLessonBookmark(String lessonId) async {
     final userId = await _getUserId();
     final response = await http.delete(
-      Uri.parse('\/bookmarks/lessons/\=\'),
+      Uri.parse('$_baseUrl/bookmarks/lessons/$lessonId?user_id=$userId'),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to remove lesson bookmark');
@@ -55,7 +55,7 @@ class BookmarkService {
   Future<void> addCourseBookmark(String courseId) async {
     final userId = await _getUserId();
     final response = await http.post(
-      Uri.parse('\/bookmarks/courses'),
+      Uri.parse('$_baseUrl/bookmarks/courses'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'user_id': userId,
@@ -70,7 +70,7 @@ class BookmarkService {
   Future<void> removeCourseBookmark(String courseId) async {
     final userId = await _getUserId();
     final response = await http.delete(
-      Uri.parse('\/bookmarks/courses/\=\'),
+      Uri.parse('$_baseUrl/bookmarks/courses/$courseId?user_id=$userId'),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to remove course bookmark');
@@ -80,7 +80,7 @@ class BookmarkService {
   Future<Map<String, dynamic>> getBookmarks() async {
     final userId = await _getUserId();
     final response = await http.get(
-      Uri.parse('\/bookmarks?user_id=\'),
+      Uri.parse('$_baseUrl/bookmarks?user_id=$userId'),
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;

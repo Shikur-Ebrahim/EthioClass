@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/bookmark_service.dart';
@@ -400,7 +400,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
     return InkWell(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(
-          builder: (_) => CourseDetailScreen(course: courseObj),
+          builder: (_) => CourseDetailScreen(course: courseObj, index: index),
         )).then((_) => _loadBookmarks());
       },
       child: Container(

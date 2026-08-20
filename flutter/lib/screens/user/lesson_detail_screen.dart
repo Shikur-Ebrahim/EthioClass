@@ -77,7 +77,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     });
     _checkBookmarkStatus();
     _initVideo();
-    _initDownloadListener();
     // Save last watched position for "Continue Learning"
     _saveLastWatched();
     // Re-attach to any downloads that are still running
@@ -387,6 +386,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                             ),
                           ],
                         ),
+                      ],
+                    ),
                   ),
 
                   // Title + error overlay at bottom
