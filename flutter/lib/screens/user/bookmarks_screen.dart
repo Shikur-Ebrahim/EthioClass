@@ -205,13 +205,13 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
         height: 44,
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(12), // slightly reduced for the outer container too
         ),
         child: TabBar(
           controller: _tabController,
           indicator: BoxDecoration(
             color: AppColors.primary,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(8), // Reduced radius for a more rectangular, attractive look
             boxShadow: [
               BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
             ],
@@ -400,7 +400,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
     return InkWell(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(
-          builder: (_) => CourseDetailScreen(course: courseObj, index: index),
+          builder: (_) => CourseDetailScreen(course: courseObj, index: 0),
         )).then((_) => _loadBookmarks());
       },
       child: Container(

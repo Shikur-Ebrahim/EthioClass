@@ -143,6 +143,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     }
   }
 
+  Future<void> _autoAddBookmark(Lesson lesson) async {
+    setState(() => _isBookmarked = true);
+    try {
+      await BookmarkService.instance.addLessonBookmark(
+        lessonId: lesson.id,
+        courseId: widget.courseId.isNotEmpty ? widget.courseId : (lesson.chapterId.isNotEmpty ? lesson.chapterId : ''),
+        chapterId: lesson.chapterId,
+      );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lesson auto-bookmarked (finished)!')));
+    } catch (e) {
+      debugPrint('Failed auto-bookmark: $e');
+    }
+  }
+
   Lesson? get _currentLesson =>
       widget.lessons.isNotEmpty && _currentLessonIndex < widget.lessons.length
           ? widget.lessons[_currentLessonIndex]
@@ -225,6 +239,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       }
 
       int lastSavedSecond = -1;
+      bool _autoBookmarked = false; // Flag to prevent multiple calls
+      
       _videoController!.addListener(() {
         if (!mounted || _videoController == null || !_videoController!.value.isInitialized) return;
         
@@ -237,6 +253,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             if (!ProgressService.instance.isLessonCompleted(lesson.id)) {
               ProgressService.instance.markLessonComplete(widget.courseId, lesson.id);
             }
+          }
+          
+          // Auto-bookmark when lesson is fully finished (at 100% or very close to it)
+          if (position.inMilliseconds >= duration.inMilliseconds - 500 && !_autoBookmarked && !_isBookmarked) {
+            _autoBookmarked = true; // prevent firing multiple times
+            _autoAddBookmark(lesson);
           }
           
           // Save timestamp periodically (only once per second)
