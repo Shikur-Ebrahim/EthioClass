@@ -8,6 +8,7 @@ import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/progress_service.dart';
+import '../../services/bookmark_service.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
 
@@ -40,8 +41,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   String? _prefetchedTxRef;
   String? _prefetchedCheckoutUrl;
 
-  // Wishlist
-  bool _isWishlisted = false;
+  // Bookmark
+  bool _isBookmarked = false;
+  bool _bookmarkLoading = false;
 
   final List<Color> _headerColors = [
     const Color(0xFF0F172A),
@@ -62,39 +64,49 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     _loadChapters();
     _preInitializePayment();
-    _loadWishlistState();
+    _checkBookmarkState();
   }
 
-  Future<void> _loadWishlistState() async {
-    final prefs = await _SharedPrefsHelper.get();
-    final wishlist = prefs.getStringList('wishlist_courses') ?? [];
-    if (mounted) {
-      setState(() => _isWishlisted = wishlist.contains(widget.course.id));
-    }
+  Future<void> _checkBookmarkState() async {
+    try {
+      final data = await BookmarkService.instance.getBookmarks();
+      final courses = data['courses'] as List<dynamic>? ?? [];
+      if (mounted) {
+        setState(() => _isBookmarked = courses.any((c) => c['id'] == widget.course.id));
+      }
+    } catch (_) {}
   }
 
-  Future<void> _toggleWishlist() async {
-    final prefs = await _SharedPrefsHelper.get();
-    final wishlist = List<String>.from(prefs.getStringList('wishlist_courses') ?? []);
-    if (_isWishlisted) {
-      wishlist.remove(widget.course.id);
-    } else {
-      wishlist.add(widget.course.id);
-    }
-    await prefs.setStringList('wishlist_courses', wishlist);
-    if (mounted) {
-      setState(() => _isWishlisted = !_isWishlisted);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isWishlisted ? '❤️ Added to wishlist' : 'Removed from wishlist'),
+  Future<void> _toggleBookmark() async {
+    if (_bookmarkLoading) return;
+    setState(() => _bookmarkLoading = true);
+    final wasBookmarked = _isBookmarked;
+    setState(() => _isBookmarked = !_isBookmarked); // optimistic update
+    try {
+      if (wasBookmarked) {
+        await BookmarkService.instance.removeCourseBookmark(widget.course.id);
+      } else {
+        await BookmarkService.instance.addCourseBookmark(widget.course.id);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(!wasBookmarked ? '🔖 Course bookmarked!' : 'Bookmark removed'),
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: _isWishlisted ? AppColors.primary : AppColors.grey,
+          backgroundColor: !wasBookmarked ? AppColors.primary : AppColors.grey,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+        ));
+      }
+    } catch (e) {
+      // revert on failure
+      if (mounted) setState(() => _isBookmarked = wasBookmarked);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update bookmark')));
+    } finally {
+      if (mounted) setState(() => _bookmarkLoading = false);
     }
   }
+
 
   Future<void> _loadChapters() async {
     try {
@@ -430,22 +442,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: _toggleWishlist,
+                  onTap: _toggleBookmark,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: _isWishlisted ? Colors.red.withOpacity(0.1) : AppColors.greyLight,
+                      color: _isBookmarked ? Colors.amber.withOpacity(0.15) : AppColors.greyLight,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _isWishlisted ? Colors.red.withOpacity(0.3) : AppColors.greyLight,
+                        color: _isBookmarked ? Colors.amber.withOpacity(0.5) : AppColors.greyLight,
                       ),
                     ),
-                    child: Icon(
-                      _isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: _isWishlisted ? Colors.red : AppColors.textDark,
-                    ),
+                    child: _bookmarkLoading
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(
+                            _isBookmarked ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
+                            color: _isBookmarked ? Colors.amber : AppColors.textDark,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),
