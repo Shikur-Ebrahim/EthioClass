@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 215,
+      expandedHeight: 240,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.navy,
