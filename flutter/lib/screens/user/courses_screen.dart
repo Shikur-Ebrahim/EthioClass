@@ -108,11 +108,12 @@ class _CoursesScreenState extends State<CoursesScreen> {
     return n.toString();
   }
 
-  void _openCourse(Course course, int i) {
+  void _openCourse(Course course, int i, {bool autoPlay = false}) {
     Navigator.push(context, MaterialPageRoute(
       builder: (_) => CourseDetailScreen(
         course: course, index: i,
         categoryName: course.categoryName ?? 'Course',
+        autoPlayLast: autoPlay,
       ),
     ));
   }
@@ -149,15 +150,15 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildContinueLearningCard(Course course) {
     return GestureDetector(
-      onTap: () => _openCourse(course, 0),
+      onTap: () => _openCourse(course, 0, autoPlay: true),
       child: Container(
         margin: const EdgeInsets.only(top: 8, bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: const Color(0xFFE8F5E9), // Light green background
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: const Color(0xFF81C784), width: 1.5),
+          boxShadow: [BoxShadow(color: const Color(0xFF81C784).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [

@@ -15,12 +15,14 @@ class CourseDetailScreen extends StatefulWidget {
   final Course course;
   final int index;
   final String categoryName;
+  final bool autoPlayLast;
 
   const CourseDetailScreen({
     super.key,
     required this.course,
     required this.index,
     this.categoryName = 'Course',
+    this.autoPlayLast = false,
   });
 
   @override
@@ -102,6 +104,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           _chapters = chapters;
           _isLoadingChapters = false;
         });
+        
+        // Auto-play the last lesson if requested (e.g. from Continue Learning banner)
+        if (widget.autoPlayLast) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _continueLearning();
+          });
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoadingChapters = false);

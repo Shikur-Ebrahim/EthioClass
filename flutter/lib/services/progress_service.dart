@@ -108,4 +108,18 @@ class ProgressService {
     if (_prefs == null) return null;
     return _prefs!.getString('global_last_course_id');
   }
+
+  // ── Video Timestamp Tracking ──────────────────────────────────────
+  
+  /// Save the current playback timestamp (in seconds) for a specific lesson
+  Future<void> saveVideoTimestamp(String lessonId, int seconds) async {
+    await init();
+    await _prefs!.setInt('video_timestamp_$lessonId', seconds);
+  }
+
+  /// Get the saved playback timestamp (in seconds) for a specific lesson
+  int getVideoTimestamp(String lessonId) {
+    if (_prefs == null) return 0;
+    return _prefs!.getInt('video_timestamp_$lessonId') ?? 0;
+  }
 }

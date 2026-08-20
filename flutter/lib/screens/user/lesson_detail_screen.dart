@@ -175,6 +175,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       
       await _videoController!.initialize();
 
+      // Restore last watched timestamp
+      final savedSeconds = ProgressService.instance.getVideoTimestamp(lesson.id);
+      if (savedSeconds > 0) {
+        await _videoController!.seekTo(Duration(seconds: savedSeconds));
+      }
+
+      int lastSavedSecond = -1;
       _videoController!.addListener(() {
         if (!mounted || _videoController == null || !_videoController!.value.isInitialized) return;
         
@@ -188,12 +195,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               ProgressService.instance.markLessonComplete(widget.courseId, lesson.id);
             }
           }
+          
+          // Save timestamp periodically (only once per second)
+          final currentSecond = position.inSeconds;
+          if (currentSecond != lastSavedSecond && currentSecond > 0 && currentSecond < duration.inSeconds) {
+            lastSavedSecond = currentSecond;
+            ProgressService.instance.saveVideoTimestamp(lesson.id, currentSecond);
+          }
         }
       });
 
       _chewieController = ChewieController(
         videoPlayerController: _videoController!,
-        autoPlay: false,
+        autoPlay: true,
         looping: false,
         allowFullScreen: true,
         allowMuting: true,
@@ -403,37 +417,43 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       return const Center(child: Text('No lessons yet', style: TextStyle(color: AppColors.grey)));
     }
 
-    // Approximate height of one item (88) + separator (10)
-    final double initialOffset = _currentLessonIndex > 0 ? (_currentLessonIndex * 98.0) : 0.0;
-    
-    return ListView.separated(
-      controller: ScrollController(initialScrollOffset: initialOffset),
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      itemCount: widget.lessons.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) {
-        final l = widget.lessons[i];
-        final isActive = i == _currentLessonIndex;
-        return ValueListenableBuilder<Set<String>>(
-          valueListenable: ProgressService.instance.completedLessonsNotifier,
-          builder: (context, completedLessons, child) {
-            final isCompleted = completedLessons.contains(l.id);
-            return GestureDetector(
-              onTap: () => _selectLesson(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary.withOpacity(0.08) : AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isActive ? AppColors.primary : Colors.transparent,
-                    width: 1.5,
-                  ),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
-                ),
-                child: Row(
-                  children: [
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          iconColor: AppColors.primary,
+          collapsedIconColor: AppColors.grey,
+          title: Text(
+            '${widget.chapterNumber}. ${widget.chapterTitle}',
+            style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textDark, fontSize: 16),
+          ),
+          children: widget.lessons.asMap().entries.map((entry) {
+            final i = entry.key;
+            final l = entry.value;
+            final isActive = i == _currentLessonIndex;
+            return ValueListenableBuilder<Set<String>>(
+              valueListenable: ProgressService.instance.completedLessonsNotifier,
+              builder: (context, completedLessons, child) {
+                final isCompleted = completedLessons.contains(l.id);
+                return GestureDetector(
+                  onTap: () => _selectLesson(i),
+                  child: AnimatedContainer(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.primary.withOpacity(0.08) : AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isActive ? AppColors.primary : Colors.transparent,
+                        width: 1.5,
+                      ),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                    ),
+                    child: Row(
+                      children: [
                     Container(
                       width: 100,
                       height: 64,
@@ -602,13 +622,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       ),
                     ),
                   ),
-              ],
-            ),
-          ),
-        );
+                  ],
+                ),
+              ),
+            );
           },
-        );
-      },
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
