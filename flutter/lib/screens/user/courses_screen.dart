@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 240,
+      expandedHeight: 215,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.navy,
@@ -227,9 +227,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
             children: [
               // Category chips
               SizedBox(
-                height: 38,
+                height: 48,
                 child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   scrollDirection: Axis.horizontal,
                   itemCount: _categories.length + 1,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -244,13 +244,15 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                         decoration: BoxDecoration(
                           color: selected ? AppColors.primary : Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          isAll ? 'All' : cat!.name,
-                          style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600,
-                            color: selected ? AppColors.navy : Colors.white70,
+                        child: Center(
+                          child: Text(
+                            isAll ? 'All' : cat!.name,
+                            style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600,
+                              color: selected ? AppColors.navy : Colors.white70,
+                            ),
                           ),
                         ),
                       ),
