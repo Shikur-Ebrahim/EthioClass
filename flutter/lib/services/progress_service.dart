@@ -122,4 +122,39 @@ class ProgressService {
     if (_prefs == null) return 0;
     return _prefs!.getInt('video_timestamp_$lessonId') ?? 0;
   }
+
+  // ── Download Continue Learning Tracking ───────────────────────────
+
+  /// Save the last downloaded lesson the user opened
+  Future<void> saveLastDownloadedLesson({
+    required String courseTitle,
+    required String chapterTitle,
+    required String lessonId,
+    required String lessonTitle,
+    required int lessonIndex,
+    required String courseThumbnailUrl,
+  }) async {
+    await init();
+    await _prefs!.setString('dl_last_courseTitle', courseTitle);
+    await _prefs!.setString('dl_last_chapterTitle', chapterTitle);
+    await _prefs!.setString('dl_last_lessonId', lessonId);
+    await _prefs!.setString('dl_last_lessonTitle', lessonTitle);
+    await _prefs!.setInt('dl_last_lessonIndex', lessonIndex);
+    await _prefs!.setString('dl_last_thumbUrl', courseThumbnailUrl);
+  }
+
+  /// Get the last downloaded lesson info, or null if none
+  Map<String, dynamic>? getLastDownloadedLesson() {
+    if (_prefs == null) return null;
+    final courseTitle = _prefs!.getString('dl_last_courseTitle');
+    if (courseTitle == null) return null;
+    return {
+      'courseTitle': courseTitle,
+      'chapterTitle': _prefs!.getString('dl_last_chapterTitle') ?? '',
+      'lessonId': _prefs!.getString('dl_last_lessonId') ?? '',
+      'lessonTitle': _prefs!.getString('dl_last_lessonTitle') ?? '',
+      'lessonIndex': _prefs!.getInt('dl_last_lessonIndex') ?? 0,
+      'thumbUrl': _prefs!.getString('dl_last_thumbUrl') ?? '',
+    };
+  }
 }

@@ -4,6 +4,7 @@ import '../../config/api_config.dart';
 import '../../services/download_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 import '../../models/lesson_model.dart';
+import '../../services/progress_service.dart';
 import 'lesson_detail_screen.dart';
 
 class DownloadsScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   bool _isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
+  Map<String, dynamic>? _lastDownloadedLesson;
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   Future<void> _loadDownloads() async {
     setState(() => _isLoading = true);
+    await ProgressService.instance.init();
     final lessons = await DownloadService.instance.getDownloadedLessons();
     final validLessons = <DownloadedLesson>[];
     for (final dl in lessons) {
@@ -50,9 +53,19 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       if (!grouped.containsKey(course)) grouped[course] = [];
       grouped[course]!.add(dl);
     }
+    // Load last opened downloaded lesson
+    final lastDl = ProgressService.instance.getLastDownloadedLesson();
+    // Only show banner if the lesson still exists in downloads
+    Map<String, dynamic>? validLastDl;
+    if (lastDl != null) {
+      final allLessons = validLessons;
+      final found = allLessons.any((dl) => dl.lesson.id == lastDl['lessonId']);
+      if (found) validLastDl = lastDl;
+    }
     setState(() {
       _groupedDownloads = grouped;
       _filtered = grouped;
+      _lastDownloadedLesson = validLastDl;
       _isLoading = false;
       if (grouped.length == 1) _expandedCourses.add(grouped.keys.first);
     });
@@ -111,9 +124,14 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                         ? _buildNoResults()
                         : ListView.builder(
                             padding: const EdgeInsets.only(top: 8, bottom: 24),
-                            itemCount: _filtered.length,
+                            itemCount: _filtered.length + (_lastDownloadedLesson != null ? 1 : 0),
                             itemBuilder: (context, index) {
-                              final courseTitle = _filtered.keys.elementAt(index);
+                              // Show continue learning banner as first item
+                              if (_lastDownloadedLesson != null && index == 0) {
+                                return _buildContinueLearningBanner();
+                              }
+                              final adjustedIndex = _lastDownloadedLesson != null ? index - 1 : index;
+                              final courseTitle = _filtered.keys.elementAt(adjustedIndex);
                               final lessons = _filtered[courseTitle]!;
                               final isExpanded = _expandedCourses.contains(courseTitle);
                               return _buildCourseCard(courseTitle, lessons, isExpanded);
@@ -354,6 +372,115 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     );
   }
 
+  // ── Continue Learning Banner ──────────────────────────────────────
+
+  Widget _buildContinueLearningBanner() {
+    final dl = _lastDownloadedLesson!;
+    final thumbUrl = dl['thumbUrl'] as String;
+    final lessonTitle = dl['lessonTitle'] as String;
+    final courseTitle = dl['courseTitle'] as String;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A7A4A), Color(0xFF22C55E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: const Color(0xFF22C55E).withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: _openLastDownloadedLesson,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                // Thumbnail
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 62, height: 62,
+                    color: Colors.white.withOpacity(0.15),
+                    child: thumbUrl.isNotEmpty
+                        ? Image.network('$apiBaseUrl/media/$thumbUrl', fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.play_circle_filled, color: Colors.white, size: 32))
+                        : const Icon(Icons.play_circle_filled, color: Colors.white, size: 32),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Text info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Continue Watching', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.5)),
+                      const SizedBox(height: 3),
+                      Text(lessonTitle, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(height: 2),
+                      Text(courseTitle, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8))),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Resume button
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.play_arrow_rounded, color: Color(0xFF16A34A), size: 16),
+                      SizedBox(width: 4),
+                      Text('Resume', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openLastDownloadedLesson() {
+    final dl = _lastDownloadedLesson;
+    if (dl == null) return;
+    final courseTitle = dl['courseTitle'] as String;
+    final chapterTitle = dl['chapterTitle'] as String;
+    final lessonIndex = dl['lessonIndex'] as int;
+    final thumbUrl = dl['thumbUrl'] as String;
+
+    // Find lessons from grouped downloads
+    final courseLessons = _groupedDownloads[courseTitle];
+    if (courseLessons == null || courseLessons.isEmpty) return;
+
+    final allLessons = courseLessons.map((d) => d.lesson).toList();
+    final safeIndex = lessonIndex < allLessons.length ? lessonIndex : 0;
+
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => LessonDetailScreen(
+        lessons: allLessons,
+        chapterTitle: chapterTitle,
+        chapterDescription: '',
+        courseTitle: courseTitle,
+        courseThumbnailUrl: thumbUrl,
+        thumbnailUrl: thumbUrl,
+        initialLessonIndex: safeIndex,
+      ),
+    ));
+  }
+
   Widget _defaultCourseIcon() {
     return Container(
       width: 90, height: 80,
@@ -372,7 +499,17 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     final thumbUrl = lesson.thumbnailUrl ?? dl.courseThumbnailUrl;
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
+        // Save this as the last downloaded lesson for "Continue Learning"
+        await ProgressService.instance.saveLastDownloadedLesson(
+          courseTitle: dl.courseTitle,
+          chapterTitle: dl.chapterTitle,
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          lessonIndex: tapIndex,
+          courseThumbnailUrl: dl.courseThumbnailUrl ?? '',
+        );
+        if (!mounted) return;
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => LessonDetailScreen(
             lessons: allCourseLessons,
