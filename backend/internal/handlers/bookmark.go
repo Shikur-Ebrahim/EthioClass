@@ -1,4 +1,4 @@
-﻿package handlers
+package handlers
 
 import (
 	"database/sql"
@@ -166,15 +166,22 @@ func GetBookmarksHandler(db *sql.DB) gin.HandlerFunc {
 		var courses []BookmarkCourseRow
 		for cRows.Next() {
 			var course BookmarkCourseRow
-			var catName sql.NullString
-			if err := cRows.Scan(&course.ID, &course.CategoryID, &catName, &course.Title, &course.Description, 
-				&course.InstructorName, &course.ThumbnailURL, &course.LessonCount, &course.DurationMinutes); err != nil {
+			var catId, catName, instructor, thumb sql.NullString
+			var lCount, dur sql.NullInt32
+			
+			if err := cRows.Scan(&course.ID, &catId, &catName, &course.Title, &course.Description, 
+				&instructor, &thumb, &lCount, &dur); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse course: " + err.Error()})
 				return
 			}
-			if catName.Valid {
-				course.CategoryName = &catName.String
-			}
+			
+			if catId.Valid { course.CategoryID = catId.String }
+			if catName.Valid { course.CategoryName = &catName.String }
+			if instructor.Valid { course.InstructorName = instructor.String }
+			if thumb.Valid { course.ThumbnailURL = &thumb.String }
+			if lCount.Valid { course.LessonCount = int(lCount.Int32) }
+			if dur.Valid { course.DurationMinutes = int(dur.Int32) }
+			
 			courses = append(courses, course)
 		}
 		if courses == nil { courses = []BookmarkCourseRow{} }
@@ -206,12 +213,24 @@ func GetBookmarksHandler(db *sql.DB) gin.HandlerFunc {
 		var lessons []BookmarkedLessonRow
 		for lRows.Next() {
 			var l BookmarkedLessonRow
-			if err := lRows.Scan(&l.ID, &l.ChapterID, &l.Title, &l.ThumbnailURL, &l.VideoURL, &l.NotesURL, 
-				&l.LessonNumber, &l.DurationMinutes, &l.CreatedAt,
-				&l.CourseTitle, &l.CourseThumbnailURL, &l.ChapterTitle); err != nil {
+			var thumb, video, notes, created, cThumb sql.NullString
+			var lNum, dur sql.NullInt32
+			
+			if err := lRows.Scan(&l.ID, &l.ChapterID, &l.Title, &thumb, &video, &notes, 
+				&lNum, &dur, &created,
+				&l.CourseTitle, &cThumb, &l.ChapterTitle); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse lesson: " + err.Error()})
 				return
 			}
+			
+			if thumb.Valid { l.ThumbnailURL = &thumb.String }
+			if video.Valid { l.VideoURL = &video.String }
+			if notes.Valid { l.NotesURL = &notes.String }
+			if created.Valid { l.CreatedAt = &created.String }
+			if cThumb.Valid { l.CourseThumbnailURL = &cThumb.String }
+			if lNum.Valid { l.LessonNumber = int(lNum.Int32) }
+			if dur.Valid { l.DurationMinutes = int(dur.Int32) }
+			
 			lessons = append(lessons, l)
 		}
 		if lessons == nil { lessons = []BookmarkedLessonRow{} }
