@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/download_service.dart';
@@ -131,7 +131,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            colors: [Color(0xFF3E1C00), Color(0xFF6B3A2A)],
           ),
         ),
         child: SafeArea(
