@@ -749,7 +749,7 @@ class _CourseCard extends StatelessWidget {
         ),
       ),
       child: Container(
-      height: 90,
+      height: 115,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
@@ -770,8 +770,8 @@ class _CourseCard extends StatelessWidget {
               bottomLeft: Radius.circular(18),
             ),
             child: Container(
-              width: 90,
-              height: 90,
+              width: 115,
+              height: 115,
               color: cardColor,
               child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
                   ? Image.network(
@@ -786,11 +786,30 @@ class _CourseCard extends StatelessWidget {
           // Info
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Category Badge
+                  if (course.categoryName != null && course.categoryName!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      margin: const EdgeInsets.only(bottom: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEEBC8), // Light orange background
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        course.categoryName!,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFDD6B20), // Darker orange text
+                        ),
+                      ),
+                    ),
+                  
+                  // Title
                   Text(
                     course.title,
                     style: const TextStyle(
@@ -801,24 +820,53 @@ class _CourseCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    course.description,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMedium,
+                  const SizedBox(height: 4),
+
+                  // Instructor Name
+                  if (course.instructorName.isNotEmpty)
+                    Row(
+                      children: [
+                        const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMedium),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            course.instructorName,
+                            style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  
+                  const Spacer(),
+                  
+                  // Lessons & Duration Row
+                  Row(
+                    children: [
+                      const Icon(Icons.play_circle_outline_rounded, size: 14, color: Color(0xFFD97706)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${course.lessonCount} lessons',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textMedium),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${course.durationMinutes ~/ 60}h ${course.durationMinutes % 60}m',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
-          // Options icon
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Icon(Icons.more_vert_rounded, color: AppColors.grey, size: 20),
+          // Options icon (chevron instead of more_vert for consistency)
+          const Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 22),
           ),
         ],
       ),
