@@ -369,7 +369,7 @@ class _CourseTile extends StatelessWidget {
         MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index, categoryName: categoryName)),
       ),
       child: Container(
-        height: 105,
+        height: 115,
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -391,8 +391,8 @@ class _CourseTile extends StatelessWidget {
                 bottomLeft: Radius.circular(16),
               ),
               child: Container(
-                width: 105,
-                height: 105,
+                width: 115,
+                height: 115,
                 color: cardColor,
                 child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
                     ? Image.network(
@@ -407,10 +407,30 @@ class _CourseTile extends StatelessWidget {
             // Info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Category Badge
+                    if (categoryName.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        margin: const EdgeInsets.bottom(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEEBC8), // Light orange background
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          categoryName,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFDD6B20), // Darker orange text
+                          ),
+                        ),
+                      ),
+                    
+                    // Title
                     Text(
                       course.title,
                       style: const TextStyle(
@@ -422,23 +442,43 @@ class _CourseTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    if (course.description.isNotEmpty)
-                      Expanded(
-                        child: Text(
-                          course.description,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textMedium, height: 1.2),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    
+                    // Instructor Name
+                    if (course.instructorName.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMedium),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              course.instructorName,
+                              style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
+                    
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text('Free', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                    
+                    // Lessons & Duration Row
+                    Row(
+                      children: [
+                        const Icon(Icons.play_circle_outline_rounded, size: 14, color: Color(0xFFD97706)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${course.lessonCount} lessons',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textMedium),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${course.durationMinutes ~/ 60}h ${course.durationMinutes % 60}m',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                        ),
+                      ],
                     ),
                   ],
                 ),
