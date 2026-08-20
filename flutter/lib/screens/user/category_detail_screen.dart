@@ -415,7 +415,7 @@ class _CourseTile extends StatelessWidget {
                     if (categoryName.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        margin: const EdgeInsets.bottom(4),
+                        margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEEBC8), // Light orange background
                           borderRadius: BorderRadius.circular(6),
