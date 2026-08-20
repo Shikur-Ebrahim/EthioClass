@@ -70,12 +70,34 @@ class ProgressService {
   // Calculate course progress using the stored count and total course lesson count
   double calculateCourseProgress(String courseId, int totalCourseLessons) {
     if (totalCourseLessons == 0) return 0.0;
-    
     if (_prefs == null) return 0.0;
     final courseKey = 'course_completed_count_$courseId';
     final completedCount = _prefs!.getInt(courseKey) ?? 0;
-    
     double progress = completedCount / totalCourseLessons;
-    return progress > 1.0 ? 1.0 : progress; // Clamp to 1.0 max
+    return progress > 1.0 ? 1.0 : progress;
+  }
+
+  // ── Last Watched Tracking ──────────────────────────────────────
+
+  /// Save the last lesson the user opened for a course.
+  /// [lessonIndex] is the index within the lesson list of that chapter.
+  Future<void> saveLastWatched({
+    required String courseId,
+    required String chapterId,
+    required int lessonIndex,
+  }) async {
+    await init();
+    await _prefs!.setString('last_chapter_$courseId', chapterId);
+    await _prefs!.setInt('last_lesson_index_$courseId', lessonIndex);
+  }
+
+  /// Get the last watched position for a course.
+  /// Returns a Map with 'chapterId' and 'lessonIndex', or null if never watched.
+  Map<String, dynamic>? getLastWatched(String courseId) {
+    if (_prefs == null) return null;
+    final chapterId = _prefs!.getString('last_chapter_$courseId');
+    if (chapterId == null) return null;
+    final lessonIndex = _prefs!.getInt('last_lesson_index_$courseId') ?? 0;
+    return {'chapterId': chapterId, 'lessonIndex': lessonIndex};
   }
 }

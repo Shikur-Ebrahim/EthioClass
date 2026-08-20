@@ -807,7 +807,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   Future<void> _continueLearning() async {
     if (_chapters.isEmpty) {
-      // Chapters not loaded yet, try to load them first
       if (_isLoadingChapters) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Loading chapters...'), duration: Duration(seconds: 1)),
@@ -820,12 +819,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       return;
     }
 
-    // Find the first unlocked chapter
-    final chapter = _chapters.first;
+    // Check if user was previously watching something
+    final lastWatched = ProgressService.instance.getLastWatched(widget.course.id);
+
+    Chapter targetChapter;
+    int targetLessonIndex = 0;
+
+    if (lastWatched != null) {
+      // Find the chapter they were on
+      final String lastChapterId = lastWatched['chapterId'] as String;
+      final int lastLessonIndex = lastWatched['lessonIndex'] as int;
+
+      final foundChapter = _chapters.cast<Chapter?>().firstWhere(
+        (c) => c?.id == lastChapterId,
+        orElse: () => null,
+      );
+
+      targetChapter = foundChapter ?? _chapters.first;
+      targetLessonIndex = foundChapter != null ? lastLessonIndex : 0;
+    } else {
+      // First time — start from beginning
+      targetChapter = _chapters.first;
+    }
 
     try {
-      final lessons = await CourseService().getLessons(chapter.id);
+      final lessons = await CourseService().getLessons(targetChapter.id);
       if (!mounted) return;
+
+      // Clamp index in case lessons changed
+      final safeIndex = targetLessonIndex < lessons.length ? targetLessonIndex : 0;
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -834,13 +857,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             courseTitle: widget.course.title,
             courseThumbnailUrl: widget.course.thumbnailUrl,
             courseTotalLessons: widget.course.lessonCount,
-            chapterTitle: chapter.title,
+            chapterTitle: targetChapter.title,
             isLocked: false,
-            thumbnailUrl: chapter.thumbnailUrl,
-            chapterNumber: chapter.chapterNumber,
-            chapterDescription: chapter.description,
+            thumbnailUrl: targetChapter.thumbnailUrl,
+            chapterNumber: targetChapter.chapterNumber,
+            chapterDescription: targetChapter.description,
             lessons: lessons,
-            initialLessonIndex: 0,
+            initialLessonIndex: safeIndex,
           ),
         ),
       );
@@ -854,11 +877,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
               courseTitle: widget.course.title,
               courseThumbnailUrl: widget.course.thumbnailUrl,
               courseTotalLessons: widget.course.lessonCount,
-              chapterTitle: chapter.title,
+              chapterTitle: targetChapter.title,
               isLocked: false,
-              thumbnailUrl: chapter.thumbnailUrl,
-              chapterNumber: chapter.chapterNumber,
-              chapterDescription: chapter.description,
+              thumbnailUrl: targetChapter.thumbnailUrl,
+              chapterNumber: targetChapter.chapterNumber,
+              chapterDescription: targetChapter.description,
             ),
           ),
         );

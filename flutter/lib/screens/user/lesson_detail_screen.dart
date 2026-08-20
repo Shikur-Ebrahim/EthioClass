@@ -73,6 +73,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _initVideo();
       _loadRemoteSizes();
     });
+    // Save last watched position for "Continue Learning"
+    _saveLastWatched();
     // Re-attach to any downloads that are still running
     for (final lesson in widget.lessons) {
       if (DownloadService.instance.isDownloading(lesson.id)) {
@@ -83,6 +85,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         });
       }
     }
+  }
+
+  void _saveLastWatched() {
+    if (widget.courseId.isEmpty) return;
+    final lesson = _currentLesson;
+    if (lesson == null) return;
+    // Use chapter id from lesson if available, else use lesson id as fallback key
+    final chapterId = lesson.chapterId.isNotEmpty ? lesson.chapterId : widget.chapterTitle;
+    ProgressService.instance.saveLastWatched(
+      courseId: widget.courseId,
+      chapterId: chapterId,
+      lessonIndex: _currentLessonIndex,
+    );
   }
 
   Lesson? get _currentLesson =>
@@ -204,6 +219,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       _videoController = null;
     });
     _initVideo();
+    // Save position so "Continue Learning" resumes here
+    _saveLastWatched();
   }
 
   @override
