@@ -89,6 +89,8 @@ class ProgressService {
     await init();
     await _prefs!.setString('last_chapter_$courseId', chapterId);
     await _prefs!.setInt('last_lesson_index_$courseId', lessonIndex);
+    // Track globally to show in 'Continue Learning' section
+    await _prefs!.setString('global_last_course_id', courseId);
   }
 
   /// Get the last watched position for a course.
@@ -99,5 +101,11 @@ class ProgressService {
     if (chapterId == null) return null;
     final lessonIndex = _prefs!.getInt('last_lesson_index_$courseId') ?? 0;
     return {'chapterId': chapterId, 'lessonIndex': lessonIndex};
+  }
+
+  /// Get the ID of the course the user most recently interacted with.
+  String? getGlobalLastWatchedCourseId() {
+    if (_prefs == null) return null;
+    return _prefs!.getString('global_last_course_id');
   }
 }

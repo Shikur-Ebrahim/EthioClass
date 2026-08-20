@@ -133,6 +133,74 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
+  Course? _getLastWatchedCourse() {
+    if (_searchQuery.isNotEmpty || _selectedCategoryId != null) return null;
+    final lastCourseId = ProgressService.instance.getGlobalLastWatchedCourseId();
+    if (lastCourseId != null) {
+      try {
+        return _allCourses.firstWhere((c) => c.id == lastCourseId);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Widget _buildContinueLearningCard(Course course) {
+    return GestureDetector(
+      onTap: () => _openCourse(course, 0),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8, bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: _buildThumbnail(course, AppColors.primary, width: 70, height: 70),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.title,
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Jump back into your last lesson', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.play_arrow_rounded, size: 14, color: AppColors.navy),
+                        SizedBox(width: 4),
+                        Text('Resume', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.navy)),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSliverHeader() {
     return SliverAppBar(
       expandedHeight: 235,
@@ -308,16 +376,69 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
-  Widget _buildList() {
+  Widget _buildScrollableBody() {
     final courses = _filtered;
+    final lastCourse = _getLastWatchedCourse();
+
     return RefreshIndicator(
       onRefresh: _loadData,
       color: AppColors.primary,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        itemCount: courses.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, i) => _buildListCard(courses[i], i),
+      child: CustomScrollView(
+        slivers: [
+          if (lastCourse != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(4, 0, 0, 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.history_rounded, size: 18, color: AppColors.primary),
+                          SizedBox(width: 8),
+                          Text('Continue Learning', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                        ],
+                      ),
+                    ),
+                    _buildContinueLearningCard(lastCourse),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(4, 16, 0, 8),
+                      child: Text('All Courses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          if (!_isGridView)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(16, lastCourse == null ? 16 : 8, 16, 100),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildListCard(courses[i], i),
+                  ),
+                  childCount: courses.length,
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(16, lastCourse == null ? 16 : 8, 16, 100),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => _buildGridCard(courses[i], i),
+                  childCount: courses.length,
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.88,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -395,21 +516,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildGrid() {
-    final courses = _filtered;
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      color: AppColors.primary,
-      child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.88),
-        itemCount: courses.length,
-        itemBuilder: (_, i) => _buildGridCard(courses[i], i),
       ),
     );
   }
