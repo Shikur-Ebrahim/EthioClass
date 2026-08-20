@@ -248,17 +248,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         final duration = _videoController!.value.duration;
         
         if (duration.inMilliseconds > 0) {
-          // Auto-complete if watched 85% or more
+          // Auto-complete and Auto-bookmark if watched 85% or more
           if (position.inMilliseconds / duration.inMilliseconds > 0.85) {
             if (!ProgressService.instance.isLessonCompleted(lesson.id)) {
               ProgressService.instance.markLessonComplete(widget.courseId, lesson.id);
             }
-          }
-          
-          // Auto-bookmark when lesson is fully finished (at 100% or very close to it)
-          if (position.inMilliseconds >= duration.inMilliseconds - 500 && !_autoBookmarked && !_isBookmarked) {
-            _autoBookmarked = true; // prevent firing multiple times
-            _autoAddBookmark(lesson);
+            
+            // Trigger auto-bookmark robustly at 85% completion
+            if (!_autoBookmarked && !_isBookmarked) {
+              _autoBookmarked = true; // prevent firing multiple times
+              _autoAddBookmark(lesson);
+            }
           }
           
           // Save timestamp periodically (only once per second)
