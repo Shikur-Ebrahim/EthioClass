@@ -12,6 +12,7 @@ import '../../models/lesson_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/download_service.dart';
 import '../../services/progress_service.dart';
+import '../../services/bookmark_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 
 class LessonDetailScreen extends StatefulWidget {
@@ -64,15 +65,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   // Track local progress for UI refresh trigger
   final Map<String, double> _downloadingProgress = {};
 
+  bool _isBookmarked = false;
+
   @override
   void initState() {
     super.initState();
     _currentLessonIndex = widget.initialLessonIndex;
     _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
     _loadAllDownloadStatuses().then((_) {
-      _initVideo();
       _loadRemoteSizes();
     });
+    _checkBookmarkStatus();
+    _initVideo();
+    _initDownloadListener();
     // Save last watched position for "Continue Learning"
     _saveLastWatched();
     // Re-attach to any downloads that are still running
@@ -98,6 +103,45 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       chapterId: chapterId,
       lessonIndex: _currentLessonIndex,
     );
+  }
+
+  Future<void> _checkBookmarkStatus() async {
+    final lesson = _currentLesson;
+    if (lesson == null) return;
+    try {
+      final bookmarks = await BookmarkService.instance.getBookmarks();
+      final lessons = bookmarks['lessons'] as List<dynamic>? ?? [];
+      setState(() {
+        _isBookmarked = lessons.any((l) => l['id'] == lesson.id);
+      });
+    } catch (e) {
+      debugPrint('Failed to check bookmark status: $e');
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    final lesson = _currentLesson;
+    if (lesson == null) return;
+    
+    final wasBookmarked = _isBookmarked;
+    setState(() => _isBookmarked = !_isBookmarked); // Optimistic update
+    
+    try {
+      if (wasBookmarked) {
+        await BookmarkService.instance.removeLessonBookmark(lesson.id);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookmark removed')));
+      } else {
+        await BookmarkService.instance.addLessonBookmark(
+          lessonId: lesson.id,
+          courseId: widget.courseId.isNotEmpty ? widget.courseId : (lesson.chapterId.isNotEmpty ? lesson.chapterId : ''), // Fallback
+          chapterId: lesson.chapterId,
+        );
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lesson bookmarked!')));
+      }
+    } catch (e) {
+      setState(() => _isBookmarked = wasBookmarked); // Revert on failure
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update bookmark')));
+    }
   }
 
   Lesson? get _currentLesson =>
@@ -328,12 +372,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: _toggleBookmark,
+                              icon: Icon(
+                                _isBookmarked ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
+                                color: _isBookmarked ? Colors.amber : Colors.white,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
                   ),
 
                   // Title + error overlay at bottom

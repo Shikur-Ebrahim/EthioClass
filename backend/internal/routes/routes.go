@@ -43,6 +43,13 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	// Media proxy — serves R2 objects through the API
 	r.GET("/media/*key", handlers.MediaProxyHandler(r2))
 
+	// Bookmarks
+	r.POST("/bookmarks/lessons", handlers.AddLessonBookmarkHandler(db))
+	r.DELETE("/bookmarks/lessons/:id", handlers.RemoveLessonBookmarkHandler(db))
+	r.POST("/bookmarks/courses", handlers.AddCourseBookmarkHandler(db))
+	r.DELETE("/bookmarks/courses/:id", handlers.RemoveCourseBookmarkHandler(db))
+	r.GET("/bookmarks", handlers.GetBookmarksHandler(db))
+
 	// Admin Routes
 	adminGroup := r.Group("/admin")
 	// TODO: Add auth middleware to require admin role
