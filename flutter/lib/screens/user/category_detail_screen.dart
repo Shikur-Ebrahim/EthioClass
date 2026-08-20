@@ -413,21 +413,26 @@ class _CourseTile extends StatelessWidget {
                   children: [
                     // Category Badge
                     if (categoryName.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        margin: const EdgeInsets.only(bottom: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEEBC8), // Light orange background
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          categoryName,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFFDD6B20), // Darker orange text
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final colors = _getCategoryColors(categoryName);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            decoration: BoxDecoration(
+                              color: colors[0], // Light background
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              categoryName,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: colors[1], // Dark text
+                              ),
+                            ),
+                          );
+                        }
                       ),
                     
                     // Title
@@ -493,5 +498,24 @@ class _CourseTile extends StatelessWidget {
       ),
     );
   }
+
+  // Returns [lightBackground, darkText]
+  List<Color> _getCategoryColors(String categoryName) {
+    final cat = categoryName.toLowerCase();
+    if (cat.contains('freshima')) {
+      return const [Color(0xFFFEEBC8), Color(0xFFDD6B20)]; // Orange
+    } else if (cat.contains('grad12') || cat.contains('grade 12')) {
+      return const [Color(0xFFDBEAFE), Color(0xFF1D4ED8)]; // Blue
+    } else if (cat.contains('tvet')) {
+      return const [Color(0xFFDCFCE7), Color(0xFF15803D)]; // Green
+    } else if (cat.contains('middle')) {
+      return const [Color(0xFFFCE7F3), Color(0xFFBE185D)]; // Pink
+    } else if (cat.contains('primary')) {
+      return const [Color(0xFFFEF3C7), Color(0xFFB45309)]; // Amber
+    } else {
+      return const [Color(0xFFF3F4F6), Color(0xFF374151)]; // Grey
+    }
+  }
 }
+
 
