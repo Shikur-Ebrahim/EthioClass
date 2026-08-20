@@ -7,9 +7,12 @@ import 'screens/user/main_layout.dart';
 import 'screens/admin/admin_home_screen.dart';
 import 'services/session_service.dart';
 
-void main() {
+import 'services/progress_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await ProgressService.instance.init();
   runApp(const EthioClassApp());
 }
 

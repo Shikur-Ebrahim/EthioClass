@@ -6,6 +6,7 @@ import '../../models/course_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
 import '../../services/payment_service.dart';
+import '../../services/progress_service.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
 
@@ -288,38 +289,48 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
                 // ── Progress ─────────────────────────────────────────
                 SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: ValueListenableBuilder<Set<String>>(
+                    valueListenable: ProgressService.instance.completedLessonsNotifier,
+                    builder: (context, _, __) {
+                      final progress = ProgressService.instance.calculateCourseProgress(
+                        widget.course.id, 
+                        widget.course.lessonCount,
+                      );
+                      
+                      return Container(
+                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Course Progress',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-                            const Text('66% Complete',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Course Progress',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                                Text('${(progress * 100).toInt()}% Complete',
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: progress > 0 ? progress : 0.0,
+                                minHeight: 8,
+                                backgroundColor: AppColors.greyLight,
+                                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: const LinearProgressIndicator(
-                            value: 0.66,
-                            minHeight: 8,
-                            backgroundColor: AppColors.greyLight,
-                            valueColor: AlwaysStoppedAnimation(AppColors.primary),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
 
@@ -585,6 +596,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         context,
         MaterialPageRoute(
           builder: (_) => LessonDetailScreen(
+            courseId: widget.course.id,
             courseTitle: widget.course.title,
             courseThumbnailUrl: widget.course.thumbnailUrl,
             courseTotalLessons: widget.course.lessonCount,
@@ -604,6 +616,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           context,
           MaterialPageRoute(
             builder: (_) => LessonDetailScreen(
+                courseId: widget.course.id,
                 courseTitle: widget.course.title,
                 courseThumbnailUrl: widget.course.thumbnailUrl,
                 courseTotalLessons: widget.course.lessonCount,

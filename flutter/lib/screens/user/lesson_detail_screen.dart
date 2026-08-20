@@ -11,9 +11,11 @@ import '../../config/api_config.dart';
 import '../../models/lesson_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/download_service.dart';
+import '../../services/progress_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 
 class LessonDetailScreen extends StatefulWidget {
+  final String courseId;
   final String courseTitle;
   final String? courseThumbnailUrl;
   final int courseTotalLessons;
@@ -29,6 +31,7 @@ class LessonDetailScreen extends StatefulWidget {
 
   const LessonDetailScreen({
     super.key,
+    this.courseId = '',
     this.courseTitle = 'Course',
     this.courseThumbnailUrl,
     this.courseTotalLessons = 1,
@@ -156,6 +159,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       }
       
       await _videoController!.initialize();
+
+      _videoController!.addListener(() {
+        if (!mounted || _videoController == null || !_videoController!.value.isInitialized) return;
+        
+        final position = _videoController!.value.position;
+        final duration = _videoController!.value.duration;
+        
+        if (duration.inMilliseconds > 0) {
+          // Auto-complete if watched 85% or more
+          if (position.inMilliseconds / duration.inMilliseconds > 0.85) {
+            if (!ProgressService.instance.isLessonCompleted(lesson.id)) {
+              ProgressService.instance.markLessonComplete(widget.courseId, lesson.id);
+            }
+          }
+        }
+      });
 
       _chewieController = ChewieController(
         videoPlayerController: _videoController!,
@@ -378,111 +397,117 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       itemBuilder: (_, i) {
         final l = widget.lessons[i];
         final isActive = i == _currentLessonIndex;
-        return GestureDetector(
-          onTap: () => _selectLesson(i),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isActive ? AppColors.primary.withOpacity(0.08) : AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isActive ? AppColors.primary : Colors.transparent,
-                width: 1.5,
-              ),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 100,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.greyLight,
-                    borderRadius: BorderRadius.circular(8),
-                    image: l.thumbnailUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage('$apiBaseUrl/media/${l.thumbnailUrl!}'),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+        return ValueListenableBuilder<Set<String>>(
+          valueListenable: ProgressService.instance.completedLessonsNotifier,
+          builder: (context, completedLessons, child) {
+            final isCompleted = completedLessons.contains(l.id);
+            return GestureDetector(
+              onTap: () => _selectLesson(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.primary.withOpacity(0.08) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isActive ? AppColors.primary : Colors.transparent,
+                    width: 1.5,
                   ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (l.thumbnailUrl == null)
-                        const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20)),
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: isActive
-                              ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
-                              : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${l.lessonNumber}. ${l.title}',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: isActive ? AppColors.primary : AppColors.textDark)),
-                      const SizedBox(height: 4),
-                      Row(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppColors.greyLight,
+                        borderRadius: BorderRadius.circular(8),
+                        image: l.thumbnailUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage('$apiBaseUrl/media/${l.thumbnailUrl!}'),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          Text('${l.durationMinutes} min',
-                              style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                          if (_downloadedLessons[l.id] != null) ...[ 
-                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
-                                style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
-                          ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
-                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            Text(_formatBytes(_remoteSizes[l.id]!),
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                          ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
-                            const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                            const SizedBox(
-                              width: 10, height: 10,
-                              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
+                          if (l.thumbnailUrl == null)
+                            const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey, size: 20)),
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: isActive
+                                  ? const Icon(Icons.pause_rounded, color: Colors.white, size: 20)
+                                  : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${l.lessonNumber}. ${l.title}',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                  color: isActive ? AppColors.primary : (isCompleted ? AppColors.grey : AppColors.textDark))),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text('${l.durationMinutes} min',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                              if (_downloadedLessons[l.id] != null) ...[ 
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
+                                    style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                              ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                Text(_formatBytes(_remoteSizes[l.id]!),
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                              ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const SizedBox(
+                                  width: 10, height: 10,
+                                  child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
+                                ),
+                              ],
+                            ],
+                          ),
+                          // Horizontal progress bar when downloading
+                          if (_downloadingProgress[l.id] != null) ...[
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: _downloadingProgress[l.id]! > 0 ? _downloadingProgress[l.id] : null,
+                                backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
+                                color: const Color(0xFF22C55E),
+                                minHeight: 5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _downloadingProgress[l.id]! > 0.01
+                                  ? '${(_downloadingProgress[l.id]! * 100).toInt()}%  Downloading...'
+                                  : 'Starting...',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF22C55E), fontWeight: FontWeight.w600),
                             ),
                           ],
                         ],
                       ),
-                      // Horizontal progress bar when downloading
-                      if (_downloadingProgress[l.id] != null) ...[
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _downloadingProgress[l.id]! > 0 ? _downloadingProgress[l.id] : null,
-                            backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
-                            color: const Color(0xFF22C55E),
-                            minHeight: 5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _downloadingProgress[l.id]! > 0.01
-                              ? '${(_downloadingProgress[l.id]! * 100).toInt()}%  Downloading...'
-                              : 'Starting...',
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF22C55E), fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                // Right-side action button
+                    ),
+                    const SizedBox(width: 4),
+                    // Right-side action button
                 if (_downloadingProgress[l.id] != null)
                   // Pause button during download
                   GestureDetector(
@@ -565,6 +590,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
         );
+          },
+        );
       },
     );
   }
@@ -582,6 +609,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
           ],
         ),
       );
+    }
+    
+    // Automatically mark as complete when they open the notes
+    if (widget.courseId.isNotEmpty) {
+      ProgressService.instance.markLessonComplete(widget.courseId, lesson.id);
     }
 
     final downloadedData = _downloadedLessons[lesson.id];
