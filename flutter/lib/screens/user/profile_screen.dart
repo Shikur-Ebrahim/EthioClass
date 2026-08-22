@@ -4,7 +4,8 @@ import 'personal_info_screen.dart';
 import 'settings_screen.dart';
 import '../../models/guidance_video.dart';
 import '../../services/guidance_service.dart';
-import '../../widgets/guidance_video_player.dart';
+import '../../config/api_config.dart';
+import 'guidance_feed_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -27,7 +28,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   List<GuidanceVideo> _videos = [];
-  int _currentVideoIndex = 0;
 
   @override
   void initState() {
@@ -192,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           
-          // Guidance Videos Swiper Section
+          // Guidance Videos Grid Section
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -203,24 +203,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(color: AppColors.textMedium),
                         ),
                       )
-                    : PageView.builder(
-                        scrollDirection: Axis.vertical,
+                    : GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.7, // Taller items for video thumbnails
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
                         itemCount: _videos.length,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentVideoIndex = index;
-                          });
-                        },
                         itemBuilder: (context, index) {
                           final video = _videos[index];
-                          return ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              topRight: Radius.circular(24),
-                            ),
-                            child: GuidanceVideoPlayer(
-                              video: video,
-                              isPlaying: index == _currentVideoIndex,
+                          final thumbUrl = video.thumbnailUrl.startsWith('http') 
+                            ? video.thumbnailUrl 
+                            : '$apiBaseUrl/media/${video.thumbnailUrl}';
+                            
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => GuidanceFeedScreen(
+                                    videos: _videos,
+                                    initialIndex: index,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  // Thumbnail Image
+                                  Container(
+                                    color: Colors.grey[300],
+                                    child: video.thumbnailUrl.isNotEmpty
+                                      ? Image.network(
+                                          thumbUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => const Center(
+                                            child: Icon(Icons.video_library, color: Colors.grey, size: 40),
+                                          ),
+                                        )
+                                      : const Center(
+                                          child: Icon(Icons.video_library, color: Colors.grey, size: 40),
+                                        ),
+                                  ),
+                                  // Dark Gradient Overlay
+                                  Container(
+                                    decoration: const BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black87,
+                                        ],
+                                        stops: [0.6, 1.0],
+                                      ),
+                                    ),
+                                  ),
+                                  // Play icon at center
+                                  const Center(
+                                    child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 48),
+                                  ),
+                                  // Title and Number at bottom
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 12,
+                                    right: 12,
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: AppColors.primary,
+                                          radius: 10,
+                                          child: Text(
+                                            '${video.orderIndex}',
+                                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            video.title,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
