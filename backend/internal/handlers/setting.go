@@ -9,7 +9,7 @@ import (
 )
 
 type SettingsRequest struct {
-	UserID string \json:"user_id" binding:"required"\
+	UserID string `json:"user_id" binding:"required"`
 }
 
 func GetSettingsHandler(db *sql.DB) gin.HandlerFunc {
@@ -21,7 +21,7 @@ func GetSettingsHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		var settings models.UserSettings
-		query := \SELECT theme, download_quality, push_notifications, email_notifications, language FROM user_settings WHERE user_id = \
+		query := `SELECT theme, download_quality, push_notifications, email_notifications, language FROM user_settings WHERE user_id = $1`
 		err := db.QueryRow(query, userId).Scan(
 			&settings.Theme,
 			&settings.DownloadQuality,
@@ -51,12 +51,12 @@ func GetSettingsHandler(db *sql.DB) gin.HandlerFunc {
 }
 
 type UpdateSettingsRequest struct {
-	UserID             string \json:"user_id" binding:"required"\
-	Theme              string \json:"theme"\
-	DownloadQuality    string \json:"downloadQuality"\
-	PushNotifications  bool   \json:"pushNotifications"\
-	EmailNotifications bool   \json:"emailNotifications"\
-	Language           string \json:"language"\
+	UserID             string `json:"user_id" binding:"required"`
+	Theme              string `json:"theme"`
+	DownloadQuality    string `json:"downloadQuality"`
+	PushNotifications  bool   `json:"pushNotifications"`
+	EmailNotifications bool   `json:"emailNotifications"`
+	Language           string `json:"language"`
 }
 
 func UpdateSettingsHandler(db *sql.DB) gin.HandlerFunc {
@@ -67,9 +67,9 @@ func UpdateSettingsHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		query := \
+		query := `
 			INSERT INTO user_settings (user_id, theme, download_quality, push_notifications, email_notifications, language, updated_at)
-			VALUES (, , , , , , now())
+			VALUES ($1, $2, $3, $4, $5, $6, now())
 			ON CONFLICT (user_id) DO UPDATE SET
 				theme = EXCLUDED.theme,
 				download_quality = EXCLUDED.download_quality,
@@ -77,7 +77,7 @@ func UpdateSettingsHandler(db *sql.DB) gin.HandlerFunc {
 				email_notifications = EXCLUDED.email_notifications,
 				language = EXCLUDED.language,
 				updated_at = now();
-		\
+		`
 
 		_, err := db.Exec(query, req.UserID, req.Theme, req.DownloadQuality, req.PushNotifications, req.EmailNotifications, req.Language)
 		if err != nil {
