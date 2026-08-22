@@ -10,6 +10,7 @@ import '../../services/payment_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../services/session_service.dart';
+import '../../services/my_learning_service.dart';
 import '../auth/onboarding_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
@@ -672,6 +673,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     try {
       final lessons = await CourseService().getLessons(chapter.id);
       if (!mounted) return;
+
+      // Record that user accessed this course (so it appears in My Learning)
+      if (lessons.isNotEmpty) {
+        MyLearningService.instance.markLessonProgress(
+          courseId: widget.course.id,
+          lessonId: lessons.first.id,
+          completed: false,
+        ).catchError((_) {}); // fire and forget
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(
