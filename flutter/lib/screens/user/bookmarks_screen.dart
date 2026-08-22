@@ -17,6 +17,7 @@ class BookmarksScreen extends StatefulWidget {
 class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
+  String? _error;
   List<dynamic> _lessons = [];
   List<dynamic> _courses = [];
   
@@ -38,18 +39,30 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
   }
 
   Future<void> _loadBookmarks() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final data = await BookmarkService.instance.getBookmarks();
-      setState(() {
-        _lessons = data['lessons'] ?? [];
-        _courses = data['courses'] ?? [];
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading bookmarks: $e')));
+        setState(() {
+          _lessons = data['lessons'] ?? [];
+          _courses = data['courses'] ?? [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          final errorStr = e.toString().toLowerCase();
+          if (errorStr.contains('socketexception') || errorStr.contains('failed host lookup')) {
+            _error = 'No internet connection.';
+          } else {
+            _error = 'Failed to load bookmarks.';
+          }
+        });
       }
     }
   }
@@ -98,13 +111,37 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildCoursesTab(filteredCourses),
-                        _buildLessonsTab(filteredLessons),
-                      ],
-                    ),
+                  : _error != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.wifi_off_rounded, size: 64, color: AppColors.grey),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppColors.textMedium, fontSize: 16),
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton(
+                                  onPressed: _loadBookmarks,
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                                  child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildCoursesTab(filteredCourses),
+                            _buildLessonsTab(filteredLessons),
+                          ],
+                        ),
             ),
           ],
         ),
