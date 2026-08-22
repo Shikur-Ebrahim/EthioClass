@@ -21,7 +21,7 @@ func GetMyLearningHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// ─── In Progress + Completed (unlocked via payment OR started via free lessons) ──
+		// ─── In Progress + Completed (unlocked/paid courses only) ──────────
 		enrolledRows, err := db.QueryContext(c.Request.Context(), `
 			SELECT
 				c.id,
@@ -37,16 +37,10 @@ func GetMyLearningHandler(db *sql.DB) gin.HandlerFunc {
 					SELECT MAX(lp.last_accessed_at) FROM lesson_progress lp
 					WHERE lp.user_id = $1 AND lp.course_id = c.id
 				) AS last_accessed_at,
-				COALESCE(
-					(SELECT uc.unlocked_at::text FROM user_courses uc WHERE uc.user_id = $1 AND uc.course_id = c.id LIMIT 1),
-					(SELECT lp.created_at::text FROM lesson_progress lp WHERE lp.user_id = $1 AND lp.course_id = c.id ORDER BY lp.created_at ASC LIMIT 1)
-				) AS started_at
-			FROM courses c
-			WHERE c.id IN (
-				SELECT course_id FROM user_courses WHERE user_id = $1
-				UNION
-				SELECT course_id FROM lesson_progress WHERE user_id = $1
-			)
+				uc.unlocked_at::text
+			FROM user_courses uc
+			JOIN courses c ON c.id = uc.course_id
+			WHERE uc.user_id = $1
 			ORDER BY last_accessed_at DESC NULLS LAST
 		`, userID)
 		if err != nil {

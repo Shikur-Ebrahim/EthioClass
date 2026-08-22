@@ -673,16 +673,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     try {
       final lessons = await CourseService().getLessons(chapter.id);
       if (!mounted) return;
-
-      // Record that user accessed this course (so it appears in My Learning)
-      if (lessons.isNotEmpty) {
-        MyLearningService.instance.markLessonProgress(
-          courseId: widget.course.id,
-          lessonId: lessons.first.id,
-          completed: false,
-        ).catchError((_) {}); // fire and forget
-      }
-
       Navigator.push(
         context,
         MaterialPageRoute(
