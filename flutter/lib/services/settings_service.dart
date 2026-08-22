@@ -24,13 +24,13 @@ class SettingsService {
   Future<UserSettings> getSettings() async {
     try {
       final userId = await _getUserId();
-      final response = await http.get(Uri.parse('\/settings?user_id=\'));
+      final response = await http.get(Uri.parse('$_baseUrl/settings?user_id=$userId'));
       
       if (response.statusCode == 200) {
         return UserSettings.fromJson(jsonDecode(response.body));
       }
     } catch (e) {
-      print('Error fetching settings: \');
+      print('Error fetching settings: $e');
     }
     return UserSettings(); // Returns defaults
   }
@@ -42,14 +42,14 @@ class SettingsService {
       body['user_id'] = userId;
 
       final response = await http.put(
-        Uri.parse('\/settings'),
+        Uri.parse('$_baseUrl/settings'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error updating settings: \');
+      print('Error updating settings: $e');
       return false;
     }
   }
