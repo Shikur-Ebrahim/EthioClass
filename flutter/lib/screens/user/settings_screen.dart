@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/theme.dart';
 import '../../models/user_settings.dart';
 import '../../services/settings_service.dart';
+import 'security_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,12 +15,15 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
+  bool _isClearingCache = false;
+  String _cacheSize = 'Calculating...';
   late UserSettings _settings;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _calculateCacheSize();
   }
 
   Future<void> _loadSettings() async {
@@ -30,11 +36,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _calculateCacheSize() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final cacheSize = await _getDirSize(tempDir);
+      if (mounted) {
+        setState(() {
+          _cacheSize = _formatSize(cacheSize);
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _cacheSize = '0 B');
+    }
+  }
+
+  Future<int> _getDirSize(Directory dir) async {
+    int size = 0;
+    try {
+      if (await dir.exists()) {
+        await for (final entity in dir.list(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            size += await entity.length();
+          }
+        }
+      }
+    } catch (_) {}
+    return size;
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes <= 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+  }
+
+  Future<void> _clearCache() async {
+    setState(() => _isClearingCache = true);
+    try {
+      final tempDir = await getTemporaryDirectory();
+      if (await tempDir.exists()) {
+        await for (final entity in tempDir.list(recursive: false)) {
+          try {
+            await entity.delete(recursive: true);
+          } catch (_) {}
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _cacheSize = '0 B';
+          _isClearingCache = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cache cleared successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isClearingCache = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to clear cache.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _updateSetting(UserSettings newSettings) async {
-    setState(() {
-      _settings = newSettings;
-    });
-    // In background, save to API
+    setState(() => _settings = newSettings);
     await SettingsService.instance.updateSettings(newSettings);
   }
 
@@ -64,6 +140,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                _buildSectionHeader('Security'),
+                _buildCard([
+                  ListTile(
+                    leading: const Icon(Icons.security_outlined, color: AppColors.textMedium),
+                    title: const Text('Security Settings', style: TextStyle(fontWeight: FontWeight.w500)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SecurityScreen()),
+                      );
+                    },
+                  ),
+                ]),
+                const SizedBox(height: 24),
                 _buildSectionHeader('Preferences'),
                 _buildCard([
                   _buildDropdownRow(
@@ -134,17 +225,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ListTile(
                     leading: const Icon(Icons.cleaning_services_outlined, color: AppColors.textMedium),
                     title: const Text('Clear Cache', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Text('45.6 MB', style: TextStyle(color: AppColors.textMedium)),
-                    onTap: () {},
+                    subtitle: const Text('Temporary files and cached data', style: TextStyle(fontSize: 12)),
+                    trailing: _isClearingCache
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          )
+                        : Text(
+                            _cacheSize,
+                            style: const TextStyle(
+                              color: AppColors.textMedium,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                    onTap: _isClearingCache ? null : () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Clear Cache'),
+                          content: Text('This will delete $_cacheSize of cached data. Continue?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                              child: const Text('Clear', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) _clearCache();
+                    },
                   ),
                 ]),
                 const SizedBox(height: 24),
                 _buildSectionHeader('About'),
                 _buildCard([
-                  ListTile(
-                    leading: const Icon(Icons.info_outline_rounded, color: AppColors.textMedium),
-                    title: const Text('App Version', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Text('1.0.0', style: TextStyle(color: AppColors.textMedium)),
+                  const ListTile(
+                    leading: Icon(Icons.info_outline_rounded, color: AppColors.textMedium),
+                    title: Text('App Version', style: TextStyle(fontWeight: FontWeight.w500)),
+                    trailing: Text('1.0.0', style: TextStyle(color: AppColors.textMedium)),
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -161,6 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () {},
                   ),
                 ]),
+                const SizedBox(height: 32),
               ],
             ),
     );

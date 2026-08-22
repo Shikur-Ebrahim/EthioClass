@@ -149,27 +149,12 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'Update your account password',
                   iconBgColor: Colors.blue.withOpacity(0.1),
                   iconColor: Colors.blue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChangePasswordScreen(accessToken: accessToken),
-                      ),
-                    );
-                  },
-                ),
-                _SettingsItem(
-                  icon: Icons.security_rounded,
-                  title: 'Security',
-                  subtitle: 'Manage account security',
-                  iconBgColor: Colors.blue.withOpacity(0.1),
-                  iconColor: Colors.blue,
                   showBorder: false,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const SecurityScreen(),
+                        builder: (_) => ChangePasswordScreen(accessToken: accessToken),
                       ),
                     );
                   },
