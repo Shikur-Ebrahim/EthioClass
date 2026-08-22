@@ -38,9 +38,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Onboarding arrow overlay
-  bool _showArrowOverlay = false;
-
   @override
   void initState() {
     super.initState();
@@ -57,26 +54,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
-    // Check if we should show onboarding arrow and auto-redirect
-    _checkOnboarding();
-  }
-
-  Future<void> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    int openCount = prefs.getInt('how_to_learning_opens') ?? 0;
-    if (openCount < 3) {
-      await prefs.setInt('how_to_learning_opens', openCount + 1);
-      if (mounted) {
-        setState(() => _showArrowOverlay = true);
-        // Auto-dismiss after 1 minute if user hasn't tapped
-        Future.delayed(const Duration(minutes: 1), () {
-          if (mounted && _showArrowOverlay) {
-            setState(() => _showArrowOverlay = false);
-          }
-        });
-      }
-    }
   }
 
   @override
@@ -391,20 +368,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF6B35), Color(0xFFFF3CAC)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFF3CAC).withOpacity(0.7), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF3CAC).withOpacity(0.5),
-                          blurRadius: 16,
-                          spreadRadius: 2,
+                          color: const Color(0xFFFF3CAC).withOpacity(0.3),
+                          blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -412,14 +384,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 16),
-                        SizedBox(width: 4),
+                        Icon(Icons.touch_app_rounded, color: Color(0xFFFF3CAC), size: 18),
+                        SizedBox(width: 8),
                         Text(
-                          'How to Learn',
+                          'Tap here to learn\nhow to use the app!',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
+                            height: 1.3,
                           ),
                         ),
                       ],
