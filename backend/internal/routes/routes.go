@@ -54,6 +54,9 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.GET("/settings", handlers.GetSettingsHandler(db))
 	r.PUT("/settings", handlers.UpdateSettingsHandler(db))
 
+	// Guidance Videos
+	r.GET("/guidance", handlers.GetGuidanceVideosHandler(db))
+
 	// Admin Routes
 	adminGroup := r.Group("/admin")
 	// TODO: Add auth middleware to require admin role
@@ -77,6 +80,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.POST("/quizzes", handlers.CreateQuizHandler(db))
 		adminGroup.PUT("/quizzes/:id", handlers.UpdateQuizHandler(db))
 		adminGroup.DELETE("/quizzes/:id", handlers.DeleteQuizHandler(db))
+
+		adminGroup.POST("/guidance", handlers.CreateGuidanceVideoHandler(db))
+		adminGroup.PUT("/guidance/:id", handlers.UpdateGuidanceVideoHandler(db))
+		adminGroup.DELETE("/guidance/:id", handlers.DeleteGuidanceVideoHandler(db))
 	}
 
 	// Payment Routes

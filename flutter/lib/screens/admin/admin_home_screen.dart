@@ -5,6 +5,7 @@ import '../../services/session_service.dart';
 import '../auth/login_screen.dart';
 import 'add_category_screen.dart';
 import 'manage_courses_screen.dart';
+import 'manage_guidance_screen.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   final String userName;
@@ -143,6 +144,24 @@ class AdminHomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => const ManageCoursesScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Guidance Videos Card
+            _buildActionCard(
+              context,
+              icon: Icons.video_library_rounded,
+              title: 'Manage Guidance Videos',
+              subtitle: 'Add short videos for the profile feed',
+              color: const Color(0xFF8B5CF6), // Purple
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ManageGuidanceScreen(),
                   ),
                 );
               },

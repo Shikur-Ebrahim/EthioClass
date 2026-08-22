@@ -3,11 +3,12 @@ import '../../core/theme.dart';
 import '../../services/session_service.dart';
 import '../auth/login_screen.dart';
 import 'personal_info_screen.dart';
-import 'change_password_screen.dart';
-import 'security_screen.dart';
 import 'settings_screen.dart';
+import '../../models/guidance_video.dart';
+import '../../services/guidance_service.dart';
+import '../../widgets/guidance_video_player.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String userName;
   final String userEmail;
   final String userPhone;
@@ -20,6 +21,37 @@ class ProfileScreen extends StatelessWidget {
     this.userPhone = '',
     this.accessToken = '',
   });
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoading = true;
+  List<GuidanceVideo> _videos = [];
+  int _currentVideoIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVideos();
+  }
+
+  Future<void> _loadVideos() async {
+    try {
+      final videos = await GuidanceService.instance.getVideos();
+      if (mounted) {
+        setState(() {
+          _videos = videos;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +70,13 @@ class ProfileScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // User Header
-            Row(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // User Header (Fixed at top)
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
                 // Avatar
                 Container(
@@ -63,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : 'S',
+                      widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'S',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -79,7 +111,7 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        userName.isNotEmpty ? userName : 'Student',
+                        widget.userName.isNotEmpty ? widget.userName : 'Student',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -88,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        userEmail,
+                        widget.userEmail,
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textMedium,
@@ -101,10 +133,10 @@ class ProfileScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => PersonalInfoScreen(
-                                currentName: userName,
-                                currentEmail: userEmail,
-                                currentPhone: userPhone,
-                                accessToken: accessToken,
+                                currentName: widget.userName,
+                                currentEmail: widget.userEmail,
+                                currentPhone: widget.userPhone,
+                                accessToken: widget.accessToken,
                               ),
                             ),
                           );
@@ -160,200 +192,43 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-
-            // Account Section
-            const _SectionTitle(title: 'Account'),
-            const SizedBox(height: 12),
-            _SettingsCard(
-              children: [
-                _SettingsItem(
-                  icon: Icons.person_rounded,
-                  title: 'Personal Information',
-                  subtitle: 'Update your personal details',
-                  iconBgColor: Colors.blue.withOpacity(0.1),
-                  iconColor: Colors.blue,
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PersonalInfoScreen(
-                          currentName: userName,
-                          currentEmail: userEmail,
-                          currentPhone: userPhone,
-                          accessToken: accessToken,
+          ),
+          
+          // Guidance Videos Swiper Section
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _videos.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No guidance videos yet.',
+                          style: TextStyle(color: AppColors.textMedium),
                         ),
+                      )
+                    : PageView.builder(
+                        scrollDirection: Axis.vertical,
+                        itemCount: _videos.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentVideoIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final video = _videos[index];
+                          return ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24),
+                            ),
+                            child: GuidanceVideoPlayer(
+                              video: video,
+                              isPlaying: index == _currentVideoIndex,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-                _SettingsItem(
-                  icon: Icons.lock_rounded,
-                  title: 'Change Password',
-                  subtitle: 'Update your account password',
-                  iconBgColor: Colors.blue.withOpacity(0.1),
-                  iconColor: Colors.blue,
-                  showBorder: false,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChangePasswordScreen(accessToken: accessToken),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            // Other Section
-            const SizedBox(height: 12),
-            _SettingsCard(
-              children: [
-                _SettingsItem(
-                  icon: Icons.logout_rounded,
-                  title: 'Logout',
-                  subtitle: 'Sign out from your account',
-                  iconBgColor: AppColors.error.withOpacity(0.1),
-                  iconColor: AppColors.error,
-                  showBorder: false,
-                  onTap: () async {
-                    await SessionService.clearSession();
-                    if (!context.mounted) return;
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textDark,
-      ),
-    );
-  }
-}
-
-class _SettingsCard extends StatelessWidget {
-  final List<Widget> children;
-  const _SettingsCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
           ),
         ],
-      ),
-      child: Column(
-        children: children,
-      ),
-    );
-  }
-}
-
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color iconBgColor;
-  final Color iconColor;
-  final bool showBorder;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  const _SettingsItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.iconBgColor,
-    required this.iconColor,
-    this.showBorder = true,
-    this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap ?? () {},
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: showBorder
-              ? const Border(
-                  bottom: BorderSide(color: AppColors.greyLight, width: 1))
-              : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
-            ],
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.grey, size: 20),
-          ],
-        ),
       ),
     );
   }
