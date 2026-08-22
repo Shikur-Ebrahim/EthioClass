@@ -37,43 +37,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFB800), Color(0xFFFF8C00)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFB800).withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.settings_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -83,6 +46,7 @@ class ProfileScreen extends StatelessWidget {
             // User Header
             Row(
               children: [
+                // Avatar
                 Container(
                   width: 72,
                   height: 72,
@@ -109,6 +73,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
+                // Name + email + edit profile
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +96,19 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PersonalInfoScreen(
+                                currentName: userName,
+                                currentEmail: userEmail,
+                                currentPhone: userPhone,
+                                accessToken: accessToken,
+                              ),
+                            ),
+                          );
+                        },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
@@ -140,16 +117,45 @@ class ProfileScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                                color: Color(0xFFFFB800),
                               ),
                             ),
                             SizedBox(width: 4),
                             Icon(Icons.chevron_right_rounded,
-                                size: 16, color: AppColors.primary),
+                                size: 16, color: Color(0xFFFFB800)),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+                // Blue settings icon circle
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.settings_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ],
