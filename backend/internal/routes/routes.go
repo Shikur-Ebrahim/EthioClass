@@ -50,6 +50,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	r.DELETE("/bookmarks/courses/:id", handlers.RemoveCourseBookmarkHandler(db))
 	r.GET("/bookmarks", handlers.GetBookmarksHandler(db))
 
+	// Settings
+	r.GET("/settings", handlers.GetSettingsHandler(db))
+	r.PUT("/settings", handlers.UpdateSettingsHandler(db))
+
 	// Admin Routes
 	adminGroup := r.Group("/admin")
 	// TODO: Add auth middleware to require admin role
