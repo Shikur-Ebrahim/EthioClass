@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"ethioclass/internal/models"
+	"github.com/EthioClass/backend/internal/models"
 )
 
 type SettingsRequest struct {
