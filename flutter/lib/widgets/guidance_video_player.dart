@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/theme.dart';
 import '../../models/guidance_video.dart';
+import '../../config/api_config.dart';
 
 class GuidanceVideoPlayer extends StatefulWidget {
   final GuidanceVideo video;
@@ -30,7 +31,11 @@ class _GuidanceVideoPlayerState extends State<GuidanceVideoPlayer> {
 
   Future<void> _initializeVideo() async {
     try {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.video.videoUrl));
+      final String fullUrl = widget.video.videoUrl.startsWith('http') 
+          ? widget.video.videoUrl 
+          : '$apiBaseUrl/media/${widget.video.videoUrl}';
+          
+      _controller = VideoPlayerController.networkUrl(Uri.parse(fullUrl));
       await _controller.initialize();
       _controller.setLooping(true);
       if (mounted) {
