@@ -243,7 +243,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
         final match = courses.where((c) => c.id == course.id).toList();
         if (match.isNotEmpty && mounted) {
           Navigator.push(context, MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(course: match.first),
+            builder: (_) => CourseDetailScreen(course: match.first, index: 0),
           ));
         }
       },
