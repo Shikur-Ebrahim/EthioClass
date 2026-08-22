@@ -69,14 +69,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       await prefs.setInt('how_to_learning_opens', openCount + 1);
       if (mounted) {
         setState(() => _showArrowOverlay = true);
-        // Auto-navigate after 2 seconds
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
+        // Auto-dismiss after 1 minute if user hasn't tapped
+        Future.delayed(const Duration(minutes: 1), () {
+          if (mounted && _showArrowOverlay) {
             setState(() => _showArrowOverlay = false);
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const HowToStartScreen()),
-            );
           }
         });
       }
@@ -207,24 +203,52 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Positioned(
               top: 60,
               right: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(12),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _showArrowOverlay = false);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HowToStartScreen()),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFFF3CAC).withOpacity(0.7), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.touch_app_rounded, color: Color(0xFFFF3CAC), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Tap here to learn\nhow to use the app! 👆',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: const Text(
-                      '👆 Tap here to learn\nhow to use the app!',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 28),
-                ],
+                    const SizedBox(height: 4),
+                    const Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF3CAC), size: 28),
+                  ],
+                ),
               ),
             ),
         ],
