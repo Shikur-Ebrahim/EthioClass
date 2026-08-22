@@ -81,8 +81,8 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.PUT("/quizzes/:id", handlers.UpdateQuizHandler(db))
 		adminGroup.DELETE("/quizzes/:id", handlers.DeleteQuizHandler(db))
 
-		adminGroup.POST("/guidance", handlers.CreateGuidanceVideoHandler(db))
-		adminGroup.PUT("/guidance/:id", handlers.UpdateGuidanceVideoHandler(db))
+		adminGroup.POST("/guidance", handlers.CreateGuidanceVideoHandler(db, r2))
+		adminGroup.PUT("/guidance/:id", handlers.UpdateGuidanceVideoHandler(db, r2))
 		adminGroup.DELETE("/guidance/:id", handlers.DeleteGuidanceVideoHandler(db))
 	}
 
