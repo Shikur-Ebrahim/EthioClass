@@ -58,22 +58,53 @@ class MyLearningService {
       return {'enrolled': [], 'saved': []};
     }
 
-    final response = await http.get(
-      Uri.parse('$_baseUrl/my-learning?user_id=$userId'),
-    ).timeout(const Duration(seconds: 10));
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/my-learning?user_id=$userId'),
+      ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final enrolled = (data['enrolled'] as List? ?? [])
-          .map((e) => MyLearningCourse.fromJson(e as Map<String, dynamic>))
-          .toList();
-      final saved = (data['saved'] as List? ?? [])
-          .map((e) => MyLearningCourse.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return {'enrolled': enrolled, 'saved': saved};
-    } else {
-      throw Exception('Failed to fetch My Learning data');
-    }
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final enrolled = (data['enrolled'] as List? ?? [])
+            .map((e) => MyLearningCourse.fromJson(e as Map<String, dynamic>))
+            .toList();
+        final saved = (data['saved'] as List? ?? [])
+            .map((e) => MyLearningCourse.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return {'enrolled': enrolled, 'saved': saved};
+      }
+    } catch (_) {}
+
+    // Fallback: use bookmarks API for Saved tab (works without new backend)
+    return await _fallbackFromBookmarks(userId);
+  }
+
+  Future<Map<String, List<MyLearningCourse>>> _fallbackFromBookmarks(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/bookmarks?user_id=$userId'),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final savedCourses = (data['courses'] as List? ?? []).map((e) {
+          final m = e as Map<String, dynamic>;
+          return MyLearningCourse(
+            id: m['course_id'] as String? ?? m['id'] as String? ?? '',
+            title: m['title'] as String? ?? 'Unknown Course',
+            thumbnailUrl: m['thumbnail_url'] as String?,
+            instructorName: m['instructor_name'] as String? ?? '',
+            totalLessons: (m['lesson_count'] as num?)?.toInt() ?? 0,
+            completedLessons: 0,
+            progress: 0.0,
+            lastAccessedAt: null,
+            isCompleted: false,
+          );
+        }).toList();
+        return {'enrolled': [], 'saved': savedCourses};
+      }
+    } catch (_) {}
+    return {'enrolled': [], 'saved': []};
   }
 
   Future<void> markLessonProgress({
