@@ -175,62 +175,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           ),
-          // Onboarding arrow overlay
-          if (_showArrowOverlay)
-            Positioned(
-              top: 75,
-              right: 20,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() => _showArrowOverlay = false);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HowToStartScreen()),
-                  );
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(right: 24),
-                      child: Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF3CAC), size: 32),
-                    ),
-                    const SizedBox(height: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFFF3CAC).withOpacity(0.7), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.touch_app_rounded, color: Color(0xFFFF3CAC), size: 18),
-                          SizedBox(width: 8),
-                          Text(
-                            'Tap here to learn\nhow to use the app!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
