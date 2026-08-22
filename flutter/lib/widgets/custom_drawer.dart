@@ -4,6 +4,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/user/settings_screen.dart';
 import '../screens/user/how_to_start_screen.dart';
+import '../screens/user/my_learning_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -108,7 +109,15 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.school_outlined,
                     label: 'My Learning',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context); // close drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyLearningScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.download_outlined,
