@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import '../../services/session_service.dart';
-import '../auth/login_screen.dart';
 import 'personal_info_screen.dart';
 import 'settings_screen.dart';
 import '../../models/guidance_video.dart';
