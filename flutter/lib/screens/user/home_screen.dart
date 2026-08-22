@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/category_model.dart';
@@ -18,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late Future<List<Category>> _categoriesFuture;
   late Future<List<Course>> _coursesFuture;
 
@@ -33,6 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSearching = false;
   bool _dataLoaded = false;
 
+  // Pulse animation
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  // Onboarding arrow overlay
+  bool _showArrowOverlay = false;
+
   @override
   void initState() {
     super.initState();
@@ -40,10 +48,44 @@ class _HomeScreenState extends State<HomeScreen> {
     _coursesFuture = CourseService().getCourses();
     _loadData();
     _searchController.addListener(_onSearchChanged);
+
+    // Pulse animation for the button
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Check if we should show onboarding arrow and auto-redirect
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    int openCount = prefs.getInt('how_to_learning_opens') ?? 0;
+    if (openCount < 3) {
+      await prefs.setInt('how_to_learning_opens', openCount + 1);
+      if (mounted) {
+        setState(() => _showArrowOverlay = true);
+        // Auto-navigate after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() => _showArrowOverlay = false);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HowToStartScreen()),
+            );
+          }
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -112,10 +154,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: () async {
+      body: Stack(
+        children: [
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
             setState(() {
               _dataLoaded = false;
               _searchController.clear();
@@ -155,8 +199,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
               ],
             ),
+              ),
+            ),
           ),
-        ),
+          // Onboarding arrow overlay
+          if (_showArrowOverlay)
+            Positioned(
+              top: 60,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '👆 Tap here to learn\nhow to use the app!',
+                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 28),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -280,48 +351,55 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const Spacer(),
-              // Notification bell
-              // "How to Learning" attractive button
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const HowToStartScreen(),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6366F1).withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+              // "How to Learning" pulsing button
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HowToStartScreen(),
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 18),
-                      SizedBox(width: 6),
-                      Text(
-                        'How to Learning',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6B35), Color(0xFFFF3CAC)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF3CAC).withOpacity(0.5),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'How to Learning',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                      ],
+                    ),
                   ),
                 ),
               ),
