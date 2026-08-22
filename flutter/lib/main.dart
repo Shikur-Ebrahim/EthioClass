@@ -95,10 +95,17 @@ class _StartupScreenState extends State<_StartupScreen> {
         );
       }
     } else {
-      // No session → go to onboarding
+      // No session → go to home as guest
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        MaterialPageRoute(
+          builder: (_) => const MainLayout(
+            userName: '',
+            userEmail: '',
+            userPhone: '',
+            accessToken: '',
+          ),
+        ),
       );
     }
   }

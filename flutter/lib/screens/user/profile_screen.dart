@@ -6,6 +6,7 @@ import '../../models/guidance_video.dart';
 import '../../services/guidance_service.dart';
 import '../../config/api_config.dart';
 import 'guidance_feed_screen.dart';
+import '../auth/onboarding_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -127,6 +128,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 6),
                       GestureDetector(
                         onTap: () async {
+                          if (widget.userName.isEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                            );
+                            return;
+                          }
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -141,18 +149,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Text(
-                              'Edit Profile',
-                              style: TextStyle(
+                              widget.userName.isEmpty ? 'Create Account' : 'Edit Profile',
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFFFFB800),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(Icons.chevron_right_rounded,
-                                size: 16, color: Color(0xFFFFB800)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_ios_rounded,
+                                size: 10, color: Color(0xFFFFB800)),
                           ],
                         ),
                       ),

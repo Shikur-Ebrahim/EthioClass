@@ -9,6 +9,8 @@ import '../../services/course_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
+import '../../services/session_service.dart';
+import '../auth/onboarding_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
 
@@ -700,7 +702,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     }
   }
 
-  void _showUnlockDialog() {
+  void _showUnlockDialog() async {
+    final session = await SessionService.loadSession();
+    final isGuest = session == null;
+
+    if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -728,10 +735,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
               const SizedBox(height: 12),
-              const Text(
-                'Get full access to all video lessons, notes, and quizzes for this course for just 249 Birr.',
+              Text(
+                isGuest 
+                  ? 'Please create an account to get full access to all video lessons, notes, and quizzes for this course.'
+                  : 'Get full access to all video lessons, notes, and quizzes for this course for just 249 Birr.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
+                style: const TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
               ),
               const SizedBox(height: 24),
               Row(
@@ -762,8 +771,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         elevation: 0,
                       ),
-                      child: const Text('Pay 249 Birr',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                      child: Text(isGuest ? 'Create Account' : 'Pay 249 Birr',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                     ),
                   ),
                 ],
@@ -777,6 +786,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _handlePayment() async {
+    final session = await SessionService.loadSession();
+    if (session == null) {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        );
+      }
+      return;
+    }
+
     if (_prefetchedCheckoutUrl == null) {
       showDialog(
         context: context,
