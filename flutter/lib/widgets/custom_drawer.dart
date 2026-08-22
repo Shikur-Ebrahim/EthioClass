@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
+import '../screens/user/settings_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -89,17 +90,15 @@ class CustomDrawer extends StatelessWidget {
                     },
                   ),
                   _DrawerItem(
-                    icon: Icons.school_outlined,
-                    label: 'My Learning',
+                    icon: Icons.play_circle_outline_rounded,
+                    label: 'How to start',
                     trailing: const Icon(Icons.chevron_right_rounded,
                         color: AppColors.grey, size: 20),
                     onTap: () {},
                   ),
                   _DrawerItem(
-                    icon: Icons.play_circle_outline_rounded,
-                    label: 'How to start',
-                    trailing: const Icon(Icons.chevron_right_rounded,
-                        color: AppColors.grey, size: 20),
+                    icon: Icons.school_outlined,
+                    label: 'My Learning',
                     onTap: () {},
                   ),
                   _DrawerItem(
@@ -170,7 +169,13 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.settings_outlined,
                     label: 'Settings',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.headset_mic_outlined,
