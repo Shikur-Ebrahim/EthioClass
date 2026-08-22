@@ -129,6 +129,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ]),
                 const SizedBox(height: 24),
+                _buildSectionHeader('Storage'),
+                _buildCard([
+                  ListTile(
+                    leading: const Icon(Icons.cleaning_services_outlined, color: AppColors.textMedium),
+                    title: const Text('Clear Cache', style: TextStyle(fontWeight: FontWeight.w500)),
+                    trailing: const Text('45.6 MB', style: TextStyle(color: AppColors.textMedium)),
+                    onTap: () {},
+                  ),
+                ]),
+                const SizedBox(height: 24),
                 _buildSectionHeader('About'),
                 _buildCard([
                   ListTile(

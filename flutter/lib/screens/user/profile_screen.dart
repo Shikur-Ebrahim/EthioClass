@@ -28,7 +28,7 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
         title: const Text(
-          'Settings',
+          'Profile',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -176,75 +176,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Preferences Section
-            const _SectionTitle(title: 'Preferences'),
-            const SizedBox(height: 12),
-            _SettingsCard(
-              children: [
-                _SettingsItem(
-                  icon: Icons.language_rounded,
-                  title: 'Language',
-                  subtitle: 'Choose your preferred language',
-                  iconBgColor: Colors.indigo.withOpacity(0.1),
-                  iconColor: Colors.indigo,
-                  trailing: const Text(
-                    'English',
-                    style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                  ),
-                ),
-                _SettingsItem(
-                  icon: Icons.hd_rounded,
-                  title: 'Video Quality',
-                  subtitle: 'Select default video quality',
-                  iconBgColor: Colors.purple.withOpacity(0.1),
-                  iconColor: Colors.purple,
-                  trailing: const Text(
-                    'Auto',
-                    style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                  ),
-                ),
-                _SettingsItem(
-                  icon: Icons.notifications_rounded,
-                  title: 'Notifications',
-                  subtitle: 'Manage your notification preferences',
-                  iconBgColor: Colors.green.withOpacity(0.1),
-                  iconColor: Colors.green,
-                ),
-                _SettingsItem(
-                  icon: Icons.dark_mode_rounded,
-                  title: 'Dark Mode',
-                  subtitle: 'Use dark theme',
-                  iconBgColor: Colors.orange.withOpacity(0.1),
-                  iconColor: Colors.orange,
-                  showBorder: false,
-                  trailing: Switch(
-                    value: false, // Hardcoded to false for light theme
-                    onChanged: (val) {},
-                    activeColor: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
             // Other Section
-            const _SectionTitle(title: 'Other'),
             const SizedBox(height: 12),
             _SettingsCard(
               children: [
-                _SettingsItem(
-                  icon: Icons.cleaning_services_rounded,
-                  title: 'Clear Cache',
-                  subtitle: 'Free up storage space',
-                  iconBgColor: Colors.blueGrey.withOpacity(0.1),
-                  iconColor: Colors.blueGrey,
-                  trailing: const Text(
-                    '45.6 MB',
-                    style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                  ),
-                ),
                 _SettingsItem(
                   icon: Icons.logout_rounded,
                   title: 'Logout',
