@@ -5,11 +5,15 @@ import '../screens/auth/login_screen.dart';
 class CustomDrawer extends StatelessWidget {
   final String userName;
   final String userEmail;
+  final void Function(int index)? onNavigate;
+  final int selectedIndex;
 
   const CustomDrawer({
     super.key,
     required this.userName,
     required this.userEmail,
+    this.onNavigate,
+    this.selectedIndex = 0,
   });
 
   @override
@@ -68,13 +72,20 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.home_outlined,
                     label: 'Home',
-                    isSelected: true,
-                    onTap: () => Navigator.pop(context),
+                    isSelected: selectedIndex == 0,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onNavigate?.call(0);
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.menu_book_outlined,
                     label: 'Courses',
-                    onTap: () {},
+                    isSelected: selectedIndex == 1,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onNavigate?.call(1);
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.school_outlined,
@@ -86,12 +97,20 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.download_outlined,
                     label: 'Downloads',
-                    onTap: () {},
+                    isSelected: selectedIndex == 2,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onNavigate?.call(2);
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.bookmark_border_rounded,
                     label: 'Bookmarks',
-                    onTap: () {},
+                    isSelected: selectedIndex == 3,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onNavigate?.call(3);
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.article_outlined,

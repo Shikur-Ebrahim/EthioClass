@@ -53,6 +53,12 @@ class _MainLayoutState extends State<MainLayout> {
       drawer: CustomDrawer(
         userName: widget.userName,
         userEmail: widget.userEmail,
+        selectedIndex: _selectedIndex,
+        onNavigate: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
       body: IndexedStack(
         index: _selectedIndex,
