@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'my_learning_service.dart';
 
 class ProgressService {
   static final ProgressService instance = ProgressService._internal();
@@ -39,6 +40,15 @@ class ProgressService {
       final courseKey = 'course_completed_count_$courseId';
       final currentCount = _prefs!.getInt(courseKey) ?? 0;
       await _prefs!.setInt(courseKey, currentCount + 1);
+
+      // Sync to backend (fire and forget – ignore errors)
+      try {
+        await MyLearningService.instance.markLessonProgress(
+          courseId: courseId,
+          lessonId: lessonId,
+          completed: true,
+        );
+      } catch (_) {}
     }
   }
 

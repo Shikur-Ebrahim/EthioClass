@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../config/api_config.dart';
+import '../../services/my_learning_service.dart';
+import 'course_detail_screen.dart';
+import '../../services/course_service.dart';
 
 class MyLearningScreen extends StatefulWidget {
   const MyLearningScreen({super.key});
@@ -8,110 +12,83 @@ class MyLearningScreen extends StatefulWidget {
   State<MyLearningScreen> createState() => _MyLearningScreenState();
 }
 
-class _MyLearningScreenState extends State<MyLearningScreen> {
-  int _selectedTab = 0; // 0 = In Progress, 1 = Completed, 2 = Saved
+class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
-  final List<Map<String, dynamic>> _inProgressCourses = [
-    {
-      'title': 'Physics - Grade 12',
-      'instructor': 'Abel Bekele',
-      'progress': 0.65,
-      'lastAccessed': 'Today',
-      'icon': Icons.science_rounded,
-      'color': const Color(0xFF4F63D2),
-    },
-    {
-      'title': 'Mathematics - Grade 12',
-      'instructor': 'Mesfin Tadesse',
-      'progress': 0.40,
-      'lastAccessed': 'Yesterday',
-      'icon': Icons.calculate_rounded,
-      'color': const Color(0xFFE85D04),
-    },
-    {
-      'title': 'Chemistry - Grade 12',
-      'instructor': 'Rahel Worku',
-      'progress': 0.25,
-      'lastAccessed': '2 days ago',
-      'icon': Icons.biotech_rounded,
-      'color': const Color(0xFF2D9CDB),
-    },
-    {
-      'title': 'Biology - Grade 12',
-      'instructor': 'Yonatan Alemu',
-      'progress': 0.75,
-      'lastAccessed': '3 days ago',
-      'icon': Icons.eco_rounded,
-      'color': const Color(0xFF27AE60),
-    },
-    {
-      'title': 'Engineering Drawing - TVET',
-      'instructor': 'Samuel Getachew',
-      'progress': 0.30,
-      'lastAccessed': '5 days ago',
-      'icon': Icons.architecture_rounded,
-      'color': const Color(0xFF9B51E0),
-    },
-  ];
+  List<MyLearningCourse> _inProgress = [];
+  List<MyLearningCourse> _completed = [];
+  List<MyLearningCourse> _saved = [];
 
-  final List<Map<String, dynamic>> _completedCourses = [
-    {
-      'title': 'Intro to Civics - Grade 11',
-      'instructor': 'Selamawit Girma',
-      'progress': 1.0,
-      'lastAccessed': '1 month ago',
-      'icon': Icons.public_rounded,
-      'color': const Color(0xFF219653),
-    },
-    {
-      'title': 'English Grammar Mastery',
-      'instructor': 'Dawit Solomon',
-      'progress': 1.0,
-      'lastAccessed': '2 months ago',
-      'icon': Icons.menu_book_rounded,
-      'color': const Color(0xFFF2994A),
-    },
-  ];
+  bool _isLoading = true;
+  String? _error;
+  String _searchQuery = '';
+  final TextEditingController _searchCtrl = TextEditingController();
 
-  final List<Map<String, dynamic>> _savedCourses = [
-    {
-      'title': 'Python Programming Bootcamp',
-      'instructor': 'Kaleab Melaku',
-      'progress': 0.0,
-      'lastAccessed': 'Not started',
-      'icon': Icons.code_rounded,
-      'color': const Color(0xFFEB5757),
-    },
-    {
-      'title': 'Web Development Fundamentals',
-      'instructor': 'Bethlehem Tefera',
-      'progress': 0.0,
-      'lastAccessed': 'Not started',
-      'icon': Icons.web_rounded,
-      'color': const Color(0xFF2D9CDB),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final data = await MyLearningService.instance.getMyLearning();
+      final enrolled = data['enrolled'] ?? [];
+      if (mounted) {
+        setState(() {
+          _inProgress = enrolled.where((c) => !c.isCompleted).toList();
+          _completed = enrolled.where((c) => c.isCompleted).toList();
+          _saved = data['saved'] ?? [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString().toLowerCase();
+        setState(() {
+          _isLoading = false;
+          _error = (err.contains('socketexception') || err.contains('failed host lookup'))
+              ? 'No internet connection.'
+              : 'Failed to load your courses.';
+        });
+      }
+    }
+  }
+
+  String _formatLastAccessed(String? iso) {
+    if (iso == null) return 'Not started';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 60) return 'Just now';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays} days ago';
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return 'Recently';
+    }
+  }
+
+  List<MyLearningCourse> _filtered(List<MyLearningCourse> list) {
+    if (_searchQuery.isEmpty) return list;
+    final q = _searchQuery.toLowerCase();
+    return list.where((c) =>
+        c.title.toLowerCase().contains(q) ||
+        c.instructorName.toLowerCase().contains(q)).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> currentList;
-    String badgeText;
-    Color badgeColor;
-
-    if (_selectedTab == 0) {
-      currentList = _inProgressCourses;
-      badgeText = 'In Progress';
-      badgeColor = const Color(0xFF2D9CDB);
-    } else if (_selectedTab == 1) {
-      currentList = _completedCourses;
-      badgeText = 'Completed';
-      badgeColor = const Color(0xFF27AE60);
-    } else {
-      currentList = _savedCourses;
-      badgeText = 'Saved';
-      badgeColor = const Color(0xFF9B51E0);
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
@@ -124,222 +101,317 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
         ),
         title: const Text(
           'My Learning',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(112),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search your courses...',
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.6)),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.08),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.white.withOpacity(0.5),
+                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                indicatorColor: AppColors.primary,
+                indicatorWeight: 3,
+                tabs: [
+                  Tab(text: 'In Progress (${_inProgress.length})'),
+                  Tab(text: 'Completed (${_completed.length})'),
+                  Tab(text: 'Saved (${_saved.length})'),
+                ],
+              ),
+            ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFF0F172A),
-            padding: const EdgeInsets.only(bottom: 20, top: 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : _error != null
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildList(_filtered(_inProgress), 'in_progress'),
+                    _buildList(_filtered(_completed), 'completed'),
+                    _buildList(_filtered(_saved), 'saved'),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 64, color: AppColors.grey),
+            const SizedBox(height: 16),
+            Text(_error!, textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textMedium, fontSize: 16)),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadData,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(List<MyLearningCourse> courses, String type) {
+    if (courses.isEmpty) {
+      String msg;
+      IconData icon;
+      switch (type) {
+        case 'in_progress':
+          msg = 'No courses in progress.\nStart learning by unlocking a course!';
+          icon = Icons.play_circle_outline_rounded;
+          break;
+        case 'completed':
+          msg = 'No completed courses yet.\nKeep going, you\'re doing great!';
+          icon = Icons.emoji_events_outlined;
+          break;
+        default:
+          msg = 'No saved courses.\nBookmark a course to save it here!';
+          icon = Icons.bookmark_border_rounded;
+      }
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 64, color: AppColors.greyLight),
+              const SizedBox(height: 16),
+              Text(msg, textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.textMedium, fontSize: 15, height: 1.5)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: courses.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        itemBuilder: (context, i) => _buildCard(courses[i], type),
+      ),
+    );
+  }
+
+  Widget _buildCard(MyLearningCourse course, String type) {
+    final pct = (course.progress * 100).toInt();
+    final badgeText = type == 'completed' ? 'Completed' : type == 'saved' ? 'Saved' : 'In Progress';
+    final badgeColor = type == 'completed'
+        ? const Color(0xFF27AE60)
+        : type == 'saved'
+            ? const Color(0xFF9B51E0)
+            : const Color(0xFF2D9CDB);
+
+    return GestureDetector(
+      onTap: () async {
+        final courses = await CourseService().getCourses();
+        final match = courses.where((c) => c.id == course.id).toList();
+        if (match.isNotEmpty && mounted) {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (_) => CourseDetailScreen(course: match.first),
+          ));
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Thumbnail + info row
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTab('In Progress', 0),
-                  const SizedBox(width: 12),
-                  _buildTab('Completed', 1),
-                  const SizedBox(width: 12),
-                  _buildTab('Saved', 2),
+                  // Thumbnail
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
+                        ? Image.network(
+                            '$apiBaseUrl/media/${course.thumbnailUrl}',
+                            width: 72,
+                            height: 72,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _placeholderIcon(),
+                          )
+                        : _placeholderIcon(),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                course.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textDark,
+                                    height: 1.3),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: badgeColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                badgeText,
+                                style: TextStyle(
+                                    color: badgeColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                course.instructorName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.menu_book_outlined, size: 14, color: AppColors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${course.completedLessons}/${course.totalLessons} lessons',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(20),
-              itemCount: currentList.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                return _buildCourseCard(currentList[index], badgeText, badgeColor);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildTab(String title, int index) {
-    final bool isActive = _selectedTab == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedTab = index;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isActive ? AppColors.primary : Colors.white.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCourseCard(Map<String, dynamic> course, String badgeText, Color badgeColor) {
-    final progress = course['progress'] as double;
-    final pct = (progress * 100).toInt();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [course['color'].withOpacity(0.8), course['color']],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(course['icon'], color: Colors.white, size: 30),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course['title'],
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark,
-                        height: 1.2,
+            // Progress bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: course.progress,
+                        minHeight: 8,
+                        backgroundColor: AppColors.greyLight,
+                        color: type == 'completed'
+                            ? const Color(0xFF27AE60)
+                            : AppColors.primary,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Instructor: ${course['instructor']}',
-                      style: const TextStyle(
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '$pct%',
+                    style: const TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: badgeColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Container(
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: AppColors.greyLight,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    FractionallySizedBox(
-                      widthFactor: progress,
-                      child: Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: AppColors.greyLight),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, size: 14, color: AppColors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Last accessed: ${_formatLastAccessed(course.lastAccessedAt)}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.grey),
+                ],
               ),
-              const SizedBox(width: 12),
-              Text(
-                '$pct%',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.greyLight, height: 1),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Last accessed: ${course['lastAccessed']}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.grey,
-                ),
-              ),
-              const Icon(Icons.more_horiz_rounded, color: AppColors.grey, size: 20),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _placeholderIcon() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 36),
     );
   }
 }
