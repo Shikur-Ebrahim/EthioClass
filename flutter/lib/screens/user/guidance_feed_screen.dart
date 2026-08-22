@@ -132,7 +132,8 @@ class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTick
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Swipe up for next video',
+                          'Swipe up or down\nfor next/previous video',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -140,11 +141,22 @@ class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTick
                             shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Icon(
-                          Icons.keyboard_double_arrow_up_rounded,
-                          color: Colors.white70,
-                          size: 48,
+                        const SizedBox(height: 12),
+                        const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.keyboard_double_arrow_up_rounded,
+                              color: Colors.white70,
+                              size: 40,
+                            ),
+                            SizedBox(width: 24),
+                            Icon(
+                              Icons.keyboard_double_arrow_down_rounded,
+                              color: Colors.white70,
+                              size: 40,
+                            ),
+                          ],
                         ),
                       ],
                     ),
