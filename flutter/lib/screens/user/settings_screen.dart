@@ -16,11 +16,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isLoading = true;
   bool _isClearingCache = false;
   String _cacheSize = 'Calculating...';
   String _accessToken = '';
-  late UserSettings _settings;
+  UserSettings _settings = UserSettings(); // instant default, no loading
 
   @override
   void initState() {
@@ -36,7 +35,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _settings = settings;
         _accessToken = session?['token'] ?? '';
-        _isLoading = false;
       });
     }
   }
@@ -140,9 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : ListView(
+      body: ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 _buildSectionHeader('Security'),
