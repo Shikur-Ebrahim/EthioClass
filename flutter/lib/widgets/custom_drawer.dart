@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/signup_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -95,6 +96,13 @@ class CustomDrawer extends StatelessWidget {
                     onTap: () {},
                   ),
                   _DrawerItem(
+                    icon: Icons.play_circle_outline_rounded,
+                    label: 'How to start',
+                    trailing: const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.grey, size: 20),
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
                     icon: Icons.download_outlined,
                     label: 'Downloads',
                     isSelected: selectedIndex == 2,
@@ -141,6 +149,17 @@ class CustomDrawer extends StatelessWidget {
                     icon: Icons.chat_bubble_outline_rounded,
                     label: 'Messages',
                     onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.person_add_outlined,
+                    label: 'Create Account',
+                    onTap: () {
+                      Navigator.pop(context); // close drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignupScreen()),
+                      );
+                    },
                   ),
                   
                   const Padding(
