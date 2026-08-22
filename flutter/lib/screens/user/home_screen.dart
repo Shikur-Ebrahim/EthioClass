@@ -201,8 +201,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           // Onboarding arrow overlay
           if (_showArrowOverlay)
             Positioned(
-              top: 60,
-              right: 16,
+              top: 75,
+              right: 20,
               child: GestureDetector(
                 onTap: () {
                   setState(() => _showArrowOverlay = false);
@@ -214,6 +214,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    const Padding(
+                      padding: EdgeInsets.only(right: 24),
+                      child: Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF3CAC), size: 32),
+                    ),
+                    const SizedBox(height: 2),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
@@ -234,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           Icon(Icons.touch_app_rounded, color: Color(0xFFFF3CAC), size: 18),
                           SizedBox(width: 8),
                           Text(
-                            'Tap here to learn\nhow to use the app! 👆',
+                            'Tap here to learn\nhow to use the app!',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 13,
@@ -245,8 +250,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF3CAC), size: 28),
                   ],
                 ),
               ),
@@ -388,14 +391,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFF6B35), Color(0xFFFF3CAC)],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
                       boxShadow: [
                         BoxShadow(
@@ -409,19 +412,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
-                        SizedBox(width: 6),
+                        Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 16),
+                        SizedBox(width: 4),
                         Text(
-                          'How to Learning',
+                          'How to Learn',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
                       ],
                     ),
                   ),
