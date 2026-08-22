@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart';
-import '../core/constants.dart';
+import '../config/api_config.dart';
 import '../models/guidance_video.dart';
 
 class GuidanceService {
@@ -12,7 +12,7 @@ class GuidanceService {
   GuidanceService._();
 
   Future<List<GuidanceVideo>> getVideos() async {
-    final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/guidance'));
+    final response = await http.get(Uri.parse('$apiBaseUrl/guidance'));
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       return data.map((json) => GuidanceVideo.fromJson(json)).toList();
@@ -29,7 +29,7 @@ class GuidanceService {
   }) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('${ApiConstants.baseUrl}/admin/guidance'),
+      Uri.parse('$apiBaseUrl/admin/guidance'),
     );
 
     request.fields['title'] = title;
@@ -70,7 +70,7 @@ class GuidanceService {
   }) async {
     var request = http.MultipartRequest(
       'PUT',
-      Uri.parse('${ApiConstants.baseUrl}/admin/guidance/$id'),
+      Uri.parse('$apiBaseUrl/admin/guidance/$id'),
     );
 
     request.fields['title'] = title;
@@ -105,7 +105,7 @@ class GuidanceService {
 
   Future<void> deleteVideo(String id) async {
     final response = await http.delete(
-      Uri.parse('${ApiConstants.baseUrl}/admin/guidance/$id'),
+      Uri.parse('$apiBaseUrl/admin/guidance/$id'),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to delete guidance video');
