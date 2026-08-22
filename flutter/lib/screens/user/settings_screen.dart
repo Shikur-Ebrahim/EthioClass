@@ -4,7 +4,9 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/theme.dart';
 import '../../models/user_settings.dart';
 import '../../services/settings_service.dart';
+import '../../services/session_service.dart';
 import 'security_screen.dart';
+import 'change_password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
   bool _isClearingCache = false;
   String _cacheSize = 'Calculating...';
+  String _accessToken = '';
   late UserSettings _settings;
 
   @override
@@ -28,9 +31,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final settings = await SettingsService.instance.getSettings();
+    final session = await SessionService.loadSession();
     if (mounted) {
       setState(() {
         _settings = settings;
+        _accessToken = session?['token'] ?? '';
         _isLoading = false;
       });
     }
@@ -142,6 +147,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _buildSectionHeader('Security'),
                 _buildCard([
+                  ListTile(
+                    leading: const Icon(Icons.lock_outline_rounded, color: AppColors.textMedium),
+                    title: const Text('Change Password', style: TextStyle(fontWeight: FontWeight.w500)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ChangePasswordScreen(accessToken: _accessToken)),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.security_outlined, color: AppColors.textMedium),
                     title: const Text('Security Settings', style: TextStyle(fontWeight: FontWeight.w500)),
