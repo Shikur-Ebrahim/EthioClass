@@ -5,6 +5,7 @@ import '../screens/auth/signup_screen.dart';
 import '../screens/user/settings_screen.dart';
 import '../screens/user/how_to_start_screen.dart';
 import '../screens/user/my_learning_screen.dart';
+import '../screens/user/share_app_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -178,6 +179,18 @@ class CustomDrawer extends StatelessWidget {
                       );
                     },
                   ),
+                  _DrawerItem(
+                    icon: Icons.share_rounded,
+                    label: 'Share Application',
+                    color: Colors.green, // use green as requested
+                    onTap: () {
+                      Navigator.pop(context); // close drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ShareAppScreen()),
+                      );
+                    },
+                  ),
                   
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -256,6 +269,7 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSelected;
   final Widget? trailing;
+  final Color? color;
 
   const _DrawerItem({
     required this.icon,
@@ -263,15 +277,17 @@ class _DrawerItem extends StatelessWidget {
     required this.onTap,
     this.isSelected = false,
     this.trailing,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? (isSelected ? AppColors.primary : AppColors.textMedium);
     return ListTile(
       onTap: onTap,
       leading: Icon(
         icon,
-        color: isSelected ? AppColors.primary : AppColors.textMedium,
+        color: effectiveColor,
         size: 24,
       ),
       title: Text(
@@ -279,7 +295,7 @@ class _DrawerItem extends StatelessWidget {
         style: TextStyle(
           fontSize: 15,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? AppColors.primary : AppColors.textDark,
+          color: color ?? (isSelected ? AppColors.primary : AppColors.textDark),
         ),
       ),
       trailing: trailing,
