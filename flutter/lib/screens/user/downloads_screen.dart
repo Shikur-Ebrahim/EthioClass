@@ -5,7 +5,9 @@ import '../../services/download_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 import '../../models/lesson_model.dart';
 import '../../services/progress_service.dart';
+import '../../models/chapter_model.dart';
 import 'lesson_detail_screen.dart';
+import 'exam_preparation_screen.dart';
 
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
@@ -656,8 +658,28 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => LessonDetailScreen(
                     lessons: [dl.lesson], chapterTitle: dl.chapterTitle, chapterDescription: '',
                     courseTitle: dl.courseTitle, courseThumbnailUrl: dl.courseThumbnailUrl,
-                    thumbnailUrl: dl.courseThumbnailUrl, initialLessonIndex: 0, initialTab: 2,
+                    thumbnailUrl: dl.courseThumbnailUrl, initialLessonIndex: 0, initialTab: 3,
                   )));
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: const Color(0xFF16A34A).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.timer_outlined, color: Color(0xFF16A34A), size: 20),
+                ),
+                title: const Text('Take Exam', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Chapter timed exam with 60s per question', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(bsc);
+                  final chapter = Chapter(
+                    id: dl.lesson.chapterId,
+                    courseId: '',
+                    title: dl.chapterTitle,
+                    chapterNumber: 1,
+                    isFree: true,
+                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreparationScreen(chapter: chapter)));
                 },
               ),
               ListTile(
