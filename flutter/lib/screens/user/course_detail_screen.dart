@@ -741,10 +741,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
               const SizedBox(height: 12),
-              const Text(
-                'Get full access to all video lessons, notes, and quizzes for this course for just 249 Birr.',
+              Text(
+                'Get full access to all video lessons, notes, and quizzes for this course for just ${widget.course.price} Birr.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
+                style: const TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
               ),
               const SizedBox(height: 24),
               Row(
@@ -775,8 +775,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         elevation: 0,
                       ),
-                      child: const Text('Pay 249 Birr',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                      child: Text('Pay ${widget.course.price} Birr',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                     ),
                   ),
                 ],

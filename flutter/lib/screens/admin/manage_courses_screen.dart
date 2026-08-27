@@ -222,6 +222,7 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
   final _aboutTextController = TextEditingController();
   final _instructorNameController = TextEditingController();
   final _instructorPhoneController = TextEditingController();
+  final _priceController = TextEditingController(text: '249');
 
   final List<TextEditingController> _bulletControllers = [];
 
@@ -241,6 +242,7 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
       _aboutTextController.text = c.aboutText;
       _instructorNameController.text = c.instructorName;
       _instructorPhoneController.text = c.instructorPhone;
+      _priceController.text = c.price.toString();
 
       // Pre-select the matching category
       if (c.categoryId != null) {
@@ -263,6 +265,7 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
     _aboutTextController.dispose();
     _instructorNameController.dispose();
     _instructorPhoneController.dispose();
+    _priceController.dispose();
     for (var c in _bulletControllers) {
       c.dispose();
     }
@@ -322,6 +325,7 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
       request.fields['about_text'] = _aboutTextController.text.trim();
       request.fields['instructor_name'] = _instructorNameController.text.trim();
       request.fields['instructor_phone'] = _instructorPhoneController.text.trim();
+      request.fields['price'] = _priceController.text.trim().isEmpty ? '249' : _priceController.text.trim();
 
       final bullets = _bulletControllers
           .map((c) => c.text.trim())
@@ -576,6 +580,38 @@ class _CourseFormScreenState extends State<_CourseFormScreen> {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
+                ),
+                const SizedBox(height: 16),
+
+                // Price field
+                Row(
+                  children: [
+                    const Icon(Icons.monetization_on_outlined, color: Color(0xFF16A34A), size: 20),
+                    const SizedBox(width: 8),
+                    const Text('Course Price (Birr)',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Price in Birr (e.g. 249)',
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('ETB', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Required';
+                    if (int.tryParse(val) == null || int.parse(val) <= 0) return 'Enter a valid price';
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 24),

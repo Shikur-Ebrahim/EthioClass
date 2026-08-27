@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/EthioClass/backend/internal/storage"
@@ -378,13 +379,14 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
 					COUNT(DISTINCT l.id) as lesson_count,
 					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
-					0 as student_count
+					0 as student_count,
+					COALESCE(c.price, 249) as price
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
 				LEFT JOIN chapters ch ON ch.course_id = c.id
 				LEFT JOIN lessons l ON l.chapter_id = ch.id
 				WHERE c.category_id = $1
-				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.price
 				ORDER BY c.created_at DESC`, categoryId)
 		} else {
 			rows, err = db.QueryContext(c.Request.Context(), `
@@ -393,12 +395,13 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
 					COUNT(DISTINCT l.id) as lesson_count,
 					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
-					0 as student_count
+					0 as student_count,
+					COALESCE(c.price, 249) as price
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
 				LEFT JOIN chapters ch ON ch.course_id = c.id
 				LEFT JOIN lessons l ON l.chapter_id = ch.id
-				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.price
 				ORDER BY c.created_at DESC`)
 		}
 
@@ -423,6 +426,7 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 			LessonCount     int     `json:"lesson_count"`
 			DurationMinutes int     `json:"duration_minutes"`
 			StudentCount    int     `json:"student_count"`
+			Price           int     `json:"price"`
 		}
 
 		var courses []Course
@@ -431,7 +435,7 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 			if err := rows.Scan(
 				&course.ID, &course.CategoryID, &course.CategoryName, &course.Title, &course.Description, 
 				&course.AboutText, &course.AboutBullets, &course.InstructorName, &course.InstructorPhone, &course.ThumbnailURL, &course.CreatedAt,
-				&course.LessonCount, &course.DurationMinutes, &course.StudentCount,
+				&course.LessonCount, &course.DurationMinutes, &course.StudentCount, &course.Price,
 			); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse course: " + err.Error()})
 				return
@@ -570,6 +574,11 @@ func CreateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 		aboutBullets := c.Request.FormValue("about_bullets") // JSON array string
 		instructorName := c.Request.FormValue("instructor_name")
 		instructorPhone := c.Request.FormValue("instructor_phone")
+		priceStr := c.Request.FormValue("price")
+		price := 249
+		if p, err2 := strconv.Atoi(priceStr); err2 == nil && p > 0 {
+			price = p
+		}
 
 		if strings.TrimSpace(title) == "" || strings.TrimSpace(categoryID) == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Category ID and Title are required"})
@@ -609,9 +618,9 @@ func CreateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 
 		var courseID string
 		err = db.QueryRowContext(c.Request.Context(),
-			`INSERT INTO courses (category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url) 
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-			categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, thumbnailURL,
+			`INSERT INTO courses (category_id, title, description, about_text, about_bullets, instructor_name, instructor_phone, thumbnail_url, price) 
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+			categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, thumbnailURL, price,
 		).Scan(&courseID)
 		
 		if err != nil {
@@ -653,6 +662,11 @@ func UpdateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 		aboutBullets := c.Request.FormValue("about_bullets")
 		instructorName := c.Request.FormValue("instructor_name")
 		instructorPhone := c.Request.FormValue("instructor_phone")
+		priceStr := c.Request.FormValue("price")
+		price := 249
+		if p, err2 := strconv.Atoi(priceStr); err2 == nil && p > 0 {
+			price = p
+		}
 
 		if strings.TrimSpace(title) == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Title is required"})
@@ -689,13 +703,13 @@ func UpdateCourseHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 
 		if newThumbnailURL != nil {
 			_, err = db.ExecContext(c.Request.Context(),
-				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7, thumbnail_url = $8 WHERE id = $9`,
-				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, newThumbnailURL, courseID,
+				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7, thumbnail_url = $8, price = $9 WHERE id = $10`,
+				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, newThumbnailURL, price, courseID,
 			)
 		} else {
 			_, err = db.ExecContext(c.Request.Context(),
-				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7 WHERE id = $8`,
-				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, courseID,
+				`UPDATE courses SET category_id = $1, title = $2, description = $3, about_text = $4, about_bullets = $5, instructor_name = $6, instructor_phone = $7, price = $8 WHERE id = $9`,
+				categoryID, title, description, aboutText, aboutBullets, instructorName, instructorPhone, price, courseID,
 			)
 		}
 

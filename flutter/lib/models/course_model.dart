@@ -16,6 +16,7 @@ class Course {
   final int lessonCount;
   final int durationMinutes;
   final int studentCount;
+  final int price;
 
   Course({
     required this.id,
@@ -32,6 +33,7 @@ class Course {
     this.lessonCount = 0,
     this.durationMinutes = 0,
     this.studentCount = 0,
+    this.price = 249,
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class Course {
       lessonCount: json['lesson_count'] as int? ?? 0,
       durationMinutes: json['duration_minutes'] as int? ?? 0,
       studentCount: json['student_count'] as int? ?? 0,
+      price: json['price'] as int? ?? 249,
     );
   }
 }
