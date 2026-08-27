@@ -113,6 +113,7 @@ class AuthService {
   Future<Map<String, dynamic>> updateProfile({
     required String fullName,
     required String phoneNumber,
+    required String email,
     required String accessToken,
   }) async {
     final response = await http.put(
@@ -124,6 +125,7 @@ class AuthService {
       body: jsonEncode({
         'fullName': fullName,
         'phoneNumber': phoneNumber,
+        'email': email,
       }),
     );
 

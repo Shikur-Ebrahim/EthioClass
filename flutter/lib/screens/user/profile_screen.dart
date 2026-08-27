@@ -118,13 +118,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        widget.userEmail,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textMedium,
+                      if (widget.userEmail.isNotEmpty &&
+                          !(widget.userEmail.endsWith('@ethioclass.com') && 
+                            widget.userEmail.replaceAll('@ethioclass.com', '').length == 10))
+                        Text(
+                          widget.userEmail,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textMedium,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 6),
                       GestureDetector(
                         onTap: () async {

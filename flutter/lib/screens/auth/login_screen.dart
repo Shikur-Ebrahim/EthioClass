@@ -189,12 +189,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text('Email or Phone Number', style: AppTextStyles.label),
                       const SizedBox(height: 8),
                       AppTextField(
-                        hint: 'Enter your email or phone number',
+                        hint: 'Enter your phone number or email',
                         prefixIcon: Icons.person_outline_rounded,
                         keyboardType: TextInputType.emailAddress,
                         controller: _emailController,
                         validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Enter your email' : null,
+                            (v == null || v.trim().isEmpty) ? 'Enter your phone number or email' : null,
                       ),
 
                       const SizedBox(height: 18),

@@ -26,4 +26,5 @@ type UpdatePasswordRequest struct {
 type UpdateProfileRequest struct {
 	FullName    string `json:"fullName" binding:"required"`
 	PhoneNumber string `json:"phoneNumber" binding:"required"`
+	Email       string `json:"email"`
 }

@@ -311,6 +311,9 @@ func UpdateProfileHandler(db *sql.DB) gin.HandlerFunc {
 				"phone_number": req.PhoneNumber,
 			},
 		}
+		if req.Email != "" {
+			payload["email"] = req.Email
+		}
 		body, _ := json.Marshal(payload)
 
 		httpReq, err := http.NewRequest("PUT",

@@ -14,7 +14,6 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -24,7 +23,6 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -40,10 +38,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final phone = _phoneController.text.trim();
+      final dummyEmail = '$phone@ethioclass.com';
+
       await AuthService().signup(
         fullName: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phoneNumber: '+251${_phoneController.text.trim()}',
+        email: dummyEmail,
+        phoneNumber: phone,
         password: _passwordController.text,
       );
       if (!mounted) return;
@@ -148,51 +149,17 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Email
+                      // Phone Number without +251 prefix
                       AppTextField(
-                        hint: 'Email Address',
-                        prefixIcon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        controller: _emailController,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Enter your email';
-                          if (!v.contains('@')) return 'Enter a valid email';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Phone Number with Ethiopian flag prefix
-                      AppTextField(
-                        hint: 'Phone Number',
+                        hint: 'Phone Number (e.g. 0912345678)',
                         prefixIcon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                         controller: _phoneController,
-                        prefixWidget: Container(
-                          padding: const EdgeInsets.only(left: 14, right: 8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text('🇪🇹', style: TextStyle(fontSize: 18)),
-                              const SizedBox(width: 4),
-                              const Text('+251',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textDark,
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                              const SizedBox(width: 6),
-                              Container(
-                                  width: 1, height: 22, color: AppColors.greyLight),
-                              const SizedBox(width: 4),
-                            ],
-                          ),
-                        ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'Enter your phone number';
                           String phone = v.trim();
-                          if (phone.length != 9) return 'Phone number must be exactly 9 digits';
-                          if (!phone.startsWith('9') && !phone.startsWith('7')) return 'Phone number must start with 9 or 7';
+                          if (phone.length != 10) return 'Phone number must be exactly 10 digits';
+                          if (!phone.startsWith('09') && !phone.startsWith('07')) return 'Phone number must start with 09 or 07';
                           if (int.tryParse(phone) == null) return 'Phone number must contain only numbers';
                           return null;
                         },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
+import '../../services/session_service.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   final String currentName;
@@ -32,7 +33,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.currentName);
-    _emailController = TextEditingController(text: widget.currentEmail);
+    
+    // Hide the dummy email we generate during signup so the user can enter a real one
+    String initialEmail = widget.currentEmail;
+    if (initialEmail.endsWith('@ethioclass.com') && initialEmail.replaceAll('@ethioclass.com', '').length == 10) {
+      initialEmail = '';
+    }
+    
+    _emailController = TextEditingController(text: initialEmail);
     _phoneController = TextEditingController(text: widget.currentPhone);
   }
 
@@ -56,7 +64,17 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       await AuthService().updateProfile(
         fullName: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
         accessToken: widget.accessToken,
+      );
+
+      // Also update session locally so the app remembers the new email
+      await SessionService.saveSession(
+        token: widget.accessToken,
+        userName: _nameController.text.trim(),
+        userEmail: _emailController.text.trim(),
+        userPhone: _phoneController.text.trim(),
+        userRole: 'user', // keep user
       );
 
       if (!mounted) return;
@@ -64,6 +82,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       Navigator.pop(context, {
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
+        'email': _emailController.text.trim(),
       });
     } catch (e) {
       if (!mounted) return;
@@ -129,7 +148,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 hint: 'Your email address',
                 prefixIcon: Icons.email_outlined,
                 controller: _emailController,
-                enabled: false,
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) {
+                  if (v != null && v.isNotEmpty && !v.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
 
