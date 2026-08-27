@@ -1,0 +1,2 @@
+-- Exam questions table for chapters
+CREATE TABLE IF NOT EXISTS public.exam_questions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), chapter_id UUID NOT NULL REFERENCES public.chapters(id) ON DELETE CASCADE, question_text TEXT NOT NULL, option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT NOT NULL, option_d TEXT NOT NULL, correct_option VARCHAR(1) NOT NULL, time_limit_seconds INTEGER NOT NULL DEFAULT 60, created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()));

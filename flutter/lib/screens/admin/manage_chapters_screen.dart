@@ -11,6 +11,7 @@ import '../../models/course_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
 import 'manage_lessons_screen.dart';
+import 'manage_exam_screen.dart';
 
 class ManageChaptersScreen extends StatefulWidget {
   final Course course;
@@ -216,6 +217,15 @@ class _ManageChaptersScreenState extends State<ManageChaptersScreen> {
                                   onPressed: () {
                                     Navigator.push(context, MaterialPageRoute(
                                       builder: (_) => ManageLessonsScreen(chapter: chap, course: widget.course),
+                                    ));
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.quiz_rounded, color: Colors.orange, size: 20),
+                                  tooltip: 'Manage Exam',
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(
+                                      builder: (_) => ManageExamScreen(chapter: chap),
                                     ));
                                   },
                                 ),

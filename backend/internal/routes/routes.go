@@ -88,7 +88,14 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.POST("/guidance", handlers.CreateGuidanceVideoHandler(db, r2))
 		adminGroup.PUT("/guidance/:id", handlers.UpdateGuidanceVideoHandler(db, r2))
 		adminGroup.DELETE("/guidance/:id", handlers.DeleteGuidanceVideoHandler(db))
+
+		adminGroup.GET("/chapters/:id/exam", handlers.GetExamQuestionsHandler(db))
+		adminGroup.POST("/chapters/:id/exam", handlers.CreateExamQuestionHandler(db))
+		adminGroup.PUT("/exam/questions/:id", handlers.UpdateExamQuestionHandler(db))
+		adminGroup.DELETE("/exam/questions/:id", handlers.DeleteExamQuestionHandler(db))
 	}
+
+	r.GET("/chapters/:id/exam", handlers.GetExamQuestionsHandler(db))
 
 	// Payment Routes
 	paymentGroup := r.Group("/payments")

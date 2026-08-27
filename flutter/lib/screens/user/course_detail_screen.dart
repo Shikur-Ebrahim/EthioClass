@@ -11,9 +11,12 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../services/session_service.dart';
 import '../../services/my_learning_service.dart';
+import '../../models/lesson_model.dart';
 import '../auth/onboarding_screen.dart';
 import 'lesson_detail_screen.dart';
+import 'exam_preparation_screen.dart';
 import 'payment_webview_screen.dart';
+import 'package:flutter/services.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -412,9 +415,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                       labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                       tabs: const [
                         Tab(text: 'Chapters'),
+                        Tab(text: 'Exams'),
                         Tab(text: 'About'),
                         Tab(text: 'Instructor'),
-                        Tab(text: 'Reviews'),
                       ],
                     ),
                   ),
@@ -494,11 +497,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       case 0:
         return _buildChaptersTab();
       case 1:
-        return _buildAboutTab(description);
+        return _buildExamsTab();
       case 2:
-        return _buildInstructorTab();
+        return _buildAboutTab(description);
       case 3:
-        return _buildReviewsTab();
+        return _buildInstructorTab();
       default:
         return _buildChaptersTab();
     }
