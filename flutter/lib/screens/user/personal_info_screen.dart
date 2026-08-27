@@ -142,7 +142,18 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               ),
               const SizedBox(height: 20),
 
-              const Text('Email Address', style: AppTextStyles.label),
+              const Text('Phone Number', style: AppTextStyles.label),
+              const SizedBox(height: 8),
+              AppTextField(
+                hint: 'Enter your phone number',
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+                controller: _phoneController,
+                validator: (v) => (v == null || v.isEmpty) ? 'Please enter your phone number' : null,
+              ),
+              const SizedBox(height: 20),
+
+              const Text('Add Email', style: AppTextStyles.label),
               const SizedBox(height: 8),
               AppTextField(
                 hint: 'Your email address',
@@ -155,17 +166,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 20),
-
-              const Text('Phone Number', style: AppTextStyles.label),
-              const SizedBox(height: 8),
-              AppTextField(
-                hint: 'Enter your phone number',
-                prefixIcon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                controller: _phoneController,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter your phone number' : null,
               ),
 
               const SizedBox(height: 40),

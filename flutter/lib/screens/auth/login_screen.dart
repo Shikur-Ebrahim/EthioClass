@@ -238,44 +238,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Divider
-                      Row(
-                        children: [
-                          const Expanded(child: Divider(color: AppColors.greyLight)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('or login with',
-                                style: AppTextStyles.body.copyWith(color: AppColors.grey)),
-                          ),
-                          const Expanded(child: Divider(color: AppColors.greyLight)),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Google
-                      SocialButton(
-                        label: 'Google',
-                        icon: Image.network(
-                          'https://www.google.com/favicon.ico',
-                          width: 22,
-                          height: 22,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.g_mobiledata, size: 24),
-                        ),
-                        onPressed: () {},
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Facebook
-                      SocialButton(
-                        label: 'Facebook',
-                        icon: const Icon(Icons.facebook_rounded,
-                            color: Color(0xFF1877F2), size: 24),
-                        onPressed: () {},
-                      ),
-
                       const SizedBox(height: 28),
 
                       // Sign up link
