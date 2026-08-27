@@ -11,12 +11,9 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../services/session_service.dart';
 import '../../services/my_learning_service.dart';
-import '../../models/lesson_model.dart';
 import '../auth/onboarding_screen.dart';
 import 'lesson_detail_screen.dart';
-import 'exam_preparation_screen.dart';
 import 'payment_webview_screen.dart';
-import 'package:flutter/services.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -415,9 +412,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                       labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                       tabs: const [
                         Tab(text: 'Chapters'),
-                        Tab(text: 'Exams'),
                         Tab(text: 'About'),
                         Tab(text: 'Instructor'),
+                        Tab(text: 'Reviews'),
                       ],
                     ),
                   ),
@@ -497,11 +494,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       case 0:
         return _buildChaptersTab();
       case 1:
-        return _buildExamsTab();
-      case 2:
         return _buildAboutTab(description);
-      case 3:
+      case 2:
         return _buildInstructorTab();
+      case 3:
+        return _buildReviewsTab();
       default:
         return _buildChaptersTab();
     }
@@ -640,45 +637,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     );
   }
 
-  Widget _buildExamsTab() {
-    if (_isLoadingChapters) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primary)));
-    }
-    if (_chapters.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No exams available yet.', style: TextStyle(color: AppColors.textMedium))));
-    }
-
-    return Column(
-      children: _chapters.map((chapter) {
-        final isFree = chapter.isFree;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))],
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            title: Text('${chapter.orderIndex}. ${chapter.title} Exam',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textDark)),
-            trailing: isFree 
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF16A34A).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                    child: const Text('FREE', style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold)),
-                  )
-                : const Icon(Icons.lock_rounded, color: AppColors.grey, size: 20),
-            onTap: () {
-              if (!isFree) {
-                 _showUnlockBottomSheet();
-                 return;
-              }
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreparationScreen(chapter: chapter)));
-            },
-          ),
-        );
-      }).toList(),
+  Widget _buildReviewsTab() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+      ),
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Text('No reviews yet.', style: TextStyle(color: AppColors.grey, fontSize: 14)),
+        ),
+      ),
     );
   }
 
@@ -709,6 +681,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             courseTitle: widget.course.title,
             courseThumbnailUrl: widget.course.thumbnailUrl,
             courseTotalLessons: widget.course.lessonCount,
+            chapter: chapter,
             chapterTitle: chapter.title,
             isLocked: false,
             thumbnailUrl: chapter.thumbnailUrl,
@@ -729,6 +702,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                 courseTitle: widget.course.title,
                 courseThumbnailUrl: widget.course.thumbnailUrl,
                 courseTotalLessons: widget.course.lessonCount,
+                chapter: chapter,
                 chapterTitle: chapter.title,
                 isLocked: false,
                 thumbnailUrl: chapter.thumbnailUrl,
@@ -932,6 +906,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             courseTitle: widget.course.title,
             courseThumbnailUrl: widget.course.thumbnailUrl,
             courseTotalLessons: widget.course.lessonCount,
+            chapter: targetChapter,
             chapterTitle: targetChapter.title,
             isLocked: false,
             thumbnailUrl: targetChapter.thumbnailUrl,
@@ -952,6 +927,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
               courseTitle: widget.course.title,
               courseThumbnailUrl: widget.course.thumbnailUrl,
               courseTotalLessons: widget.course.lessonCount,
+              chapter: targetChapter,
               chapterTitle: targetChapter.title,
               isLocked: false,
               thumbnailUrl: targetChapter.thumbnailUrl,

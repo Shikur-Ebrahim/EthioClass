@@ -15,11 +15,15 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 
+import '../../models/chapter_model.dart';
+import 'exam_preparation_screen.dart';
+
 class LessonDetailScreen extends StatefulWidget {
   final String courseId;
   final String courseTitle;
   final String? courseThumbnailUrl;
   final int courseTotalLessons;
+  final Chapter? chapter;
   final String chapterTitle;
   final bool isLocked;
   final String? thumbnailUrl;
@@ -36,6 +40,7 @@ class LessonDetailScreen extends StatefulWidget {
     this.courseTitle = 'Course',
     this.courseThumbnailUrl,
     this.courseTotalLessons = 1,
+    this.chapter,
     required this.chapterTitle,
     this.isLocked = false,
     this.thumbnailUrl,
@@ -460,7 +465,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               indicatorColor: AppColors.primary,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Quiz')],
+              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Exam')],
             ),
           ),
 
@@ -787,12 +792,51 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── QUIZ TAB: all lessons in chapter ──────────────────
+  // ── EXAM TAB ──────────────────────────────────────────────────
   Widget _buildQuizTab(Lesson? lesson) {
-    if (widget.lessons.isEmpty) {
-      return const Center(child: Text('No lessons in this chapter', style: TextStyle(color: AppColors.grey)));
+    if (widget.chapter == null) {
+      return const Center(child: Text('Exam not available', style: TextStyle(color: AppColors.grey)));
     }
-    return _ChapterQuizSection(lessons: widget.lessons);
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.quiz_rounded, color: Colors.orange, size: 40),
+            ),
+            const SizedBox(height: 20),
+            const Text('Chapter Exam',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+            const SizedBox(height: 8),
+            const Text('Test your knowledge of this chapter with a timed exam.',
+                style: TextStyle(fontSize: 13, color: AppColors.textMedium), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreparationScreen(chapter: widget.chapter!)));
+              },
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Take Exam'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBannerImage(String? thumbUrl) {
