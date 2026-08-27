@@ -6,6 +6,7 @@ import '../screens/user/settings_screen.dart';
 import '../screens/user/how_to_start_screen.dart';
 import '../screens/user/my_learning_screen.dart';
 import '../screens/user/share_app_screen.dart';
+import '../screens/user/about_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -216,7 +217,13 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.info_outline_rounded,
                     label: 'About EthioClass',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      );
+                    },
                   ),
                 ],
               ),
