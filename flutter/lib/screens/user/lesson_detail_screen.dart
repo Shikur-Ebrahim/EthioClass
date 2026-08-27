@@ -76,7 +76,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   void initState() {
     super.initState();
     _currentLessonIndex = widget.initialLessonIndex;
-    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTab);
     _loadAllDownloadStatuses().then((_) {
       _loadRemoteSizes();
     });
@@ -465,7 +465,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               indicatorColor: AppColors.primary,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Exam')],
+              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Exam'), Tab(text: 'Quiz')],
             ),
           ),
 
@@ -477,6 +477,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                 _buildVideoTab(lesson),
                 _buildNotesTab(lesson),
                 _buildQuizTab(lesson),
+                _buildChapterQuizTab(lesson),
               ],
             ),
           ),
@@ -837,6 +838,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         ),
       ),
     );
+  }
+
+  // ── QUIZ TAB: all lessons in chapter ──────────────────
+  Widget _buildChapterQuizTab(Lesson? lesson) {
+    if (widget.lessons.isEmpty) {
+      return const Center(child: Text('No lessons in this chapter', style: TextStyle(color: AppColors.grey)));
+    }
+    return _ChapterQuizSection(lessons: widget.lessons);
   }
 
   Widget _buildBannerImage(String? thumbUrl) {
