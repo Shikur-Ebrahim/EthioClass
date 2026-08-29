@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -123,6 +125,58 @@ type ExplainRequest struct {
 	Answer   string `json:"answer"`
 }
 
+func getBestGroqModel(apiKey string) string {
+	defaultModel := "llama-3.1-8b-instant"
+
+	req, err := http.NewRequest("GET", "https://api.groq.com/openai/v1/models", nil)
+	if err != nil {
+		return defaultModel
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return defaultModel
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return defaultModel
+	}
+
+	if len(result.Data) == 0 {
+		return defaultModel
+	}
+
+	// 1. Try to find the smartest 120b model
+	for _, m := range result.Data {
+		if strings.Contains(m.ID, "120b") {
+			return m.ID
+		}
+	}
+	// 2. Fallback to a 70b model
+	for _, m := range result.Data {
+		if strings.Contains(m.ID, "70b") {
+			return m.ID
+		}
+	}
+	// 3. Fallback to any llama model
+	for _, m := range result.Data {
+		if strings.Contains(m.ID, "llama") {
+			return m.ID
+		}
+	}
+	
+	// 4. Ultimate fallback: just pick the very first available model so it NEVER crashes
+	return result.Data[0].ID
+}
+
 func ExplainExamAnswerHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req ExplainRequest
@@ -154,10 +208,13 @@ func ExplainExamAnswerHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Auto-detect the best active model!
+		modelName := getBestGroqModel(apiKey)
+
 		prompt := fmt.Sprintf("You are an expert, friendly Ethiopian high school teacher. A student asked this question: \"%s\". The correct answer is \"%s\". Please explain WHY this is the correct answer in simple terms for a high school student. Make the explanation clear, encouraging, and no longer than 3 short paragraphs.", req.Question, req.Answer)
 
 		payload := map[string]interface{}{
-			"model": "openai/gpt-oss-120b",
+			"model": modelName,
 			"messages": []map[string]interface{}{
 				{"role": "user", "content": prompt},
 			},
