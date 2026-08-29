@@ -7,6 +7,8 @@ import '../../services/guidance_service.dart';
 import '../../config/api_config.dart';
 import 'guidance_feed_screen.dart';
 import '../auth/signup_screen.dart';
+import '../auth/login_screen.dart';
+import '../../services/session_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -28,12 +30,23 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
+  bool _hasRegisteredDevice = false;
   List<GuidanceVideo> _videos = [];
 
   @override
   void initState() {
     super.initState();
+    _checkRegistration();
     _loadVideos();
+  }
+
+  Future<void> _checkRegistration() async {
+    final hasReg = await SessionService.hasDeviceRegistered();
+    if (mounted) {
+      setState(() {
+        _hasRegisteredDevice = hasReg;
+      });
+    }
   }
 
   Future<void> _loadVideos() async {
@@ -154,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              widget.userName.isEmpty ? 'Create Account' : 'Edit Profile',
+                              widget.userName.isEmpty ? (_hasRegisteredDevice ? 'Log In' : 'Create Account') : 'Edit Profile',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -322,4 +335,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
 
