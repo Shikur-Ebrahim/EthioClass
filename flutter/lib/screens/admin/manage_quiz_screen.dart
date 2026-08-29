@@ -278,7 +278,6 @@ class _QuizFormSheetState extends State<_QuizFormSheet> {
   final _optionBCtrl = TextEditingController();
   final _optionCCtrl = TextEditingController();
   final _optionDCtrl = TextEditingController();
-  final _explanationCtrl = TextEditingController();
   String _correctAnswer = 'A';
   bool _isSubmitting = false;
 
@@ -294,7 +293,6 @@ class _QuizFormSheetState extends State<_QuizFormSheet> {
       _optionBCtrl.text = q['option_b'] ?? '';
       _optionCCtrl.text = q['option_c'] ?? '';
       _optionDCtrl.text = q['option_d'] ?? '';
-      _explanationCtrl.text = q['explanation'] ?? '';
       _correctAnswer = q['correct_answer'] ?? 'A';
     }
   }
@@ -306,7 +304,6 @@ class _QuizFormSheetState extends State<_QuizFormSheet> {
     _optionBCtrl.dispose();
     _optionCCtrl.dispose();
     _optionDCtrl.dispose();
-    _explanationCtrl.dispose();
     super.dispose();
   }
 
@@ -327,7 +324,6 @@ class _QuizFormSheetState extends State<_QuizFormSheet> {
       'option_c': _optionCCtrl.text.trim(),
       'option_d': _optionDCtrl.text.trim(),
       'correct_answer': _correctAnswer,
-      'explanation': _explanationCtrl.text.trim(),
     });
 
     try {
@@ -446,8 +442,26 @@ class _QuizFormSheetState extends State<_QuizFormSheet> {
             ),
             const SizedBox(height: 14),
 
-            // Explanation
-            _buildField('Explanation (shown after answer)', _explanationCtrl, maxLines: 3),
+            // AI handles explanation automatically
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withOpacity(0.07),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 16, color: Color(0xFF2563EB)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text('EthioClass AI will automatically generate and save the explanation when a student first asks.',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF2563EB), height: 1.4)),
+                  ),
+                ],
+              ),
+            ),
 
             SizedBox(
               width: double.infinity,

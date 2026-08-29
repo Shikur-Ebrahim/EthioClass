@@ -16,7 +16,6 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../models/downloaded_lesson_model.dart';
 
-import '../../models/chapter_model.dart';
 import 'exam_preparation_screen.dart';
 
 class LessonDetailScreen extends StatefulWidget {
@@ -320,7 +319,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // ── Video / Banner Header ──────────────────────────────────
+          // â”€â”€ Video / Banner Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
             height: 280,
             width: double.infinity,
@@ -430,7 +429,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           ),
                           if (lesson != null)
                             Text(
-                              'Lesson ${lesson.lessonNumber}  •  ${lesson.durationMinutes} min',
+                              'Lesson ${lesson.lessonNumber}  â€¢  ${lesson.durationMinutes} min',
                               style: const TextStyle(color: Colors.white60, fontSize: 11),
                             ),
                         ],
@@ -441,7 +440,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // ── Chapter Description ────────────────────────────────────
+          // â”€â”€ Chapter Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (desc != null && desc.isNotEmpty)
             Container(
               width: double.infinity,
@@ -453,7 +452,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               ),
             ),
 
-          // ── Tabs ───────────────────────────────────────────────────
+          // â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
             decoration: BoxDecoration(
               color: AppColors.surface,
@@ -470,7 +469,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // ── Tab Content ────────────────────────────────────────────
+          // â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -487,7 +486,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── VIDEO TAB: list of lessons ─────────────────────────────────
+  // â”€â”€ VIDEO TAB: list of lessons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildVideoTab(Lesson? active) {
     if (widget.lessons.isEmpty) {
       return const Center(child: Text('No lessons yet', style: TextStyle(color: AppColors.grey)));
@@ -579,15 +578,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               Text('${l.durationMinutes} min',
                                   style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               if (_downloadedLessons[l.id] != null) ...[ 
-                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
                                     style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
                               ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
-                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_remoteSizes[l.id]!),
                                     style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
-                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 const SizedBox(
                                   width: 10, height: 10,
                                   child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
@@ -710,7 +709,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── NOTES TAB ──────────────────────────────────────────────────
+  // â”€â”€ NOTES TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildNotesTab(Lesson? lesson) {
     if (lesson?.notesUrl == null || lesson!.notesUrl!.isEmpty) {
       return const Center(
@@ -794,7 +793,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── EXAM TAB ──────────────────────────────────────────────────
+  // â”€â”€ EXAM TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildQuizTab(Lesson? lesson) {
     if (widget.chapter == null) {
       return const Center(child: Text('Exam not available', style: TextStyle(color: AppColors.grey)));
@@ -891,7 +890,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // ── QUIZ TAB: all lessons in chapter ──────────────────
+  // â”€â”€ QUIZ TAB: all lessons in chapter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildChapterQuizTab(Lesson? lesson) {
     if (widget.lessons.isEmpty) {
       return const Center(child: Text('No lessons in this chapter', style: TextStyle(color: AppColors.grey)));
@@ -923,7 +922,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   Widget _bannerPlaceholder() => Container(color: Colors.black);
 }
 
-// ── CHAPTER QUIZ SECTION (all lessons, sequential) ──────────────────
+// â”€â”€ CHAPTER QUIZ SECTION (all lessons, sequential) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ChapterQuizSection extends StatefulWidget {
   final List<Lesson> lessons;
   const _ChapterQuizSection({required this.lessons});
@@ -932,12 +931,10 @@ class _ChapterQuizSection extends StatefulWidget {
   State<_ChapterQuizSection> createState() => _ChapterQuizSectionState();
 }
 
+
 class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
-  // lessonId -> list of questions
   Map<String, List<Map<String, dynamic>>> _lessonQuizzes = {};
   bool _isLoading = true;
-
-  // Per lesson group state
   Map<String, Map<int, String>> _selectedAnswers = {};
   Map<String, bool> _submitted = {};
 
@@ -968,41 +965,19 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
         results[lesson.id] = [];
       }
     }
-    // Filter to only lessons that HAVE quizzes
-    final filtered = Map.fromEntries(
-      results.entries.where((e) => e.value.isNotEmpty),
-    );
+    final filtered = Map.fromEntries(results.entries.where((e) => e.value.isNotEmpty));
     if (mounted) setState(() { _lessonQuizzes = filtered; _isLoading = false; });
   }
 
-  // Lessons that have quizzes, in order
   List<Lesson> get _lessonsWithQuiz =>
       widget.lessons.where((l) => (_lessonQuizzes[l.id]?.isNotEmpty ?? false)).toList();
-
-  int get _score {
-    int score = 0;
-    for (final lesson in _lessonsWithQuiz) {
-      final questions = _lessonQuizzes[lesson.id] ?? [];
-      final answers = _selectedAnswers[lesson.id] ?? {};
-      for (int i = 0; i < questions.length; i++) {
-        if (answers[i] == questions[i]['correct_answer']) score++;
-      }
-    }
-    return score;
-  }
-
-  int get _totalQuestions {
-    return _lessonsWithQuiz.fold(0, (sum, l) => sum + (_lessonQuizzes[l.id]?.length ?? 0));
-  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
-
     final lessonsWithQuiz = _lessonsWithQuiz;
-
     if (lessonsWithQuiz.isEmpty) {
       return const Center(
         child: Column(
@@ -1028,14 +1003,11 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Lesson name header
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 margin: const EdgeInsets.only(top: 8, bottom: 12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
-                  ),
+                  gradient: const LinearGradient(colors: [Color(0xFF1B5E20), Color(0xFF16A34A)]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1043,21 +1015,15 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
                     Container(
                       width: 28, height: 28,
                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                      child: Center(
-                        child: Text('${lesson.lessonNumber}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
-                      ),
+                      child: Center(child: Text('${lesson.lessonNumber}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13))),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(lesson.title,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                    ),
+                    Expanded(child: Text(lesson.title,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14))),
                   ],
                 ),
               ),
-              
-              // Questions
               ...questions.asMap().entries.map((e) {
                 final q = e.value;
                 final idx = e.key;
@@ -1072,10 +1038,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
                   }),
                 );
               }),
-              
               const SizedBox(height: 16),
-
-              // Score banner if submitted
               if (isSubmitted) Builder(builder: (_) {
                 int score = 0;
                 for (int i = 0; i < questions.length; i++) {
@@ -1106,8 +1069,6 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
                   ),
                 );
               }),
-
-              // Submit button
               if (!isSubmitted)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 32),
@@ -1131,11 +1092,10 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
       ),
     );
   }
-
 }
 
 // ── INDIVIDUAL QUIZ CARD ──────────────────────────────────────
-class _QuizCard extends StatelessWidget {
+class _QuizCard extends StatefulWidget {
   final Map<String, dynamic> question;
   final int index;
   final String? selected;
@@ -1150,23 +1110,81 @@ class _QuizCard extends StatelessWidget {
     this.onSelect,
   });
 
-  Color _optionColor(String option) {
-    if (!submitted) {
-      return selected == option ? AppColors.primary.withOpacity(0.1) : AppColors.surface;
+  @override
+  State<_QuizCard> createState() => _QuizCardState();
+}
+
+class _QuizCardState extends State<_QuizCard> {
+  String? _explanation;
+  bool _isLoadingExplanation = false;
+  bool _showExplanation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final cached = widget.question['explanation'];
+    if (cached != null && cached.toString().isNotEmpty) {
+      _explanation = cached.toString();
     }
-    if (option == question['correct_answer']) return AppColors.success.withOpacity(0.15);
-    if (selected == option) return AppColors.error.withOpacity(0.15);
+  }
+
+  Color _optionColor(String option) {
+    if (!widget.submitted) {
+      return widget.selected == option ? AppColors.primary.withOpacity(0.1) : AppColors.surface;
+    }
+    if (option == widget.question['correct_answer']) return AppColors.success.withOpacity(0.15);
+    if (widget.selected == option) return AppColors.error.withOpacity(0.15);
     return AppColors.surface;
+  }
+
+  Future<void> _askAI() async {
+    if (_explanation != null) {
+      setState(() => _showExplanation = !_showExplanation);
+      return;
+    }
+    setState(() { _isLoadingExplanation = true; _showExplanation = true; });
+
+    final correctKey = widget.question['correct_answer']?.toString() ?? 'A';
+    final optionMap = {
+      'A': widget.question['option_a'] ?? '',
+      'B': widget.question['option_b'] ?? '',
+      'C': widget.question['option_c'] ?? '',
+      'D': widget.question['option_d'] ?? '',
+    };
+    final correctAnswerText = '$correctKey. ${optionMap[correctKey] ?? ''}';
+
+    try {
+      final res = await http.post(
+        Uri.parse('$apiBaseUrl/quiz/explain'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'quiz_id': widget.question['id'] ?? '',
+          'question': widget.question['question'] ?? '',
+          'answer': correctAnswerText,
+        }),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (mounted) setState(() {
+          _explanation = data['explanation'] ?? 'AI could not explain at this time.';
+          _isLoadingExplanation = false;
+        });
+      } else {
+        if (mounted) setState(() { _explanation = 'Failed to get explanation.'; _isLoadingExplanation = false; });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _explanation = 'Connection error. Try again.'; _isLoadingExplanation = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final options = ['A', 'B', 'C', 'D'];
     final optionValues = {
-      'A': question['option_a'],
-      'B': question['option_b'],
-      'C': question['option_c'],
-      'D': question['option_d'],
+      'A': widget.question['option_a'],
+      'B': widget.question['option_b'],
+      'C': widget.question['option_c'],
+      'D': widget.question['option_d'],
     };
 
     return Container(
@@ -1180,69 +1198,108 @@ class _QuizCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Q${index + 1}. ${question['question']}',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark),
-          ),
+          Text('Q${widget.index + 1}. ${widget.question['question']}',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
           const SizedBox(height: 12),
           ...options.map((opt) => GestureDetector(
-                onTap: () => onSelect?.call(opt),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _optionColor(opt),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: selected == opt ? AppColors.primary : AppColors.greyLight,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text('$opt. ', style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: selected == opt ? AppColors.primary : AppColors.textMedium,
-                        fontSize: 13,
-                      )),
-                      Expanded(child: Text(optionValues[opt] ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textDark))),
-                      if (submitted && opt == question['correct_answer'])
-                        const Icon(Icons.check_circle, color: AppColors.success, size: 18),
-                      if (submitted && selected == opt && opt != question['correct_answer'])
-                        const Icon(Icons.cancel, color: AppColors.error, size: 18),
-                    ],
-                  ),
-                ),
-              )),
-          // Explanation shown after submit
-          if (submitted && question['explanation'] != null && question['explanation'].toString().isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 4, bottom: 4),
-              padding: const EdgeInsets.all(10),
+            onTap: () => widget.onSelect?.call(opt),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.2)),
+                color: _optionColor(opt),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: widget.selected == opt ? AppColors.primary : AppColors.greyLight,
+                  width: 1.5,
+                ),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_rounded, size: 14, color: Color(0xFF2563EB)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      question['explanation'].toString(),
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF2563EB), height: 1.4),
-                    ),
-                  ),
+                  Text('$opt. ', style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: widget.selected == opt ? AppColors.primary : AppColors.textMedium,
+                    fontSize: 13,
+                  )),
+                  Expanded(child: Text(optionValues[opt] ?? '',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textDark))),
+                  if (widget.submitted && opt == widget.question['correct_answer'])
+                    const Icon(Icons.check_circle, color: AppColors.success, size: 18),
+                  if (widget.submitted && widget.selected == opt && opt != widget.question['correct_answer'])
+                    const Icon(Icons.cancel, color: AppColors.error, size: 18),
                 ],
               ),
             ),
+          )),
+          if (widget.submitted) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _askAI,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF7C3AED)]),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 20, height: 20,
+                      decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: const Center(
+                          child: Text('AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 8))),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _showExplanation && _explanation != null ? 'Hide Explanation' : 'Ask AI to Explain',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_showExplanation) ...[
+              const SizedBox(height: 10),
+              if (_isLoadingExplanation)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB))),
+                      SizedBox(width: 8),
+                      Text('AI is thinking...', style: TextStyle(fontSize: 11, color: Color(0xFF2563EB))),
+                    ],
+                  ),
+                )
+              else if (_explanation != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.lightbulb_rounded, size: 14, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(_explanation!,
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF1E3A8A), height: 1.5)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
         ],
       ),
     );
   }
 }
-// end of file
-
