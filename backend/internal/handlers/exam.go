@@ -177,7 +177,8 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 
 		var geminiResp map[string]interface{}
 		if err := json.Unmarshal(body, &geminiResp); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse AI response", "raw": string(body)})
+			// Always return 200 so Cloudflare doesn't intercept
+			c.JSON(http.StatusOK, gin.H{"error": "Failed to parse AI response", "raw": string(body)})
 			return
 		}
 
@@ -187,26 +188,26 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 				msg, _ := errMap["message"].(string)
 				status, _ := errMap["status"].(string)
 				if status == "RESOURCE_EXHAUSTED" {
-					c.JSON(http.StatusTooManyRequests, gin.H{"error": "daily_limit_reached"})
+					c.JSON(http.StatusOK, gin.H{"error": "daily_limit_reached"})
 				} else {
-					c.JSON(http.StatusBadGateway, gin.H{"error": msg})
+					c.JSON(http.StatusOK, gin.H{"error": msg})
 				}
 			} else {
-				c.JSON(http.StatusBadGateway, gin.H{"error": "AI service error"})
+				c.JSON(http.StatusOK, gin.H{"error": "AI service error"})
 			}
 			return
 		}
 
 		candidates, ok := geminiResp["candidates"].([]interface{})
 		if !ok || len(candidates) == 0 {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "No response from AI"})
+			c.JSON(http.StatusOK, gin.H{"error": "No response from AI"})
 			return
 		}
 		firstCandidate, _ := candidates[0].(map[string]interface{})
 		content, _ := firstCandidate["content"].(map[string]interface{})
 		parts, _ := content["parts"].([]interface{})
 		if len(parts) == 0 {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Empty AI response"})
+			c.JSON(http.StatusOK, gin.H{"error": "Empty AI response"})
 			return
 		}
 		firstPart, _ := parts[0].(map[string]interface{})

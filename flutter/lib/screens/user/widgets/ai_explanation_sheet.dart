@@ -44,11 +44,26 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _explanation = data['explanation'] ?? 'No explanation provided.';
-            _isLoading = false;
-          });
+        // Check if backend returned an error field (e.g. Gemini error)
+        if (data.containsKey('error')) {
+          final errMsg = data['error'] as String;
+          if (mounted) {
+            setState(() {
+              if (errMsg == 'daily_limit_reached') {
+                _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+              } else {
+                _error = 'AI Error: $errMsg';
+              }
+              _isLoading = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _explanation = data['explanation'] ?? 'No explanation provided.';
+              _isLoading = false;
+            });
+          }
         }
       } else if (response.statusCode == 429) {
         // Daily limit reached
