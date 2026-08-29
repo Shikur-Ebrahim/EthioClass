@@ -50,13 +50,29 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
             _isLoading = false;
           });
         }
+      } else if (response.statusCode == 429) {
+        // Daily limit reached
+        if (mounted) {
+          setState(() {
+            _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+            _isLoading = false;
+          });
+        }
       } else {
-        throw Exception('Failed to load explanation');
+        // Show the actual error from backend for diagnosis
+        final data = jsonDecode(response.body);
+        final msg = data['error'] ?? 'Unknown error from AI service.';
+        if (mounted) {
+          setState(() {
+            _error = 'AI Error: $msg';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'The AI reached its daily limit or encountered an error. Please try again next time!';
+          _error = 'Could not connect to AI service. Please try again next time!';
           _isLoading = false;
         });
       }

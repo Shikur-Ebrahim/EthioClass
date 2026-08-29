@@ -169,18 +169,36 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 			return
 		}
 
-		defer func() {
-			if r := recover(); r != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "AI response format unexpected"})
+		// Check if Gemini returned an error (e.g. invalid API key, quota exceeded)
+		if errObj, hasErr := geminiResp["error"]; hasErr {
+			if errMap, ok := errObj.(map[string]interface{}); ok {
+				msg, _ := errMap["message"].(string)
+				status, _ := errMap["status"].(string)
+				if status == "RESOURCE_EXHAUSTED" {
+					c.JSON(http.StatusTooManyRequests, gin.H{"error": "daily_limit_reached"})
+				} else {
+					c.JSON(http.StatusBadGateway, gin.H{"error": msg})
+				}
+			} else {
+				c.JSON(http.StatusBadGateway, gin.H{"error": "AI service error"})
 			}
-		}()
+			return
+		}
 
-		candidates := geminiResp["candidates"].([]interface{})
-		firstCandidate := candidates[0].(map[string]interface{})
-		content := firstCandidate["content"].(map[string]interface{})
-		parts := content["parts"].([]interface{})
-		firstPart := parts[0].(map[string]interface{})
-		explanation := firstPart["text"].(string)
+		candidates, ok := geminiResp["candidates"].([]interface{})
+		if !ok || len(candidates) == 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No response from AI"})
+			return
+		}
+		firstCandidate, _ := candidates[0].(map[string]interface{})
+		content, _ := firstCandidate["content"].(map[string]interface{})
+		parts, _ := content["parts"].([]interface{})
+		if len(parts) == 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Empty AI response"})
+			return
+		}
+		firstPart, _ := parts[0].(map[string]interface{})
+		explanation, _ := firstPart["text"].(string)
 
 		c.JSON(http.StatusOK, gin.H{"explanation": explanation})
 	}
