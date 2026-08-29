@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../models/chapter_model.dart';
 import '../../config/api_config.dart';
 import 'dart:async';
+import 'widgets/ai_explanation_sheet.dart';
 
 class ExamPreparationScreen extends StatefulWidget {
   final Chapter chapter;
@@ -214,6 +215,30 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
                       const SizedBox(height: 4),
                       Text('Correct Answer: $correctAnswerText', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                     ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.auto_awesome, color: Colors.blue, size: 18),
+                        label: const Text('Ask AI to Explain', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.blue.withOpacity(0.5)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => AIExplanationSheet(
+                              questionText: q['question_text'],
+                              correctAnswerText: correctAnswerText,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               );

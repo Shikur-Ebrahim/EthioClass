@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/update_password_screen.dart';
 import 'screens/user/main_layout.dart';
@@ -11,6 +12,7 @@ import 'services/progress_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await ProgressService.instance.init();
   runApp(const EthioClassApp());
