@@ -19,6 +19,7 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
   List<dynamic> _questions = [];
   int _currentIndex = 0;
   String? _selectedOption;
+  final List<String?> _userAnswers = [];
   int _score = 0;
   bool _isFinished = false;
   
@@ -73,6 +74,7 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
   }
 
   void _nextQuestion() {
+    _userAnswers.add(_selectedOption);
     if (_selectedOption != null) {
       if (_selectedOption == _questions[_currentIndex]['correct_option']) {
         _score++;
@@ -117,25 +119,100 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
            iconTheme: const IconThemeData(color: AppColors.textDark),
            title: const Text('Exam Result', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-               const Icon(Icons.emoji_events_rounded, size: 80, color: Colors.amber),
-               const SizedBox(height: 20),
-               Text('You scored $_score out of ${_questions.length}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-               const SizedBox(height: 20),
-               ElevatedButton(
-                 onPressed: () => Navigator.pop(context),
-                 style: ElevatedButton.styleFrom(
-                   backgroundColor: AppColors.primary, 
-                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14)
-                 ),
-                 child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-               )
-            ],
-          )
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.emoji_events_rounded, size: 64, color: Colors.amber),
+                  const SizedBox(height: 16),
+                  Text('You scored $_score out of ${_questions.length}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary, 
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14)
+                    ),
+                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text('Review Answers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+            const SizedBox(height: 16),
+            ...List.generate(_questions.length, (index) {
+              final q = _questions[index];
+              final userAnswer = _userAnswers.length > index ? _userAnswers[index] : null;
+              final correctAnswer = q['correct_option'];
+              final isCorrect = userAnswer == correctAnswer;
+              final explanation = q['explanation'] ?? '';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: isCorrect ? Colors.green.shade300 : Colors.red.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded, 
+                             color: isCorrect ? Colors.green : Colors.red, size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Q${index + 1}: ${q['question_text']}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Your Answer: ${userAnswer ?? "Not answered"}', 
+                         style: TextStyle(color: isCorrect ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w600)),
+                    if (!isCorrect) ...[
+                      const SizedBox(height: 4),
+                      Text('Correct Answer: $correctAnswer', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                    ],
+                    if (!isCorrect && explanation.toString().isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.lightbulb_outline, color: Colors.blue, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(explanation, style: const TextStyle(color: AppColors.textDark, fontSize: 13))),
+                          ],
+                        ),
+                      )
+                    ]
+                  ],
+                ),
+              );
+            }),
+          ],
         )
       );
     }

@@ -125,6 +125,7 @@ class _ExamQuestionFormState extends State<_ExamQuestionForm> {
   final _bController = TextEditingController();
   final _cController = TextEditingController();
   final _dController = TextEditingController();
+  final _explanationController = TextEditingController();
   final _timeController = TextEditingController(text: '60');
   String _correctOption = 'A';
   bool _isSaving = false;
@@ -138,6 +139,7 @@ class _ExamQuestionFormState extends State<_ExamQuestionForm> {
       _bController.text = widget.questionToEdit['option_b'];
       _cController.text = widget.questionToEdit['option_c'];
       _dController.text = widget.questionToEdit['option_d'];
+      _explanationController.text = widget.questionToEdit['explanation'] ?? '';
       _timeController.text = widget.questionToEdit['time_limit_seconds'].toString();
       _correctOption = widget.questionToEdit['correct_option'];
     }
@@ -155,6 +157,7 @@ class _ExamQuestionFormState extends State<_ExamQuestionForm> {
       'option_c': _cController.text,
       'option_d': _dController.text,
       'correct_option': _correctOption,
+      'explanation': _explanationController.text,
       'time_limit_seconds': int.tryParse(_timeController.text) ?? 60,
     };
 
@@ -201,6 +204,8 @@ class _ExamQuestionFormState extends State<_ExamQuestionForm> {
                 items: ['A', 'B', 'C', 'D'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                 onChanged: (v) => setState(() => _correctOption = v!),
               ),
+              const SizedBox(height: 12),
+              TextFormField(controller: _explanationController, decoration: const InputDecoration(labelText: 'Explanation (Optional)'), maxLines: 3),
               const SizedBox(height: 12),
               TextFormField(controller: _timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Time limit (seconds)'), validator: (v) => v!.isEmpty ? 'Required' : null),
               const SizedBox(height: 24),
