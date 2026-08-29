@@ -157,7 +157,7 @@ func ExplainExamAnswerHandler(db *sql.DB) gin.HandlerFunc {
 		prompt := fmt.Sprintf("You are an expert, friendly Ethiopian high school teacher. A student asked this question: \"%s\". The correct answer is \"%s\". Please explain WHY this is the correct answer in simple terms for a high school student. Make the explanation clear, encouraging, and no longer than 3 short paragraphs.", req.Question, req.Answer)
 
 		payload := map[string]interface{}{
-			"model": "openai/gpt-oss-20b",
+			"model": "openai/gpt-oss-120b",
 			"messages": []map[string]interface{}{
 				{"role": "user", "content": prompt},
 			},
