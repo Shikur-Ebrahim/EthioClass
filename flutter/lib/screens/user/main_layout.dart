@@ -6,6 +6,7 @@ import 'courses_screen.dart';
 import 'downloads_screen.dart';
 import 'bookmarks_screen.dart';
 import 'profile_screen.dart';
+import '../../services/session_service.dart';
 
 /// MainLayout wraps the bottom nav and manages tab switching.
 class MainLayout extends StatefulWidget {
@@ -28,12 +29,14 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+  bool _hasRegisteredDevice = false;
 
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _checkDeviceRegistration();
     _pages = [
       HomeScreen(
         userName: widget.userName,
@@ -46,6 +49,15 @@ class _MainLayoutState extends State<MainLayout> {
     ];
   }
 
+  Future<void> _checkDeviceRegistration() async {
+    final hasReg = await SessionService.hasDeviceRegistered();
+    if (mounted) {
+      setState(() {
+        _hasRegisteredDevice = hasReg;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,6 +66,7 @@ class _MainLayoutState extends State<MainLayout> {
         userName: widget.userName,
         userEmail: widget.userEmail,
         selectedIndex: _selectedIndex,
+        hasRegisteredDevice: _hasRegisteredDevice,
         onNavigate: (index) {
           setState(() {
             _selectedIndex = index;
@@ -168,3 +181,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

@@ -23,6 +23,7 @@ class SessionService {
     await prefs.setString(_keyUserEmail, userEmail);
     await prefs.setString(_keyUserPhone, userPhone);
     await prefs.setString(_keyUserRole, userRole);
+    await prefs.setBool(_keyHasRegistered, true);
   }
 
   /// Load existing session. Returns null if no session exists.
@@ -30,6 +31,10 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_keyToken);
     if (token == null || token.isEmpty) return null;
+    
+    // If they have a session, flag the device as having registered
+    await prefs.setBool(_keyHasRegistered, true);
+    
     return {
       'token': token,
       'userName': prefs.getString(_keyUserName) ?? '',
@@ -54,5 +59,19 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_keyToken);
     return token != null && token.isNotEmpty;
+  }
+
+  static const _keyHasRegistered = 'device_has_registered';
+
+  /// Mark device as having registered/logged in at least once
+  static Future<void> setDeviceHasRegistered() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyHasRegistered, true);
+  }
+
+  /// Check if this device has ever registered/logged in
+  static Future<bool> hasDeviceRegistered() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyHasRegistered) ?? false;
   }
 }

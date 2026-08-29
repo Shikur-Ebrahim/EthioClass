@@ -15,6 +15,7 @@ class CustomDrawer extends StatelessWidget {
   final String userEmail;
   final void Function(int index)? onNavigate;
   final int selectedIndex;
+  final bool hasRegisteredDevice;
 
   const CustomDrawer({
     super.key,
@@ -22,6 +23,7 @@ class CustomDrawer extends StatelessWidget {
     required this.userEmail,
     this.onNavigate,
     this.selectedIndex = 0,
+    this.hasRegisteredDevice = false,
   });
 
   @override
@@ -231,14 +233,14 @@ class CustomDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            // Login / Logout
+            // Login / Logout / Signup
             Padding(
               padding: const EdgeInsets.all(20),
               child: InkWell(
                 onTap: () async {
                   if (userName.isEmpty) {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(builder: (_) => hasRegisteredDevice ? const LoginScreen() : const SignupScreen()),
                       (route) => false,
                     );
                   } else {
@@ -267,12 +269,16 @@ class CustomDrawer extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        userName.isEmpty ? Icons.login_rounded : Icons.logout_rounded,
+                        userName.isEmpty 
+                            ? (hasRegisteredDevice ? Icons.login_rounded : Icons.person_add_rounded) 
+                            : Icons.logout_rounded,
                         color: userName.isEmpty ? AppColors.primary : AppColors.error,
                       ),
                       const SizedBox(width: 14),
                       Text(
-                        userName.isEmpty ? 'Log In' : 'Log Out',
+                        userName.isEmpty 
+                            ? (hasRegisteredDevice ? 'Log In' : 'Create Account') 
+                            : 'Log Out',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
