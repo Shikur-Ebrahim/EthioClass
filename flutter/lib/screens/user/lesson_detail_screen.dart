@@ -429,7 +429,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           ),
                           if (lesson != null)
                             Text(
-                              'Lesson ${lesson.lessonNumber}  Ã¢â‚¬Â¢  ${lesson.durationMinutes} min',
+                              'Lesson ${lesson.lessonNumber}  •  ${lesson.durationMinutes} min',
                               style: const TextStyle(color: Colors.white60, fontSize: 11),
                             ),
                         ],
@@ -578,15 +578,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               Text('${l.durationMinutes} min',
                                   style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               if (_downloadedLessons[l.id] != null) ...[ 
-                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
                                     style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
                               ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
-                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_remoteSizes[l.id]!),
                                     style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
-                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  •  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 const SizedBox(
                                   width: 10, height: 10,
                                   child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
@@ -1056,7 +1056,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(passed ? 'ðŸŽ‰' : 'ðŸ“–', style: const TextStyle(fontSize: 22)),
+                      Text(passed ? '🎉' : '📖', style: const TextStyle(fontSize: 22)),
                       const SizedBox(width: 10),
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('$score / ${questions.length} Correct',
