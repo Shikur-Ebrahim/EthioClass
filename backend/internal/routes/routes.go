@@ -96,6 +96,7 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	}
 
 	r.GET("/chapters/:id/exam", handlers.GetExamQuestionsHandler(db))
+	r.POST("/exam/explain", handlers.ExplainExamAnswerHandler())
 
 	// Payment Routes
 	paymentGroup := r.Group("/payments")

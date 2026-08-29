@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/api_config.dart';
 import '../../../core/theme.dart';
 
 class AIExplanationSheet extends StatefulWidget {
@@ -30,36 +33,25 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
 
   Future<void> _fetchExplanation() async {
     try {
-      final apiKey = dotenv.env['GEMINI_API_KEY'];
-      if (apiKey == null || apiKey.isEmpty) {
-        setState(() {
-          _error = 'API key not configured.';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: apiKey,
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/exam/explain'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'question': widget.questionText,
+          'answer': widget.correctAnswerText,
+        }),
       );
 
-      final prompt = '''
-You are an expert, friendly Ethiopian high school teacher.
-A student asked this question: "${widget.questionText}"
-The correct answer is "${widget.correctAnswerText}".
-
-Please explain WHY this is the correct answer in simple terms for a high school student. 
-Make the explanation clear, encouraging, and no longer than 3 short paragraphs.
-''';
-
-      final response = await model.generateContent([Content.text(prompt)]);
-      
-      if (mounted) {
-        setState(() {
-          _explanation = response.text ?? 'I could not generate an explanation right now.';
-          _isLoading = false;
-        });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _explanation = data['explanation'] ?? 'No explanation provided.';
+            _isLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load explanation');
       }
     } catch (e) {
       if (mounted) {

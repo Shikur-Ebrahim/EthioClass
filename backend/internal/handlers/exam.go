@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -111,5 +116,72 @@ func DeleteExamQuestionHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+	}
+}
+type ExplainRequest struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
+func ExplainExamAnswerHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ExplainRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		apiKey := os.Getenv("GEMINI_API_KEY")
+		if apiKey == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "GEMINI_API_KEY not configured"})
+			return
+		}
+
+		prompt := fmt.Sprintf("You are an expert, friendly Ethiopian high school teacher. A student asked this question: \"%s\". The correct answer is \"%s\". Please explain WHY this is the correct answer in simple terms for a high school student. Make the explanation clear, encouraging, and no longer than 3 short paragraphs.", req.Question, req.Answer)
+
+		payload := map[string]interface{}{
+			"contents": []map[string]interface{}{
+				{
+					"parts": []map[string]interface{}{
+						{
+							"text": prompt,
+						},
+					},
+				},
+			},
+		}
+
+		payloadBytes, _ := json.Marshal(payload)
+		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey
+
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to AI"})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+
+		var geminiResp map[string]interface{}
+		if err := json.Unmarshal(body, &geminiResp); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse AI response"})
+			return
+		}
+
+		defer func() {
+			if r := recover(); r != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "AI response format unexpected"})
+			}
+		}()
+
+		candidates := geminiResp["candidates"].([]interface{})
+		firstCandidate := candidates[0].(map[string]interface{})
+		content := firstCandidate["content"].(map[string]interface{})
+		parts := content["parts"].([]interface{})
+		firstPart := parts[0].(map[string]interface{})
+		explanation := firstPart["text"].(string)
+
+		c.JSON(http.StatusOK, gin.H{"explanation": explanation})
 	}
 }
