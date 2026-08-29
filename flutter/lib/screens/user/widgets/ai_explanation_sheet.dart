@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../config/api_config.dart';
+import '../../../config/api_config.dart';
 import '../../../core/theme.dart';
 
 class AIExplanationSheet extends StatefulWidget {
