@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
+import '../user/main_layout.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -100,7 +101,24 @@ class _SignupScreenState extends State<SignupScreen>
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MainLayout(
+                              userName: '',
+                              userEmail: '',
+                              userPhone: '',
+                              accessToken: '',
+                            ),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
                     child: Container(
                       width: 40,
                       height: 40,

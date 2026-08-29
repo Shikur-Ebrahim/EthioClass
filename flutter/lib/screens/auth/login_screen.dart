@@ -126,7 +126,24 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MainLayout(
+                              userName: '',
+                              userEmail: '',
+                              userPhone: '',
+                              accessToken: '',
+                            ),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
                     child: Container(
                       width: 40,
                       height: 40,
