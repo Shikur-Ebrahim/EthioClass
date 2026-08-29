@@ -152,7 +152,7 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 		}
 
 		payloadBytes, _ := json.Marshal(payload)
-		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
 
 		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 		if err != nil {
