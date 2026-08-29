@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -573,7 +573,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                                   fontWeight: FontWeight.w700,
                                   color: isActive ? AppColors.primary : (isCompleted ? AppColors.grey : AppColors.textDark))),
                           const SizedBox(height: 4),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text('${l.durationMinutes} min',
                                   style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
