@@ -152,9 +152,18 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 		}
 
 		payloadBytes, _ := json.Marshal(payload)
-		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey
+		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request"})
+			return
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq.Header.Set("x-goog-api-key", apiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(httpReq)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to AI"})
 			return
@@ -163,9 +172,12 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 
 		body, _ := io.ReadAll(resp.Body)
 
+		// Log for debugging
+		fmt.Printf("[GEMINI] Status: %d Body: %s\n", resp.StatusCode, string(body))
+
 		var geminiResp map[string]interface{}
 		if err := json.Unmarshal(body, &geminiResp); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse AI response"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse AI response", "raw": string(body)})
 			return
 		}
 
