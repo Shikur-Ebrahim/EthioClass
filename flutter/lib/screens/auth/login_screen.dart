@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 18, color: AppColors.navyLight),
+                          size: 18, color: AppColors.primary),
                     ),
                   ),
                 ],

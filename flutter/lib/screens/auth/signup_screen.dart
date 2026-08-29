@@ -29,10 +29,10 @@ class _SignupScreenState extends State<SignupScreen>
     super.initState();
     _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
     );
-    _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
+    _shakeAnimation = Tween<double>(begin: 0, end: 24).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.easeOut),
     );
   }
 
@@ -115,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen>
                         ],
                       ),
                       child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 18, color: AppColors.navy),
+                          size: 18, color: AppColors.primary),
                     ),
                   ),
                   const Expanded(
@@ -214,9 +214,10 @@ class _SignupScreenState extends State<SignupScreen>
 
                       // Terms checkbox with shake animation
                       AnimatedBuilder(
-                        animation: _shakeAnimation,
+                        animation: _shakeController,
                         builder: (context, child) {
-                          final shake = math.sin(_shakeAnimation.value * math.pi * 6) * 8;
+                          final t = _shakeController.value;
+                          final shake = math.sin(t * math.pi * 8) * (1 - t) * 10;
                           return Transform.translate(
                             offset: Offset(shake, 0),
                             child: child,
