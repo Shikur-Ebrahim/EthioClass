@@ -16,7 +16,6 @@ type ExamQuestion struct {
 	OptionC          string `json:"option_c"`
 	OptionD          string `json:"option_d"`
 	CorrectOption    string `json:"correct_option"`
-	Explanation      string `json:"explanation"`
 	TimeLimitSeconds int    `json:"time_limit_seconds"`
 	CreatedAt        string `json:"created_at"`
 }
@@ -28,7 +27,7 @@ func GetExamQuestionsHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		chapterID := c.Param("id")
-		rows, err := db.QueryContext(c.Request.Context(), "SELECT id, chapter_id, question_text, option_a, option_b, option_c, option_d, correct_option, COALESCE(explanation, ''), time_limit_seconds, created_at FROM exam_questions WHERE chapter_id = $1 ORDER BY created_at ASC", chapterID)
+		rows, err := db.QueryContext(c.Request.Context(), "SELECT id, chapter_id, question_text, option_a, option_b, option_c, option_d, correct_option, time_limit_seconds, created_at FROM exam_questions WHERE chapter_id = $1 ORDER BY created_at ASC", chapterID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -37,7 +36,7 @@ func GetExamQuestionsHandler(db *sql.DB) gin.HandlerFunc {
 		var questions []ExamQuestion
 		for rows.Next() {
 			var q ExamQuestion
-			if err := rows.Scan(&q.ID, &q.ChapterID, &q.QuestionText, &q.OptionA, &q.OptionB, &q.OptionC, &q.OptionD, &q.CorrectOption, &q.Explanation, &q.TimeLimitSeconds, &q.CreatedAt); err != nil {
+			if err := rows.Scan(&q.ID, &q.ChapterID, &q.QuestionText, &q.OptionA, &q.OptionB, &q.OptionC, &q.OptionD, &q.CorrectOption, &q.TimeLimitSeconds, &q.CreatedAt); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -63,8 +62,8 @@ func CreateExamQuestionHandler(db *sql.DB) gin.HandlerFunc {
 		}
 		chapterID := c.Param("id")
 		err := db.QueryRowContext(c.Request.Context(),
-			"INSERT INTO exam_questions (chapter_id, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, time_limit_seconds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at",
-			chapterID, q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectOption, q.Explanation, q.TimeLimitSeconds,
+			"INSERT INTO exam_questions (chapter_id, question_text, option_a, option_b, option_c, option_d, correct_option, time_limit_seconds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at",
+			chapterID, q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectOption, q.TimeLimitSeconds,
 		).Scan(&q.ID, &q.CreatedAt)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -88,8 +87,8 @@ func UpdateExamQuestionHandler(db *sql.DB) gin.HandlerFunc {
 		}
 		id := c.Param("id")
 		_, err := db.ExecContext(c.Request.Context(),
-			"UPDATE exam_questions SET question_text = $1, option_a = $2, option_b = $3, option_c = $4, option_d = $5, correct_option = $6, explanation = $7, time_limit_seconds = $8 WHERE id = $9",
-			q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectOption, q.Explanation, q.TimeLimitSeconds, id,
+			"UPDATE exam_questions SET question_text = $1, option_a = $2, option_b = $3, option_c = $4, option_d = $5, correct_option = $6, time_limit_seconds = $7 WHERE id = $8",
+			q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectOption, q.TimeLimitSeconds, id,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

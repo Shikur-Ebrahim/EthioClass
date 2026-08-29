@@ -110,6 +110,21 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
       );
     }
 
+    if (_questions.isEmpty && !_isFinished) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: AppColors.textDark),
+          title: Text('${widget.chapter.title} Exam', style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+        ),
+        body: const Center(
+          child: Text('No questions available for this exam.', style: TextStyle(color: AppColors.textMedium, fontSize: 16)),
+        ),
+      );
+    }
+
     if (_isFinished) {
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -155,7 +170,6 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
               final userAnswer = _userAnswers.length > index ? _userAnswers[index] : null;
               final correctAnswer = q['correct_option'];
               final isCorrect = userAnswer == correctAnswer;
-              final explanation = q['explanation'] ?? '';
 
               String getOptionText(String? option) {
                 if (option == 'A') return q['option_a'];
@@ -200,25 +214,6 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
                       const SizedBox(height: 4),
                       Text('Correct Answer: $correctAnswerText', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                     ],
-                    if (!isCorrect && explanation.toString().isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.withOpacity(0.2)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.lightbulb_outline, color: Colors.blue, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(explanation, style: const TextStyle(color: AppColors.textDark, fontSize: 13))),
-                          ],
-                        ),
-                      )
-                    ]
                   ],
                 ),
               );
