@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
@@ -11,7 +12,8 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends State<SignupScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -19,9 +21,24 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _agreedToTerms = false;
   bool _isLoading = false;
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
+    );
+  }
 
   @override
   void dispose() {
+    _shakeController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -32,6 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _signup() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreedToTerms) {
+      _shakeController.forward(from: 0);
       _showSnack('Please agree to the Terms of Service', isError: true);
       return;
     }
@@ -194,43 +212,53 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Terms checkbox
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Checkbox(
-                            value: _agreedToTerms,
-                            onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4)),
-                            side: const BorderSide(color: AppColors.grey),
-                          ),
-                          Expanded(
-                            child: RichText(
-                              text: const TextSpan(
-                                style: TextStyle(
-                                    fontSize: 13, color: AppColors.textMedium),
-                                children: [
-                                  TextSpan(text: 'I agree to the '),
-                                  TextSpan(
-                                    text: 'Terms of Service',
-                                    style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  TextSpan(text: ' and '),
-                                  TextSpan(
-                                    text: 'Privacy Policy',
-                                    style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
+                      // Terms checkbox with shake animation
+                      AnimatedBuilder(
+                        animation: _shakeAnimation,
+                        builder: (context, child) {
+                          final shake = math.sin(_shakeAnimation.value * math.pi * 6) * 8;
+                          return Transform.translate(
+                            offset: Offset(shake, 0),
+                            child: child,
+                          );
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: _agreedToTerms,
+                              onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                              activeColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4)),
+                              side: const BorderSide(color: AppColors.grey),
+                            ),
+                            Expanded(
+                              child: RichText(
+                                text: const TextSpan(
+                                  style: TextStyle(
+                                      fontSize: 13, color: AppColors.textMedium),
+                                  children: [
+                                    TextSpan(text: 'I agree to the '),
+                                    TextSpan(
+                                      text: 'Terms of Service',
+                                      style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    TextSpan(text: ' and '),
+                                    TextSpan(
+                                      text: 'Privacy Policy',
+                                      style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 
