@@ -7,6 +7,8 @@ import '../screens/user/how_to_start_screen.dart';
 import '../screens/user/my_learning_screen.dart';
 import '../screens/user/share_app_screen.dart';
 import '../screens/user/about_screen.dart';
+import '../services/session_service.dart';
+import '../screens/user/main_layout.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -169,9 +171,10 @@ class CustomDrawer extends StatelessWidget {
                     label: 'Messages',
                     onTap: () {},
                   ),
-                  _DrawerItem(
-                    icon: Icons.person_add_outlined,
-                    label: 'Create Account',
+                  if (userName.isEmpty)
+                    _DrawerItem(
+                      icon: Icons.person_add_outlined,
+                      label: 'Create Account',
                     onTap: () {
                       Navigator.pop(context); // close drawer
                       Navigator.push(
@@ -228,34 +231,52 @@ class CustomDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            
-            // Logout
+            // Login / Logout
             Padding(
               padding: const EdgeInsets.all(20),
               child: InkWell(
-                onTap: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
+                onTap: () async {
+                  if (userName.isEmpty) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  } else {
+                    await SessionService.clearSession();
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const MainLayout(
+                          userName: '',
+                          userEmail: '',
+                          userPhone: '',
+                          accessToken: '',
+                        ),
+                      ),
+                      (route) => false,
+                    );
+                  }
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: userName.isEmpty ? AppColors.primary.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.logout_rounded, color: AppColors.error),
+                      Icon(
+                        userName.isEmpty ? Icons.login_rounded : Icons.logout_rounded,
+                        color: userName.isEmpty ? AppColors.primary : AppColors.error,
+                      ),
                       const SizedBox(width: 14),
-                      const Text(
-                        'Log Out',
+                      Text(
+                        userName.isEmpty ? 'Log In' : 'Log Out',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.error,
+                          color: userName.isEmpty ? AppColors.primary : AppColors.error,
                         ),
                       ),
                     ],
@@ -312,3 +333,4 @@ class _DrawerItem extends StatelessWidget {
     );
   }
 }
+
