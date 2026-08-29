@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
@@ -11,7 +11,7 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../services/session_service.dart';
 import '../../services/my_learning_service.dart';
-import '../auth/onboarding_screen.dart';
+import '../auth/signup_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
 
@@ -93,7 +93,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(!wasBookmarked ? '🔖 Course bookmarked!' : 'Bookmark removed'),
+          content: Text(!wasBookmarked ? 'ðŸ”– Course bookmarked!' : 'Bookmark removed'),
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
           backgroundColor: !wasBookmarked ? AppColors.primary : AppColors.grey,
@@ -168,7 +168,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           Expanded(
             child: CustomScrollView(
               slivers: [
-                // ── Header ──────────────────────────────────────────
+                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverAppBar(
                   expandedHeight: 260,
                   pinned: true,
@@ -324,7 +324,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // ── Description ──────────────────────────────────────
+                // â”€â”€ Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Container(
                     color: AppColors.surface,
@@ -347,7 +347,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // ── Progress ─────────────────────────────────────────
+                // â”€â”€ Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: ValueListenableBuilder<Set<String>>(
                     valueListenable: ProgressService.instance.completedLessonsNotifier,
@@ -394,7 +394,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // ── Tabs ─────────────────────────────────────────────
+                // â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -420,7 +420,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // ── Tab Content ───────────────────────────────────────
+                // â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -433,7 +433,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             ),
           ),
 
-          // ── Bottom bar ───────────────────────────────────────────
+          // â”€â”€ Bottom bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
@@ -661,7 +661,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         if (mounted) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            MaterialPageRoute(builder: (_) => const SignupScreen()),
           );
         }
         return;
@@ -797,7 +797,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          MaterialPageRoute(builder: (_) => const SignupScreen()),
         );
       }
       return;
@@ -846,7 +846,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Course unlocked successfully! 🎉'),
+        content: const Text('Course unlocked successfully! ðŸŽ‰'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -887,7 +887,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       targetChapter = foundChapter ?? _chapters.first;
       targetLessonIndex = foundChapter != null ? lastLessonIndex : 0;
     } else {
-      // First time — start from beginning
+      // First time â€” start from beginning
       targetChapter = _chapters.first;
     }
 
@@ -941,7 +941,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 }
 
-// ── SharedPrefs Helper ────────────────────────────────────────
+// â”€â”€ SharedPrefs Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SharedPrefsHelper {
   static SharedPreferences? _instance;
   static Future<SharedPreferences> get() async {
@@ -950,7 +950,7 @@ class _SharedPrefsHelper {
   }
 }
 
-// ── Header stat widget ────────────────────────────────────────
+// â”€â”€ Header stat widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final String value;
@@ -977,7 +977,7 @@ class _HeaderStat extends StatelessWidget {
   }
 }
 
-// ── Chapter tile ──────────────────────────────────────────────
+// â”€â”€ Chapter tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ChapterTile extends StatelessWidget {
   final Chapter chapter;
   final int index;
@@ -1080,5 +1080,6 @@ class _ChapterTile extends StatelessWidget {
     );
   }
 }
+
 
 

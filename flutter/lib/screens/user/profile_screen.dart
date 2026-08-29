@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import 'personal_info_screen.dart';
 import 'settings_screen.dart';
@@ -6,7 +6,7 @@ import '../../models/guidance_video.dart';
 import '../../services/guidance_service.dart';
 import '../../config/api_config.dart';
 import 'guidance_feed_screen.dart';
-import '../auth/onboarding_screen.dart';
+import '../auth/signup_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (widget.userName.isEmpty) {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                              MaterialPageRoute(builder: (_) => const SignupScreen()),
                             );
                             return;
                           }
@@ -322,3 +322,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
