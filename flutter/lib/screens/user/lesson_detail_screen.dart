@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
@@ -465,7 +466,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               indicatorColor: AppColors.primary,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Exam'), Tab(text: 'Quiz')],
+              tabs: const [Tab(text: 'Video'), Tab(text: 'Notes'), Tab(text: 'Quiz'), Tab(text: 'Exam')],
             ),
           ),
 
@@ -476,8 +477,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               children: [
                 _buildVideoTab(lesson),
                 _buildNotesTab(lesson),
-                _buildQuizTab(lesson),
                 _buildChapterQuizTab(lesson),
+                _buildQuizTab(lesson),
               ],
             ),
           ),
@@ -799,44 +800,94 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       return const Center(child: Text('Exam not available', style: TextStyle(color: AppColors.grey)));
     }
     
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.quiz_rounded, color: Colors.orange, size: 40),
-            ),
-            const SizedBox(height: 20),
-            const Text('Chapter Exam',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-            const SizedBox(height: 8),
-            const Text('Test your knowledge of this chapter with a timed exam.',
-                style: TextStyle(fontSize: 13, color: AppColors.textMedium), textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreparationScreen(chapter: widget.chapter!)));
-              },
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Take Exam'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ],
+    return Stack(
+      children: [
+        // Fake background exam questions
+        Opacity(
+          opacity: 0.8, // Increased opacity to make it more visible
+          child: ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 16, width: 250, color: Colors.grey.shade400),
+                    const SizedBox(height: 12),
+                    for (int i = 0; i < 4; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(width: 20, height: 20, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade500))),
+                            const SizedBox(width: 12),
+                            Container(height: 14, width: 150 + (i * 20.0), color: Colors.grey.shade300),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
-      ),
+        
+        // Blur overlay
+        Positioned.fill(
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5), // Lighter blur so questions are visible
+              child: Container(
+                color: Colors.white.withOpacity(0.7), // Less milky white
+              ),
+            ),
+          ),
+        ),
+
+        // Foreground Action UI
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.quiz_rounded, color: Colors.orange, size: 40),
+                ),
+                const SizedBox(height: 20),
+                const Text('Chapter Exam',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                const SizedBox(height: 8),
+                const Text('Test your knowledge of this chapter with a timed exam.',
+                    style: TextStyle(fontSize: 13, color: AppColors.textMedium), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                     Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreparationScreen(chapter: widget.chapter!)));
+                  },
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Take Exam'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -885,7 +936,6 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
   // lessonId -> list of questions
   Map<String, List<Map<String, dynamic>>> _lessonQuizzes = {};
   bool _isLoading = true;
-  int _currentLessonGroupIndex = 0;
 
   // Per lesson group state
   Map<String, Map<int, String>> _selectedAnswers = {};
@@ -945,8 +995,6 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
     return _lessonsWithQuiz.fold(0, (sum, l) => sum + (_lessonQuizzes[l.id]?.length ?? 0));
   }
 
-  bool get _allGroupsDone => _currentLessonGroupIndex >= _lessonsWithQuiz.length;
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -968,245 +1016,122 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
       );
     }
 
-    // Final results screen
-    if (_allGroupsDone) {
-      return _buildFinalResults(lessonsWithQuiz);
-    }
-
-    final currentLesson = lessonsWithQuiz[_currentLessonGroupIndex];
-    final questions = _lessonQuizzes[currentLesson.id] ?? [];
-    final answers = _selectedAnswers[currentLesson.id] ?? {};
-    final isSubmitted = _submitted[currentLesson.id] ?? false;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Progress dots
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(lessonsWithQuiz.length, (i) {
-              final isDone = _submitted[lessonsWithQuiz[i].id] == true;
-              final isCurrent = i == _currentLessonGroupIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: isCurrent ? 20 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: isDone ? AppColors.success
-                      : isCurrent ? AppColors.primary
-                      : AppColors.greyLight,
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 16),
+        children: lessonsWithQuiz.map((lesson) {
+          final questions = _lessonQuizzes[lesson.id] ?? [];
+          final answers = _selectedAnswers[lesson.id] ?? {};
+          final isSubmitted = _submitted[lesson.id] ?? false;
 
-          // Lesson name header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 28, height: 28,
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                  child: Center(
-                    child: Text('${currentLesson.lessonNumber}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Lesson name header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                margin: const EdgeInsets.only(top: 8, bottom: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1B5E20), Color(0xFF16A34A)],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(currentLesson.title,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                ),
-                Text('${_currentLessonGroupIndex + 1}/${lessonsWithQuiz.length}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Questions
-          ...questions.asMap().entries.map((e) {
-            final q = e.value;
-            final idx = e.key;
-            return _QuizCard(
-              question: q,
-              index: idx,
-              selected: answers[idx],
-              submitted: isSubmitted,
-              onSelect: isSubmitted ? null : (ans) => setState(() {
-                _selectedAnswers[currentLesson.id] ??= {};
-                _selectedAnswers[currentLesson.id]![idx] = ans;
-              }),
-            );
-          }),
-
-          const SizedBox(height: 16),
-
-          // Score banner if submitted (Moved to bottom)
-          if (isSubmitted) ...[  
-            Builder(builder: (_) {
-              int score = 0;
-              for (int i = 0; i < questions.length; i++) {
-                if (answers[i] == questions[i]['correct_answer']) score++;
-              }
-              final passed = score >= questions.length / 2;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: passed ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: passed ? AppColors.success : AppColors.error),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(passed ? '🎉' : '📖', style: const TextStyle(fontSize: 22)),
+                    Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                      child: Center(
+                        child: Text('${lesson.lessonNumber}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('$score / ${questions.length} Correct',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900,
-                              color: passed ? AppColors.success : AppColors.error)),
-                      Text(passed ? 'Great job on this lesson!' : 'Review and keep going!',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
-                    ]),
+                    Expanded(
+                      child: Text(lesson.title,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                    ),
                   ],
                 ),
-              );
-            }),
-          ],
+              ),
+              
+              // Questions
+              ...questions.asMap().entries.map((e) {
+                final q = e.value;
+                final idx = e.key;
+                return _QuizCard(
+                  question: q,
+                  index: idx,
+                  selected: answers[idx],
+                  submitted: isSubmitted,
+                  onSelect: isSubmitted ? null : (ans) => setState(() {
+                    _selectedAnswers[lesson.id] ??= {};
+                    _selectedAnswers[lesson.id]![idx] = ans;
+                  }),
+                );
+              }),
+              
+              const SizedBox(height: 16),
 
-          // Submit or Next button
-          if (!isSubmitted)
-            ElevatedButton(
-              onPressed: answers.length == questions.length
-                  ? () => setState(() => _submitted[currentLesson.id] = true)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                disabledBackgroundColor: AppColors.greyLight,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: const Text('Submit Quiz',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: () => setState(() => _currentLessonGroupIndex++),
-              icon: Icon(_currentLessonGroupIndex < lessonsWithQuiz.length - 1
-                  ? Icons.arrow_forward_rounded
-                  : Icons.emoji_events_rounded),
-              label: Text(_currentLessonGroupIndex < lessonsWithQuiz.length - 1
-                  ? 'Next Lesson Quiz'
-                  : 'See Final Results'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+              // Score banner if submitted
+              if (isSubmitted) Builder(builder: (_) {
+                int score = 0;
+                for (int i = 0; i < questions.length; i++) {
+                  if (answers[i] == questions[i]['correct_answer']) score++;
+                }
+                final passed = score >= questions.length / 2;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: passed ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: passed ? AppColors.success : AppColors.error),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(passed ? '🎉' : '📖', style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 10),
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('$score / ${questions.length} Correct',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900,
+                                color: passed ? AppColors.success : AppColors.error)),
+                        Text(passed ? 'Great job on this lesson!' : 'Review and keep going!',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                      ]),
+                    ],
+                  ),
+                );
+              }),
 
-  Widget _buildFinalResults(List<Lesson> lessonsWithQuiz) {
-    final score = _score;
-    final total = _totalQuestions;
-    final passed = score >= total / 2;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 20),
-          Icon(passed ? Icons.emoji_events_rounded : Icons.school_rounded,
-              size: 72, color: passed ? const Color(0xFFFBB024) : AppColors.primary),
-          const SizedBox(height: 16),
-          Text(passed ? 'Chapter Complete! 🎉' : 'Chapter Quiz Done!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textDark)),
-          const SizedBox(height: 8),
-          Text('$score out of $total correct',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: AppColors.textMedium)),
-          const SizedBox(height: 24),
-          // Per-lesson summary
-          ...lessonsWithQuiz.map((lesson) {
-            final questions = _lessonQuizzes[lesson.id] ?? [];
-            final answers = _selectedAnswers[lesson.id] ?? {};
-            int s = 0;
-            for (int i = 0; i < questions.length; i++) {
-              if (answers[i] == questions[i]['correct_answer']) s++;
-            }
-            final p = s >= questions.length / 2;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: p ? AppColors.success.withOpacity(0.3) : AppColors.error.withOpacity(0.3)),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: p ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
-                      shape: BoxShape.circle,
+              // Submit button
+              if (!isSubmitted)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 32),
+                  child: ElevatedButton(
+                    onPressed: answers.length == questions.length
+                        ? () => setState(() => _submitted[lesson.id] = true)
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.greyLight,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Icon(p ? Icons.check_rounded : Icons.close_rounded,
-                        color: p ? AppColors.success : AppColors.error, size: 18),
+                    child: Text('Submit ${lesson.title} Quiz',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Lesson ${lesson.lessonNumber}: ${lesson.title}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                      Text('$s / ${questions.length} correct',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                    ]),
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () => setState(() {
-              _currentLessonGroupIndex = 0;
-              _selectedAnswers = {};
-              _submitted = {};
-            }),
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry All Quizzes'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-          ),
-        ],
+                ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
+
 }
 
 // ── INDIVIDUAL QUIZ CARD ──────────────────────────────────────
