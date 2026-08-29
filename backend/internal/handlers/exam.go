@@ -123,7 +123,7 @@ type ExplainRequest struct {
 	Answer   string `json:"answer"`
 }
 
-func ExplainExamAnswerHandler() gin.HandlerFunc {
+func ExplainExamAnswerHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req ExplainRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -131,87 +131,98 @@ func ExplainExamAnswerHandler() gin.HandlerFunc {
 			return
 		}
 
-		apiKey := os.Getenv("GEMINI_API_KEY")
+		if db != nil {
+			// Ensure explanation column exists in exam_questions table
+			_, err := db.ExecContext(c.Request.Context(), `
+				ALTER TABLE exam_questions ADD COLUMN IF NOT EXISTS explanation TEXT;
+			`)
+			if err == nil {
+				// Check Cache
+				var cached sql.NullString
+				err := db.QueryRowContext(c.Request.Context(), "SELECT explanation FROM exam_questions WHERE question_text = $1 LIMIT 1", req.Question).Scan(&cached)
+				if err == nil && cached.Valid && cached.String != "" {
+					fmt.Println("[CACHE HIT] Served explanation from exam_questions table!")
+					c.JSON(http.StatusOK, gin.H{"explanation": cached.String})
+					return
+				}
+			}
+		}
+
+		apiKey := os.Getenv("GROQ_API_KEY")
 		if apiKey == "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "GEMINI_API_KEY not configured"})
+			c.JSON(http.StatusOK, gin.H{"error": "GROQ_API_KEY not configured"})
 			return
 		}
 
 		prompt := fmt.Sprintf("You are an expert, friendly Ethiopian high school teacher. A student asked this question: \"%s\". The correct answer is \"%s\". Please explain WHY this is the correct answer in simple terms for a high school student. Make the explanation clear, encouraging, and no longer than 3 short paragraphs.", req.Question, req.Answer)
 
 		payload := map[string]interface{}{
-			"contents": []map[string]interface{}{
-				{
-					"parts": []map[string]interface{}{
-						{
-							"text": prompt,
-						},
-					},
-				},
+			"model": "llama3-8b-8192",
+			"messages": []map[string]interface{}{
+				{"role": "user", "content": prompt},
 			},
+			"temperature": 0.5,
 		}
 
 		payloadBytes, _ := json.Marshal(payload)
-		url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
+		url := "https://api.groq.com/openai/v1/chat/completions"
 
 		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request"})
+			c.JSON(http.StatusOK, gin.H{"error": "Failed to create request"})
 			return
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
-		httpReq.Header.Set("x-goog-api-key", apiKey)
+		httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 
 		client := &http.Client{}
 		resp, err := client.Do(httpReq)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to AI"})
+			c.JSON(http.StatusOK, gin.H{"error": "Failed to connect to AI"})
 			return
 		}
 		defer resp.Body.Close()
 
 		body, _ := io.ReadAll(resp.Body)
 
-		// Log for debugging
-		fmt.Printf("[GEMINI] Status: %d Body: %s\n", resp.StatusCode, string(body))
-
-		var geminiResp map[string]interface{}
-		if err := json.Unmarshal(body, &geminiResp); err != nil {
-			// Always return 200 so Cloudflare doesn't intercept
-			c.JSON(http.StatusOK, gin.H{"error": "Failed to parse AI response", "raw": string(body)})
+		var groqResp map[string]interface{}
+		if err := json.Unmarshal(body, &groqResp); err != nil {
+			c.JSON(http.StatusOK, gin.H{"error": "Failed to parse AI response"})
 			return
 		}
 
-		// Check if Gemini returned an error (e.g. invalid API key, quota exceeded)
-		if errObj, hasErr := geminiResp["error"]; hasErr {
+		if errObj, hasErr := groqResp["error"]; hasErr {
 			if errMap, ok := errObj.(map[string]interface{}); ok {
 				msg, _ := errMap["message"].(string)
-				status, _ := errMap["status"].(string)
-				if status == "RESOURCE_EXHAUSTED" {
-					c.JSON(http.StatusOK, gin.H{"error": "daily_limit_reached"})
-				} else {
-					c.JSON(http.StatusOK, gin.H{"error": msg})
-				}
+				c.JSON(http.StatusOK, gin.H{"error": msg})
 			} else {
 				c.JSON(http.StatusOK, gin.H{"error": "AI service error"})
 			}
 			return
 		}
 
-		candidates, ok := geminiResp["candidates"].([]interface{})
-		if !ok || len(candidates) == 0 {
-			c.JSON(http.StatusOK, gin.H{"error": "No response from AI"})
+		// Parse the OpenAI-compatible response from Groq
+		choices, ok := groqResp["choices"].([]interface{})
+		if !ok || len(choices) == 0 {
+			c.JSON(http.StatusOK, gin.H{"error": "Empty response from AI"})
 			return
 		}
-		firstCandidate, _ := candidates[0].(map[string]interface{})
-		content, _ := firstCandidate["content"].(map[string]interface{})
-		parts, _ := content["parts"].([]interface{})
-		if len(parts) == 0 {
-			c.JSON(http.StatusOK, gin.H{"error": "Empty AI response"})
-			return
+
+		choice := choices[0].(map[string]interface{})
+		message := choice["message"].(map[string]interface{})
+		explanation := message["content"].(string)
+
+		// Save to cache
+		if db != nil {
+			_, err := db.ExecContext(c.Request.Context(), 
+				"UPDATE exam_questions SET explanation = $1 WHERE question_text = $2", 
+				explanation, req.Question)
+			if err != nil {
+				fmt.Printf("[CACHE ERROR] Failed to save to database: %v\n", err)
+			} else {
+				fmt.Println("[CACHE MISS] Saved new explanation to exam_questions table!")
+			}
 		}
-		firstPart, _ := parts[0].(map[string]interface{})
-		explanation, _ := firstPart["text"].(string)
 
 		c.JSON(http.StatusOK, gin.H{"explanation": explanation})
 	}

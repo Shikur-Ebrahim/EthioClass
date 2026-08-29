@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../config/api_config.dart';
 import '../../../core/theme.dart';
 
@@ -114,16 +115,37 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2196F3), Color(0xFF9C27B0)], // Blue to Purple
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.blue, size: 24),
+                alignment: Alignment.center,
+                child: const Text(
+                  'EA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    letterSpacing: -0.5,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               const Text(
-                'AI Teacher Explanation',
+                'EthioClass AI Teacher',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -139,9 +161,28 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
                 padding: EdgeInsets.all(40),
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: Colors.blue),
-                    SizedBox(height: 16),
-                    Text('Analyzing the question...', style: TextStyle(color: AppColors.textMedium)),
+                    SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(
+                        color: Colors.blue,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Text(
+                      'AI is analyzing your answer...',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Generating a tailored explanation',
+                      style: TextStyle(color: AppColors.textMedium, fontSize: 13),
+                    ),
                   ],
                 ),
               ),
@@ -162,12 +203,9 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
               ),
             )
           else
-            Text(
-              _explanation,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.6,
-                color: AppColors.textDark,
+            Flexible(
+              child: SingleChildScrollView(
+                child: TypewriterMarkdown(text: _explanation),
               ),
             ),
           const SizedBox(height: 24),
@@ -184,6 +222,56 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TypewriterMarkdown extends StatefulWidget {
+  final String text;
+  const TypewriterMarkdown({super.key, required this.text});
+
+  @override
+  State<TypewriterMarkdown> createState() => _TypewriterMarkdownState();
+}
+
+class _TypewriterMarkdownState extends State<TypewriterMarkdown> {
+  String _displayedText = '';
+  int _currentIndex = 0;
+  bool _isAnimating = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _animateText();
+  }
+
+  void _animateText() async {
+    while (_currentIndex < widget.text.length && mounted) {
+      // Add a chunk of characters at a time for faster but smooth typing
+      int nextChunk = (_currentIndex + 3).clamp(0, widget.text.length);
+      setState(() {
+        _displayedText = widget.text.substring(0, nextChunk);
+        _currentIndex = nextChunk;
+      });
+      await Future.delayed(const Duration(milliseconds: 15));
+    }
+    if (mounted) {
+      setState(() => _isAnimating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MarkdownBody(
+      data: _displayedText + (_isAnimating ? ' 🔵' : ''), // Blinking cursor effect
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(
+          fontSize: 15,
+          height: 1.6,
+          color: AppColors.textDark,
+        ),
+        strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
       ),
     );
   }

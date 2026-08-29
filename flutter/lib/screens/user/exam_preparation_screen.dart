@@ -5,7 +5,7 @@ import '../../core/theme.dart';
 import '../../models/chapter_model.dart';
 import '../../config/api_config.dart';
 import 'dart:async';
-import 'widgets/ai_explanation_sheet.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class ExamPreparationScreen extends StatefulWidget {
   final Chapter chapter;
@@ -310,68 +310,339 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
             final userAnswerText = userAnswer != null ? '$userAnswer: ${getOptionText(userAnswer)}' : 'Not answered';
             final correctAnswerText = '$correctAnswer: ${getOptionText(correctAnswer)}';
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isCorrect ? Colors.green.shade300 : Colors.red.shade300),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded, 
-                           color: isCorrect ? Colors.green : Colors.red, size: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Q${index + 1}: ${q['question_text']}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Your Answer: $userAnswerText', 
-                       style: TextStyle(color: isCorrect ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w600)),
-                  if (!isCorrect) ...[
-                    const SizedBox(height: 4),
-                    Text('Correct Answer: $correctAnswerText', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  ],
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.auto_awesome, color: Colors.blue, size: 18),
-                      label: const Text('Ask AI to Explain', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.blue.withOpacity(0.5)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => AIExplanationSheet(
-                            questionText: q['question_text'],
-                            correctAnswerText: correctAnswerText,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+            return ResultQuestionCard(
+              index: index,
+              question: q,
+              userAnswer: userAnswer,
+              correctAnswer: correctAnswer,
+              userAnswerText: userAnswerText,
+              correctAnswerText: correctAnswerText,
+              isCorrect: isCorrect,
             );
           }),
         ],
-      )
+      ),
+    );
+  }
+}
+
+class ResultQuestionCard extends StatefulWidget {
+  final int index;
+  final dynamic question;
+  final String? userAnswer;
+  final String correctAnswer;
+  final String userAnswerText;
+  final String correctAnswerText;
+  final bool isCorrect;
+
+  const ResultQuestionCard({
+    super.key,
+    required this.index,
+    required this.question,
+    required this.userAnswer,
+    required this.correctAnswer,
+    required this.userAnswerText,
+    required this.correctAnswerText,
+    required this.isCorrect,
+  });
+
+  @override
+  State<ResultQuestionCard> createState() => _ResultQuestionCardState();
+}
+
+class _ResultQuestionCardState extends State<ResultQuestionCard> {
+  bool _isExplaining = false;
+  bool _isLoadingExplanation = false;
+  bool _isFirstTimeExplaining = true;
+  String? _explanation;
+  String? _error;
+
+  Future<void> _fetchExplanation() async {
+    if (_explanation != null) return; // Already fetched
+    
+    setState(() {
+      _isExplaining = true;
+      _isLoadingExplanation = true;
+      _error = null;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/exam/explain'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'question': widget.question['question_text'],
+          'answer': widget.correctAnswerText,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data.containsKey('error')) {
+          final errMsg = data['error'] as String;
+          if (mounted) {
+            setState(() {
+              if (errMsg == 'daily_limit_reached') {
+                _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+              } else {
+                _error = 'AI Error: $errMsg';
+              }
+              _isLoadingExplanation = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _explanation = data['explanation'] ?? 'No explanation provided.';
+              _isLoadingExplanation = false;
+            });
+          }
+        }
+      } else if (response.statusCode == 429) {
+        if (mounted) {
+          setState(() {
+            _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+            _isLoadingExplanation = false;
+          });
+        }
+      } else {
+        final data = jsonDecode(response.body);
+        final msg = data['error'] ?? 'Unknown error from AI service.';
+        if (mounted) {
+          setState(() {
+            _error = 'AI Error: $msg';
+            _isLoadingExplanation = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not connect to AI service. Please try again next time!';
+          _isLoadingExplanation = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: widget.isCorrect ? Colors.green.shade300 : Colors.red.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(widget.isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded, 
+                   color: widget.isCorrect ? Colors.green : Colors.red, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Q${widget.index + 1}: ${widget.question['question_text']}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('Your Answer: ${widget.userAnswerText}', 
+               style: TextStyle(color: widget.isCorrect ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w600)),
+          if (!widget.isCorrect) ...[
+            const SizedBox(height: 4),
+            Text('Correct Answer: ${widget.correctAnswerText}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+          ],
+          const SizedBox(height: 16),
+          
+          if (!_isExplaining)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.blue.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                onPressed: () {
+                  if (_explanation != null) {
+                    setState(() {
+                      _isExplaining = true;
+                      _isFirstTimeExplaining = false; 
+                    });
+                  } else {
+                    _fetchExplanation();
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2196F3), Color(0xFF9C27B0)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'EA',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Ask AI to Explain', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            const Divider(height: 32, thickness: 1, color: AppColors.greyLight),
+            Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2196F3), Color(0xFF9C27B0)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'EA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'EthioClass AI Teacher',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingExplanation)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Analyzing the question...', style: TextStyle(color: AppColors.textMedium, fontStyle: FontStyle.italic)),
+                  ],
+                ),
+              )
+            else if (_error != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 13))),
+                  ],
+                ),
+              )
+            else
+              TypewriterMarkdown(text: _explanation!, animate: _isFirstTimeExplaining),
+              
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => setState(() => _isExplaining = false),
+                child: const Text('Hide Explanation', style: TextStyle(color: AppColors.textMedium)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class TypewriterMarkdown extends StatefulWidget {
+  final String text;
+  final bool animate;
+  const TypewriterMarkdown({super.key, required this.text, this.animate = true});
+
+  @override
+  State<TypewriterMarkdown> createState() => _TypewriterMarkdownState();
+}
+
+class _TypewriterMarkdownState extends State<TypewriterMarkdown> {
+  String _displayedText = '';
+  int _currentIndex = 0;
+  bool _isAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) {
+      _isAnimating = true;
+      _animateText();
+    } else {
+      _displayedText = widget.text;
+    }
+  }
+
+  void _animateText() async {
+    while (_currentIndex < widget.text.length && mounted) {
+      int nextChunk = (_currentIndex + 3).clamp(0, widget.text.length);
+      setState(() {
+        _displayedText = widget.text.substring(0, nextChunk);
+        _currentIndex = nextChunk;
+      });
+      await Future.delayed(const Duration(milliseconds: 15));
+    }
+    if (mounted) {
+      setState(() => _isAnimating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MarkdownBody(
+      data: _displayedText + (_isAnimating ? ' 🔵' : ''),
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(
+          fontSize: 14,
+          height: 1.6,
+          color: AppColors.textDark,
+        ),
+        strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+      ),
     );
   }
 }
