@@ -1,8 +1,7 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/update_password_screen.dart';
 import 'screens/user/main_layout.dart';
 import 'screens/admin/admin_home_screen.dart';
@@ -46,7 +45,7 @@ class _EthioClassAppState extends State<EthioClassApp> {
 }
 
 /// Splash/startup screen that checks for existing session.
-/// If logged in → go to MainLayout. If not → go to OnboardingScreen.
+/// If logged in â†’ go to MainLayout. If not â†’ go to OnboardingScreen.
 class _StartupScreen extends StatefulWidget {
   const _StartupScreen();
 
@@ -83,7 +82,7 @@ class _StartupScreenState extends State<_StartupScreen> {
           ),
         );
       } else {
-        // Session exists → go directly to home
+        // Session exists â†’ go directly to home
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -97,7 +96,7 @@ class _StartupScreenState extends State<_StartupScreen> {
         );
       }
     } else {
-      // No session → go to home as guest
+      // No session â†’ go to home as guest
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -142,3 +141,4 @@ class _StartupScreenState extends State<_StartupScreen> {
     );
   }
 }
+
