@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -319,7 +319,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // â”€â”€ Video / Banner Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Video / Banner Header Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           Container(
             height: 280,
             width: double.infinity,
@@ -429,7 +429,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                           ),
                           if (lesson != null)
                             Text(
-                              'Lesson ${lesson.lessonNumber}  â€¢  ${lesson.durationMinutes} min',
+                              'Lesson ${lesson.lessonNumber}  Ã¢â‚¬Â¢  ${lesson.durationMinutes} min',
                               style: const TextStyle(color: Colors.white60, fontSize: 11),
                             ),
                         ],
@@ -440,7 +440,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // â”€â”€ Chapter Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Chapter Description Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           if (desc != null && desc.isNotEmpty)
             Container(
               width: double.infinity,
@@ -452,7 +452,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
               ),
             ),
 
-          // â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Tabs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           Container(
             decoration: BoxDecoration(
               color: AppColors.surface,
@@ -469,7 +469,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
             ),
           ),
 
-          // â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Tab Content Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -486,7 +486,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // â”€â”€ VIDEO TAB: list of lessons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ VIDEO TAB: list of lessons Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildVideoTab(Lesson? active) {
     if (widget.lessons.isEmpty) {
       return const Center(child: Text('No lessons yet', style: TextStyle(color: AppColors.grey)));
@@ -578,15 +578,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                               Text('${l.durationMinutes} min',
                                   style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               if (_downloadedLessons[l.id] != null) ...[ 
-                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_downloadedLessons[l.id]!.sizeBytes),
                                     style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
                               ] else if (_remoteSizes[l.id] != null && _remoteSizes[l.id]! > 0) ...[
-                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 Text(_formatBytes(_remoteSizes[l.id]!),
                                     style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
                               ] else if (l.videoUrl != null && l.videoUrl!.isNotEmpty && _downloadedLessons[l.id] == null) ...[
-                                const Text('  â€¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                                const Text('  Ã¢â‚¬Â¢  ', style: TextStyle(fontSize: 11, color: AppColors.textMedium)),
                                 const SizedBox(
                                   width: 10, height: 10,
                                   child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.grey),
@@ -709,7 +709,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // â”€â”€ NOTES TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ NOTES TAB Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildNotesTab(Lesson? lesson) {
     if (lesson?.notesUrl == null || lesson!.notesUrl!.isEmpty) {
       return const Center(
@@ -793,7 +793,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // â”€â”€ EXAM TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ EXAM TAB Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildQuizTab(Lesson? lesson) {
     if (widget.chapter == null) {
       return const Center(child: Text('Exam not available', style: TextStyle(color: AppColors.grey)));
@@ -803,7 +803,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
       children: [
         // Fake background exam questions
         Opacity(
-          opacity: 0.8, // Increased opacity to make it more visible
+          opacity: 1.0, // Fully visible fake questions
           child: ListView.builder(
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
@@ -838,9 +838,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
         Positioned.fill(
           child: ClipRect(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5), // Lighter blur so questions are visible
+              filter: ImageFilter.blur(sigmaX: 0.8, sigmaY: 0.8), // Very light blur
               child: Container(
-                color: Colors.white.withOpacity(0.7), // Less milky white
+                color: Colors.white.withOpacity(0.4), // Much less milky white to allow visibility
               ),
             ),
           ),
@@ -890,7 +890,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     );
   }
 
-  // â”€â”€ QUIZ TAB: all lessons in chapter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ QUIZ TAB: all lessons in chapter Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildChapterQuizTab(Lesson? lesson) {
     if (widget.lessons.isEmpty) {
       return const Center(child: Text('No lessons in this chapter', style: TextStyle(color: AppColors.grey)));
@@ -922,7 +922,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   Widget _bannerPlaceholder() => Container(color: Colors.black);
 }
 
-// â”€â”€ CHAPTER QUIZ SECTION (all lessons, sequential) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ CHAPTER QUIZ SECTION (all lessons, sequential) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _ChapterQuizSection extends StatefulWidget {
   final List<Lesson> lessons;
   const _ChapterQuizSection({required this.lessons});
@@ -1056,7 +1056,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(passed ? '🎉' : '📖', style: const TextStyle(fontSize: 22)),
+                      Text(passed ? 'ðŸŽ‰' : 'ðŸ“–', style: const TextStyle(fontSize: 22)),
                       const SizedBox(width: 10),
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('$score / ${questions.length} Correct',
@@ -1094,7 +1094,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
   }
 }
 
-// ── INDIVIDUAL QUIZ CARD ──────────────────────────────────────
+// â”€â”€ INDIVIDUAL QUIZ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _QuizCard extends StatefulWidget {
   final Map<String, dynamic> question;
   final int index;
@@ -1303,3 +1303,4 @@ class _QuizCardState extends State<_QuizCard> {
     );
   }
 }
+
