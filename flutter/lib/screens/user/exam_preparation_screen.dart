@@ -157,6 +157,17 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
               final isCorrect = userAnswer == correctAnswer;
               final explanation = q['explanation'] ?? '';
 
+              String getOptionText(String? option) {
+                if (option == 'A') return q['option_a'];
+                if (option == 'B') return q['option_b'];
+                if (option == 'C') return q['option_c'];
+                if (option == 'D') return q['option_d'];
+                return '';
+              }
+
+              final userAnswerText = userAnswer != null ? '$userAnswer: ${getOptionText(userAnswer)}' : 'Not answered';
+              final correctAnswerText = '$correctAnswer: ${getOptionText(correctAnswer)}';
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
@@ -183,11 +194,11 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text('Your Answer: ${userAnswer ?? "Not answered"}', 
+                    Text('Your Answer: $userAnswerText', 
                          style: TextStyle(color: isCorrect ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w600)),
                     if (!isCorrect) ...[
                       const SizedBox(height: 4),
-                      Text('Correct Answer: $correctAnswer', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                      Text('Correct Answer: $correctAnswerText', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                     ],
                     if (!isCorrect && explanation.toString().isNotEmpty) ...[
                       const SizedBox(height: 12),
