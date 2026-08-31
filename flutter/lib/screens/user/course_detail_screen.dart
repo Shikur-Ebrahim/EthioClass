@@ -81,7 +81,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         _isEnrolled = prefs.getBool('enrolled_${widget.course.id}') ?? false;
       });
     }
-  } catch (_) {}
   }
 
   Future<void> _enrollCourse() async {
