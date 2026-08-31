@@ -93,6 +93,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         setState(() {
           _isEnrolled = true;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Enrolled successfully!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
       }
     } catch (_) {}
   }
