@@ -81,28 +81,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         _isEnrolled = prefs.getBool('enrolled_${widget.course.id}') ?? false;
       });
     }
-  }
-
-  
-  Future<void> _enrollCourseSilent() async {
-    try {
-      await CourseService().enrollCourse(widget.course.id);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('enrolled_', true);
-      if (mounted) {
-        setState(() {
-          _isEnrolled = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Enrolled successfully!'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
-    } catch (_) {}
+  } catch (_) {}
   }
 
   Future<void> _enrollCourse() async {
@@ -747,9 +726,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _handleChapterTap(Chapter chapter) async {
-    if (!_isEnrolled) {
-      await _enrollCourseSilent();
-    }
     if (!chapter.isFree) {
       final session = await SessionService.loadSession();
       if (session == null) {
@@ -950,9 +926,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _continueLearning() async {
-    if (!_isEnrolled) {
-      await _enrollCourseSilent();
-    }
     if (_chapters.isEmpty) {
       if (_isLoadingChapters) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ import '../models/division_model.dart';
 import '../models/lesson_model.dart';
 import '../models/lesson_material_model.dart';
 import '../models/question_model.dart';
+import '../services/session_service.dart';
 
 /// CourseService fetches course and category data from the EthioClass Go backend,
 /// which in turn queries Supabase (so we don't expose Supabase keys in Flutter).
