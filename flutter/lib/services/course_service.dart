@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/category_model.dart';
@@ -59,6 +59,16 @@ class CourseService {
   }
 
   /// Fetches all courses from the backend, optionally filtered by divisionId or categoryId.
+    Future<void> enrollCourse(String courseId) async {
+    final response = await http.post(
+      Uri.parse('$apiBaseUrl/courses/$courseId/enroll'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to enroll in course');
+    }
+  }
+
   Future<List<Course>> getCourses({String? divisionId, String? categoryId}) async {
     try {
       Uri uri;
@@ -167,3 +177,4 @@ class CourseService {
     }
   }
 }
+

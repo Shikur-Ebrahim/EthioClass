@@ -379,14 +379,14 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
 					COUNT(DISTINCT l.id) as lesson_count,
 					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
-					0 as student_count,
+					COALESCE(c.students, 0) as student_count,
 					COALESCE(c.price, 249) as price
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
 				LEFT JOIN chapters ch ON ch.course_id = c.id
 				LEFT JOIN lessons l ON l.chapter_id = ch.id
 				WHERE c.category_id = $1
-				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.price
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.students, c.price
 				ORDER BY c.created_at DESC`, categoryId)
 		} else {
 			rows, err = db.QueryContext(c.Request.Context(), `
@@ -395,13 +395,13 @@ func GetCoursesHandler(db *sql.DB) gin.HandlerFunc {
 					c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at,
 					COUNT(DISTINCT l.id) as lesson_count,
 					COALESCE(SUM(l.duration_minutes), 0) as duration_minutes,
-					0 as student_count,
+					COALESCE(c.students, 0) as student_count,
 					COALESCE(c.price, 249) as price
 				FROM courses c
 				LEFT JOIN categories cat ON c.category_id = cat.id
 				LEFT JOIN chapters ch ON ch.course_id = c.id
 				LEFT JOIN lessons l ON l.chapter_id = ch.id
-				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.price
+				GROUP BY c.id, c.category_id, cat.name, c.title, c.description, c.about_text, c.about_bullets, c.instructor_name, c.instructor_phone, c.thumbnail_url, c.created_at, c.students, c.price
 				ORDER BY c.created_at DESC`)
 		}
 
@@ -743,5 +743,29 @@ func DeleteCourseHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Course deleted successfully"})
+	}
+}
+
+// EnrollCourseHandler increments the student count for a course.
+func EnrollCourseHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if db == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not connected"})
+			return
+		}
+
+		courseID := c.Param("id")
+		if courseID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Course ID is required"})
+			return
+		}
+
+		_, err := db.ExecContext(c.Request.Context(), `UPDATE courses SET students = students + 1 WHERE id = $1`, courseID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enroll in course: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Enrolled successfully"})
 	}
 }

@@ -48,6 +48,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   // Bookmark
   bool _isBookmarked = false;
   bool _bookmarkLoading = false;
+  bool _isEnrolled = false;
+  bool _enrollLoading = false;
 
   final List<Color> _headerColors = [
     const Color(0xFF0F172A),
@@ -69,6 +71,50 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     _loadChapters();
     _preInitializePayment();
     _checkBookmarkState();
+    _checkEnrollmentState();
+  }
+
+    Future<void> _checkEnrollmentState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isEnrolled = prefs.getBool('enrolled_${widget.course.id}') ?? false;
+      });
+    }
+  }
+
+  Future<void> _enrollCourse() async {
+    if (_enrollLoading) return;
+    setState(() => _enrollLoading = true);
+    
+    try {
+      final response = await CourseService().enrollCourse(widget.course.id);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('enrolled_${widget.course.id}', true);
+      
+      if (mounted) {
+        setState(() {
+          _isEnrolled = true;
+          _enrollLoading = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Enrolled successfully! ðŸŽ‰'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _enrollLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to enroll')),
+        );
+      }
+    }
   }
 
   Future<void> _checkBookmarkState() async {
@@ -179,23 +225,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                     child: Container(
                       margin: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                     ),
                   ),
-                  title: const Text(
-                    'Course Details',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-                  ),
                   centerTitle: true,
                   actions: [
                     Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.share_rounded, color: Colors.white, size: 20),
@@ -468,19 +510,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _continueLearning,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                    label: const Text('Continue Learning',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-                  ),
+                  child: _isEnrolled
+                      ? ElevatedButton.icon(
+                          onPressed: _continueLearning,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                          label: const Text('Continue Learning',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                        )
+                      : ElevatedButton(
+                          onPressed: _enrollCourse,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 0,
+                          ),
+                          child: _enrollLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                )
+                              : const Text('Enroll Course',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                        ),
                 ),
               ],
             ),
@@ -1081,6 +1142,12 @@ class _ChapterTile extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
 
 
 
