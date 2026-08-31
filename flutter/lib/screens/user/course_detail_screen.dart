@@ -83,6 +83,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     }
   }
 
+  
+  Future<void> _enrollCourseSilent() async {
+    try {
+      await CourseService().enrollCourse(widget.course.id);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('enrolled_', true);
+      if (mounted) {
+        setState(() {
+          _isEnrolled = true;
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _enrollCourse() async {
     if (_enrollLoading) return;
     setState(() => _enrollLoading = true);
@@ -100,7 +114,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Enrolled successfully! ðŸŽ‰'),
+            content: const Text('Enrolled successfully!'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -240,7 +254,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.share_rounded, color: Colors.white, size: 20),
+                      child: const Icon(Icons.share_rounded, color: Colors.white, size: 24),
                     ),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
@@ -295,27 +309,35 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                // Category badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    widget.course.categoryName ?? widget.categoryName,
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  widget.course.title,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    height: 1.2,
-                                  ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        widget.course.title,
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Category badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        widget.course.categoryName ?? widget.categoryName,
+                                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 14),
                                 Row(
@@ -527,7 +549,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                       : ElevatedButton(
                           onPressed: _enrollCourse,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: Colors.deepPurple,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -717,6 +739,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _handleChapterTap(Chapter chapter) async {
+    if (!_isEnrolled) {
+      await _enrollCourseSilent();
+    }
     if (!chapter.isFree) {
       final session = await SessionService.loadSession();
       if (session == null) {
@@ -908,7 +933,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Course unlocked successfully! ðŸŽ‰'),
+        content: const Text('Course unlocked successfully!'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -917,6 +942,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _continueLearning() async {
+    if (!_isEnrolled) {
+      await _enrollCourseSilent();
+    }
     if (_chapters.isEmpty) {
       if (_isLoadingChapters) {
         ScaffoldMessenger.of(context).showSnackBar(
