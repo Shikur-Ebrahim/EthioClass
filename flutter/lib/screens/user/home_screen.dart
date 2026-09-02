@@ -68,14 +68,21 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _loadData() async {
     try {
+      // Step 1: fetch categories + courses in parallel
       final results = await Future.wait([
         CourseService().getCategories(),
         CourseService().getCourses(),
       ]);
+      final courses = results[1] as List<Course>;
+
+      // Step 2: prefetch chapters for ALL courses in parallel — wait for them
+      // so chapters are guaranteed in cache before home screen is shown
+      await Future.wait(courses.map((c) => CourseService().getChapters(c.id)));
+
       if (mounted) {
         setState(() {
           _allCategories = results[0] as List<Category>;
-          _allCourses = results[1] as List<Course>;
+          _allCourses = courses;
           _filteredCategories = _allCategories;
           _filteredCourses = _allCourses;
           _dataLoaded = true;
