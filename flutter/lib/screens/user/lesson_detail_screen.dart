@@ -315,7 +315,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   void _handleBack() {
     final lesson = _currentLesson;
     if (lesson != null && _videoController != null && _chewieController != null &&
-        _videoController!.value.isPlaying) {
+        _videoController!.value.isInitialized) {
       MiniPlayerService.instance.handover(
         lesson: lesson,
         courseTitle: widget.courseTitle,
