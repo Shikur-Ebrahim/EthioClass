@@ -402,11 +402,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                         fit: StackFit.expand,
                         children: [
                           _buildBannerImage(thumbUrl),
-                          const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          ),
                         ],
                       )
                     else
@@ -1344,7 +1339,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: EthioClassLoading());
+      return const SizedBox(height: 100);
     }
     final lessonsWithQuiz = _lessonsWithQuiz;
     if (lessonsWithQuiz.isEmpty) {

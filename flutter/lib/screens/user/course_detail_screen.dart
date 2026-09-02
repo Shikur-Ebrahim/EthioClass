@@ -880,7 +880,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   Widget _buildChaptersTab() {
     if (_isLoadingChapters) {
-      return const Center(child: const Center(child: EthioClassLoading()));
+      return const SizedBox(height: 100);
     }
 
     if (_chapters.isEmpty) {
@@ -1163,7 +1163,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   Widget _buildReviewsTab() {
     if (_reviewsLoading) {
-      return const Center(child: EthioClassLoading());
+      return const SizedBox(height: 100);
     }
 
     return Column(
