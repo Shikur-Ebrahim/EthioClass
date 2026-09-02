@@ -94,6 +94,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Full-screen loader until courses are fetched
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: EthioClassLoading()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(

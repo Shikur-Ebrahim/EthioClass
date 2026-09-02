@@ -457,6 +457,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Full-screen loader until chapters are fetched
+    if (_isLoadingChapters && _chapters.isEmpty) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: EthioClassLoading()),
+      );
+    }
+
     final headerColor = _headerColors[widget.index % _headerColors.length];
     final description = widget.course.description.isNotEmpty
         ? widget.course.description
@@ -469,7 +477,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           Expanded(
             child: CustomScrollView(
               slivers: [
-                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ──────────────────────────────────────────
                 SliverAppBar(
                   expandedHeight: 260,
                   pinned: true,
