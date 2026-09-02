@@ -265,8 +265,11 @@ class _HomeScreenState extends State<HomeScreen>
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _filteredCategories.length,
-              itemBuilder: (_, i) =>
-                  _CategoryCard(cat: _filteredCategories[i], index: i),
+              itemBuilder: (_, i) => _CategoryCard(
+                cat: _filteredCategories[i],
+                index: i,
+                allCourses: _allCourses,
+              ),
             ),
           ),
           const SizedBox(height: 24),
