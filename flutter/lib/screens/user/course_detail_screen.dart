@@ -305,8 +305,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(!wasBookmarked ? 'ðŸ”– Course bookmarked!' : 'Bookmark removed'),
-          duration: const Duration(seconds: 1),
+          content: Row(
+            children: [
+              Icon(!wasBookmarked ? Icons.bookmark_added_rounded : Icons.bookmark_remove_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Text(!wasBookmarked ? 'Course bookmarked!' : 'Bookmark removed'),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           backgroundColor: !wasBookmarked ? AppColors.primary : AppColors.grey,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -723,59 +729,124 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Widget _buildAboutTab(String description) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'About this Course',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textDark),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Features grid
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
           ),
-          const SizedBox(height: 10),
-          Text(
-            widget.course.aboutText.isNotEmpty ? widget.course.aboutText : description,
-            style: const TextStyle(fontSize: 13, color: AppColors.textMedium, height: 1.65),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Course Features', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildFeatureItem(Icons.play_circle_filled_rounded, '${widget.course.lessonCount} Lessons')),
+                  Expanded(child: _buildFeatureItem(Icons.schedule_rounded, '${widget.course.durationMinutes} mins')),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildFeatureItem(Icons.people_alt_rounded, '${widget.course.studentCount} Students')),
+                  Expanded(child: _buildFeatureItem(Icons.translate_rounded, 'Amharic & Eng')),
+                ],
+              ),
+            ],
           ),
-          if (widget.course.aboutBullets.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'What you\'ll learn',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark),
-            ),
-            const SizedBox(height: 10),
-            ...widget.course.aboutBullets.map((bullet) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2.0),
-                        child: Icon(Icons.check_circle, color: Color(0xFF2563EB), size: 16),
+        ),
+        const SizedBox(height: 12),
+        // Description box
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'About this Course',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textDark),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                widget.course.aboutText.isNotEmpty ? widget.course.aboutText : description,
+                style: const TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.6),
+              ),
+              if (widget.course.aboutBullets.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'What you\'ll learn',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 16),
+                ...widget.course.aboutBullets.map((bullet) => Container(
+                      margin: const EdgeInsets.only(bottom: 12.0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          bullet,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textDark,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE0E7FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded, color: Color(0xFF4F46E5), size: 14),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              bullet,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.textDark,
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )),
-          ],
-        ],
-      ),
+                    )),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF7ED),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: const Color(0xFFEA580C), size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+        ),
+      ],
     );
   }
 
