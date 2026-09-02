@@ -20,7 +20,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late Future<List<Category>> _categoriesFuture;
   late Future<List<Course>> _coursesFuture;
 
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         body: Center(child: EthioClassLoading()),
       );
     }
-    
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -141,45 +142,54 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: RefreshIndicator(
               color: AppColors.primary,
               onRefresh: () async {
-            setState(() {
-              _dataLoaded = false;
-              _searchController.clear();
-            });
-            await _loadData();
-            setState(() {
-              _categoriesFuture = CourseService().getCategories();
-              _coursesFuture = CourseService().getCourses();
-            });
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 20),
-                _buildSearchBar(),
-                const SizedBox(height: 24),
-                if (_isSearching) ...[
-                  _buildSearchResults(),
-                ] else ...[
-                  _buildSectionHeader('Explore Categories', onViewAll: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => const AllCategoriesScreen(),
-                    ));
-                  }),
-                  const SizedBox(height: 14),
-                  _buildCategories(),
-                  const SizedBox(height: 28),
-                  _buildSectionHeader('All Courses', onViewAll: () {
-                    widget.onGoToCourses?.call();
-                  }),
-                  const SizedBox(height: 14),
-                  _buildCourses(),
-                ],
-                const SizedBox(height: 24),
-              ],
-            ),
+                setState(() {
+                  _dataLoaded = false;
+                  _searchController.clear();
+                });
+                await _loadData();
+                setState(() {
+                  _categoriesFuture = CourseService().getCategories();
+                  _coursesFuture = CourseService().getCourses();
+                });
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 20),
+                    _buildSearchBar(),
+                    const SizedBox(height: 24),
+                    if (_isSearching) ...[
+                      _buildSearchResults(),
+                    ] else ...[
+                      _buildSectionHeader(
+                        'Explore Categories',
+                        onViewAll: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AllCategoriesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildCategories(),
+                      const SizedBox(height: 28),
+                      _buildSectionHeader(
+                        'All Courses',
+                        onViewAll: () {
+                          widget.onGoToCourses?.call();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildCourses(),
+                    ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           ),
@@ -207,7 +217,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.search_off_rounded, size: 60, color: AppColors.grey.withOpacity(0.5)),
+              Icon(
+                Icons.search_off_rounded,
+                size: 60,
+                color: AppColors.grey.withOpacity(0.5),
+              ),
               const SizedBox(height: 16),
               Text(
                 'No results for "$_searchQuery"',
@@ -238,7 +252,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           child: Text(
             '${_filteredCategories.length + _filteredCourses.length} result${(_filteredCategories.length + _filteredCourses.length) == 1 ? '' : 's'} for "$_searchQuery"',
-            style: const TextStyle(fontSize: 13, color: AppColors.textMedium, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textMedium,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
 
@@ -252,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _filteredCategories.length,
-              itemBuilder: (_, i) => _CategoryCard(cat: _filteredCategories[i], index: i),
+              itemBuilder: (_, i) =>
+                  _CategoryCard(cat: _filteredCategories[i], index: i),
             ),
           ),
           const SizedBox(height: 24),
@@ -268,7 +287,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: _filteredCourses.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (_, i) => _CourseCard(course: _filteredCourses[i], index: i),
+            itemBuilder: (_, i) =>
+                _CourseCard(course: _filteredCourses[i], index: i),
           ),
         ],
       ],
@@ -302,8 +322,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.menu_rounded,
-                      size: 22, color: AppColors.textDark),
+                  child: const Icon(
+                    Icons.menu_rounded,
+                    size: 22,
+                    color: AppColors.textDark,
+                  ),
                 ),
               ),
               const Spacer(),
@@ -320,11 +343,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black87,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFFF3CAC).withOpacity(0.7), width: 1.5),
+                      border: Border.all(
+                        color: const Color(0xFFFF3CAC).withOpacity(0.7),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF3CAC).withOpacity(0.3),
@@ -336,7 +365,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.touch_app_rounded, color: Color(0xFFFF3CAC), size: 18),
+                        Icon(
+                          Icons.touch_app_rounded,
+                          color: Color(0xFFFF3CAC),
+                          size: 18,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Tap here to learn\nhow to use the app!',
@@ -419,12 +452,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onChanged: (_) => _onSearchChanged(),
                       decoration: InputDecoration(
                         hintText: 'Search courses, categories...',
-                        hintStyle: TextStyle(color: AppColors.grey, fontSize: 14),
+                        hintStyle: TextStyle(
+                          color: AppColors.grey,
+                          fontSize: 14,
+                        ),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textDark,
+                      ),
                       textInputAction: TextInputAction.search,
                     ),
                   ),
@@ -433,7 +472,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onTap: _clearSearch,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 12),
-                        child: Icon(Icons.close_rounded, color: AppColors.grey, size: 20),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: AppColors.grey,
+                          size: 20,
+                        ),
                       ),
                     ),
                 ],
@@ -452,7 +495,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isSearching ? AppColors.textDark : AppColors.primary).withOpacity(0.35),
+                    color:
+                        (_isSearching ? AppColors.textDark : AppColors.primary)
+                            .withOpacity(0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -497,8 +542,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 18, color: AppColors.primary),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
               ],
             ),
           ),
@@ -513,23 +561,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       future: _categoriesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 120,
-            child: const Center(child: EthioClassLoading()),
-          );
+          return const SizedBox(height: 120);
         }
         if (snapshot.hasError) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text('Could not load categories.',
-                style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Could not load categories.',
+              style: TextStyle(color: AppColors.error),
+            ),
           );
         }
         final cats = snapshot.data ?? [];
         if (cats.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text('No categories yet.', style: TextStyle(color: AppColors.grey)),
+            child: Text(
+              'No categories yet.',
+              style: TextStyle(color: AppColors.grey),
+            ),
           );
         }
         return SizedBox(
@@ -551,23 +601,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       future: _coursesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 160,
-            child: const Center(child: EthioClassLoading()),
-          );
+          return const SizedBox(height: 160);
         }
         if (snapshot.hasError) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text('Could not load courses.',
-                style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Could not load courses.',
+              style: TextStyle(color: AppColors.error),
+            ),
           );
         }
         final courses = snapshot.data ?? [];
         if (courses.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text('No courses yet.', style: TextStyle(color: AppColors.grey)),
+            child: Text(
+              'No courses yet.',
+              style: TextStyle(color: AppColors.grey),
+            ),
           );
         }
         return ListView.separated(
@@ -649,10 +701,7 @@ class _CategoryCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.65),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.65)],
                   stops: const [0.35, 1.0],
                 ),
               ),
@@ -718,7 +767,6 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
-
 // ── COURSE CARD ────────────────────────────────────────────────
 class _CourseCard extends StatelessWidget {
   final Course course;
@@ -750,140 +798,179 @@ class _CourseCard extends StatelessWidget {
         ),
       ),
       child: Container(
-      height: 115,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Thumbnail
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
+        height: 115,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
-            child: Container(
-              width: 115,
-              height: 115,
-              color: cardColor,
-              child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
-                  ? Image.network(
-                      '$apiBaseUrl/media/${course.thumbnailUrl!}',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _fallbackThumbnail(cardColor),
-                    )
-                  : _fallbackThumbnail(cardColor),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Thumbnail
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                bottomLeft: Radius.circular(18),
+              ),
+              child: Container(
+                width: 115,
+                height: 115,
+                color: cardColor,
+                child:
+                    course.thumbnailUrl != null &&
+                        course.thumbnailUrl!.isNotEmpty
+                    ? Image.network(
+                        '$apiBaseUrl/media/${course.thumbnailUrl!}',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _fallbackThumbnail(cardColor),
+                      )
+                    : _fallbackThumbnail(cardColor),
+              ),
             ),
-          ),
-          const SizedBox(width: 14),
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category Badge
-                  if (course.categoryName != null && course.categoryName!.isNotEmpty)
-                    Builder(
-                      builder: (context) {
-                        final colors = _getCategoryColors(course.categoryName!);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          margin: const EdgeInsets.only(bottom: 4),
-                          decoration: BoxDecoration(
-                            color: colors[0], // Light background
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
+            const SizedBox(width: 14),
+            // Info
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Category Badge
+                    if (course.categoryName != null &&
+                        course.categoryName!.isNotEmpty)
+                      Builder(
+                        builder: (context) {
+                          final colors = _getCategoryColors(
                             course.categoryName!,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: colors[1], // Dark text
+                          );
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            decoration: BoxDecoration(
+                              color: colors[0], // Light background
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              course.categoryName!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: colors[1], // Dark text
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                    // Title
+                    Text(
+                      course.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Instructor Name
+                    if (course.instructorName.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline_rounded,
+                            size: 14,
+                            color: AppColors.textMedium,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              course.instructorName,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMedium,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        );
-                      }
-                    ),
-                  
-                  // Title
-                  Text(
-                    course.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
+                        ],
+                      ),
 
-                  // Instructor Name
-                  if (course.instructorName.isNotEmpty)
+                    const Spacer(),
+
+                    // Lessons & Duration Row
                     Row(
                       children: [
-                        const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMedium),
+                        const Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 14,
+                          color: Color(0xFFD97706),
+                        ),
                         const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            course.instructorName,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          '${course.lessonCount} lessons',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.schedule_rounded,
+                          size: 14,
+                          color: AppColors.textMedium,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${course.durationMinutes ~/ 60}h ${course.durationMinutes % 60}m',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
                           ),
                         ),
                       ],
                     ),
-                  
-                  const Spacer(),
-                  
-                  // Lessons & Duration Row
-                  Row(
-                    children: [
-                      const Icon(Icons.play_circle_outline_rounded, size: 14, color: Color(0xFFD97706)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${course.lessonCount} lessons',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textMedium),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${course.durationMinutes ~/ 60}h ${course.durationMinutes % 60}m',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          // Options icon (chevron instead of more_vert for consistency)
-          const Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 22),
-          ),
-        ],
+            // Options icon (chevron instead of more_vert for consistency)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+                size: 22,
+              ),
+            ),
+          ],
+        ),
       ),
-     ),
     );
   }
 
   Widget _fallbackThumbnail(Color color) {
     return Center(
-      child: Icon(Icons.play_circle_outline_rounded,
-          color: Colors.white.withOpacity(0.7), size: 36),
+      child: Icon(
+        Icons.play_circle_outline_rounded,
+        color: Colors.white.withOpacity(0.7),
+        size: 36,
+      ),
     );
   }
 
