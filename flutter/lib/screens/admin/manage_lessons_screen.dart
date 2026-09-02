@@ -536,6 +536,12 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
                       controller: _durationCtrl,
                       keyboardType: TextInputType.number,
                       decoration: _inputDec('Duration (min)'),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        final num = int.tryParse(v);
+                        if (num == null || num <= 0) return 'Must be > 0';
+                        return null;
+                      },
                     ),
                   ),
                 ]),
@@ -555,27 +561,38 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
                 GestureDetector(
                   onTap: _pickVideo,
                   child: Container(
-                    padding: const EdgeInsets.all(14),
+                    height: 100,
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.3), width: 1.5),
+                      color: const Color(0xFF2563EB).withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.4), width: 2),
                     ),
-                    child: Row(children: [
-                      Icon(Icons.videocam_rounded, color: const Color(0xFF2563EB).withOpacity(0.7), size: 22),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _videoFile != null || existVideo != null ? Icons.check_circle : Icons.videocam_rounded,
+                          color: _videoFile != null || existVideo != null ? AppColors.success : const Color(0xFF2563EB).withOpacity(0.8),
+                          size: 32,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
                           _videoFile != null
                               ? _videoFile!.path.split('/').last.split('\\').last
-                              : (existVideo != null ? '✔ Video uploaded (tap to replace)' : 'Tap to upload video (MP4)'),
-                          style: TextStyle(fontSize: 12, color: _videoFile != null || existVideo != null ? AppColors.textDark : AppColors.grey),
+                              : (existVideo != null ? '✔ Video uploaded (tap to replace)' : 'Tap to upload video (MP4 up to 1GB)'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _videoFile != null || existVideo != null ? AppColors.textDark : const Color(0xFF2563EB).withOpacity(0.8),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      if (_videoFile != null)
-                        Icon(Icons.check_circle, color: AppColors.success, size: 18),
-                    ]),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
