@@ -78,6 +78,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         setState(() => _currentTab = _tabController.index);
       }
     });
+
+    // Instant load from cache if available
+    final cached = CourseService().getCachedChapters(widget.course.id);
+    if (cached != null) {
+      _chapters = cached;
+      _isLoadingChapters = false;
+    }
+
     _loadChapters();
     _preInitializePayment();
     _checkBookmarkState();

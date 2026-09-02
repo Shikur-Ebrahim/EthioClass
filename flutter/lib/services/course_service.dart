@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/category_model.dart';
@@ -15,13 +15,18 @@ import '../services/session_service.dart';
 class CourseService {
   static const String _baseUrl = apiBaseUrl;
 
+  // Cache for instant loading
+  static final Map<String, List<Chapter>> _chaptersCache = {};
+
   /// Fetches all categories from the backend.
   Future<List<Category>> getCategories() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/categories'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/categories'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -38,14 +43,13 @@ class CourseService {
   /// Fetches divisions, optionally filtered by categoryId.
   Future<List<Division>> getDivisions({String? categoryId}) async {
     try {
-      final uri = categoryId != null 
+      final uri = categoryId != null
           ? Uri.parse('$_baseUrl/divisions?category_id=$categoryId')
           : Uri.parse('$_baseUrl/divisions');
-      
-      final response = await http.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+
+      final response = await http
+          .get(uri, headers: {'Content-Type': 'application/json'})
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -60,7 +64,7 @@ class CourseService {
   }
 
   /// Fetches all courses from the backend, optionally filtered by divisionId or categoryId.
-    Future<void> enrollCourse(String courseId) async {
+  Future<void> enrollCourse(String courseId) async {
     final response = await http.post(
       Uri.parse('$apiBaseUrl/courses/$courseId/enroll'),
     );
@@ -70,7 +74,10 @@ class CourseService {
     }
   }
 
-  Future<List<Course>> getCourses({String? divisionId, String? categoryId}) async {
+  Future<List<Course>> getCourses({
+    String? divisionId,
+    String? categoryId,
+  }) async {
     try {
       Uri uri;
       if (divisionId != null) {
@@ -81,10 +88,9 @@ class CourseService {
         uri = Uri.parse('$_baseUrl/courses');
       }
 
-      final response = await http.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(uri, headers: {'Content-Type': 'application/json'})
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -101,10 +107,12 @@ class CourseService {
   /// Fetches chapters for a specific course.
   Future<List<Chapter>> getChapters(String courseId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/chapters?course_id=$courseId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/chapters?course_id=$courseId'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -121,10 +129,12 @@ class CourseService {
   /// Fetches lessons for a specific chapter.
   Future<List<Lesson>> getLessons(String chapterId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/lessons?chapter_id=$chapterId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/lessons?chapter_id=$chapterId'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -141,10 +151,12 @@ class CourseService {
   /// Fetches lesson materials for a specific lesson.
   Future<List<LessonMaterial>> getLessonMaterials(String lessonId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/lesson-materials?lesson_id=$lessonId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/lesson-materials?lesson_id=$lessonId'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -161,10 +173,12 @@ class CourseService {
   /// Fetches questions for a specific lesson.
   Future<List<Question>> getQuestions(String lessonId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/questions?lesson_id=$lessonId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/questions?lesson_id=$lessonId'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -178,4 +192,3 @@ class CourseService {
     }
   }
 }
-
