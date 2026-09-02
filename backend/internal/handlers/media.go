@@ -44,18 +44,14 @@ func MediaProxyHandler(r2 *storage.R2Client) gin.HandlerFunc {
 			return
 		}
 
-		body, contentType, size, err := r2.GetObject(c.Request.Context(), key)
+		// For GET requests, generate a presigned URL and redirect the client directly to R2
+		// This bypasses the Cloudflare proxy limit and natively supports Range requests (pausing/resuming).
+		presignedURL, err := r2.GeneratePresignedGetURL(c.Request.Context(), key, 4*60*60*1000000000) // 4 hours valid
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "File not found: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate download link: " + err.Error()})
 			return
 		}
-		defer body.Close()
 
-		// Stream the object to the client
-		c.Header("Cache-Control", "public, max-age=31536000") // cache for 1 year
-		if size >= 0 {
-			c.Header("Content-Length", fmt.Sprintf("%d", size))
-		}
-		c.DataFromReader(http.StatusOK, size, contentType, body, nil)
+		c.Redirect(http.StatusFound, presignedURL)
 	}
 }

@@ -109,6 +109,27 @@ func (r *R2Client) GeneratePresignedURL(ctx context.Context, key string, content
 	return req.URL, nil
 }
 
+// GeneratePresignedGetURL generates a temporary download URL for a specific key.
+func (r *R2Client) GeneratePresignedGetURL(ctx context.Context, key string, expire time.Duration) (string, error) {
+	if r.Client == nil {
+		return "", fmt.Errorf("R2 client not initialized")
+	}
+
+	presignClient := s3.NewPresignClient(r.Client)
+
+	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(r.BucketName),
+		Key:    aws.String(key),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = expire
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned GET URL: %w", err)
+	}
+
+	return req.URL, nil
+}
 
 // GetObject streams an object from R2 by key and returns its size.
 func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
