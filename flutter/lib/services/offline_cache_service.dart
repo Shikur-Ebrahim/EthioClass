@@ -6,31 +6,46 @@ class OfflineCacheService {
   OfflineCacheService._();
   static final OfflineCacheService instance = OfflineCacheService._();
 
+  static late SharedPreferences _prefs;
+
+  static Future<void> init() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
   static const _keyCategories = 'cache_categories';
   static const _keyCourses = 'cache_courses';
   static String _keyChapters(String courseId) => 'cache_chapters_$courseId';
   static String _keyLessons(String chapterId) => 'cache_lessons_$chapterId';
 
   Future<void> saveCategories(List<Map<String, dynamic>> data) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyCategories, jsonEncode(data));
+    await _prefs.setString(_keyCategories, jsonEncode(data));
   }
 
   Future<List<Map<String, dynamic>>?> loadCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyCategories);
+    final raw = _prefs.getString(_keyCategories);
     if (raw == null) return null;
     return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
 
   Future<void> saveCourses(List<Map<String, dynamic>> data) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyCourses, jsonEncode(data));
+    await _prefs.setString(_keyCourses, jsonEncode(data));
+  }
+
+  
+  List<Map<String, dynamic>>? loadCategoriesSync() {
+    final raw = _prefs.getString(_keyCategories);
+    if (raw == null) return null;
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+  }
+
+  List<Map<String, dynamic>>? loadCoursesSync() {
+    final raw = _prefs.getString(_keyCourses);
+    if (raw == null) return null;
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
 
   Future<List<Map<String, dynamic>>?> loadCourses() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyCourses);
+    final raw = _prefs.getString(_keyCourses);
     if (raw == null) return null;
     return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
@@ -39,13 +54,11 @@ class OfflineCacheService {
     String courseId,
     List<Map<String, dynamic>> data,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyChapters(courseId), jsonEncode(data));
+    await _prefs.setString(_keyChapters(courseId), jsonEncode(data));
   }
 
   Future<List<Map<String, dynamic>>?> loadChapters(String courseId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyChapters(courseId));
+    final raw = _prefs.getString(_keyChapters(courseId));
     if (raw == null) return null;
     return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
@@ -54,19 +67,16 @@ class OfflineCacheService {
     String chapterId,
     List<Map<String, dynamic>> data,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyLessons(chapterId), jsonEncode(data));
+    await _prefs.setString(_keyLessons(chapterId), jsonEncode(data));
   }
 
   Future<List<Map<String, dynamic>>?> loadLessons(String chapterId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyLessons(chapterId));
+    final raw = _prefs.getString(_keyLessons(chapterId));
     if (raw == null) return null;
     return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
 
   Future<bool> hasCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_keyCategories) || prefs.containsKey(_keyCourses);
+    return _prefs.containsKey(_keyCategories) || _prefs.containsKey(_keyCourses);
   }
 }

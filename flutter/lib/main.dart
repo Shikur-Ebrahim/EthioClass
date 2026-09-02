@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,12 +8,14 @@ import 'screens/admin/admin_home_screen.dart';
 import 'services/session_service.dart';
 
 import 'services/progress_service.dart';
+import 'services/offline_cache_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await ProgressService.instance.init();
+  await OfflineCacheService.init();
   runApp(const EthioClassApp());
 }
 
@@ -63,14 +65,14 @@ class _StartupScreenState extends State<_StartupScreen> {
   Future<void> _checkSession() async {
     // Small delay to show splash naturally
     await Future.delayed(const Duration(milliseconds: 800));
-    
+
     final session = await SessionService.loadSession();
-    
+
     if (!mounted) return;
 
     if (session != null) {
       final userRole = session['userRole'] ?? 'user';
-      
+
       if (userRole == 'admin') {
         Navigator.pushReplacement(
           context,
@@ -141,4 +143,3 @@ class _StartupScreenState extends State<_StartupScreen> {
     );
   }
 }
-

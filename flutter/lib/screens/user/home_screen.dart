@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _categoriesFuture = CourseService().getCategories();
     _coursesFuture = CourseService().getCourses();
-    _loadData();
+    _loadDataSync();
     _searchController.addListener(_onSearchChanged);
 
     // Pulse animation for the button
