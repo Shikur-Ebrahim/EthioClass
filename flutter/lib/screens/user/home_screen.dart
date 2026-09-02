@@ -68,11 +68,10 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    // ── Step 1: Load from disk cache instantly (offline-first) ──────────────
-    final cachedCategories = await OfflineCacheService.instance
-        .loadCategories();
-    final cachedCourses = await OfflineCacheService.instance.loadCourses();
+  void _loadDataSync() {
+    // ── Step 1: Load from disk cache SYNCHRONOUSLY (zero frame delay) ──────────────
+    final cachedCategories = OfflineCacheService.instance.loadCategoriesSync();
+    final cachedCourses = OfflineCacheService.instance.loadCoursesSync();
 
     if (cachedCategories != null &&
         cachedCategories.isNotEmpty &&
@@ -80,23 +79,24 @@ class _HomeScreenState extends State<HomeScreen>
         cachedCourses.isNotEmpty) {
       final cats = cachedCategories.map((e) => Category.fromJson(e)).toList();
       final crss = cachedCourses.map((e) => Course.fromJson(e)).toList();
-      // Also load chapters from disk cache into memory
-      // Warm in-memory chapter cache from disk (getChapters checks disk cache)
-      await Future.wait(crss.map((c) => CourseService().getChapters(c.id)));
-      if (mounted) {
-        setState(() {
-          _allCategories = cats;
-          _allCourses = crss;
-          _filteredCategories = cats;
-          _filteredCourses = crss;
-          _dataLoaded = true;
-        });
-      }
-      // ── Step 2: Refresh from network silently in background ────────────────
-      _refreshFromNetwork(crss);
-      return;
-    }
 
+      _allCategories = cats;
+      _allCourses = crss;
+      _filteredCategories = cats;
+      _filteredCourses = crss;
+      _dataLoaded = true; // INSTANT! No build with false.
+
+      // Warm in-memory chapter cache from disk
+      Future.wait(crss.map((c) => CourseService().getChapters(c.id)));
+
+      // Refresh from network silently in background
+      _refreshFromNetwork(crss);
+    } else {
+      _loadData(); // Fallback to async if first launch
+    }
+  }
+
+  Future<void> _loadData() async {
     // ── First time: no cache — fetch from network ─────────────────────────
     try {
       final results = await Future.wait([
