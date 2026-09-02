@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:chewie/chewie.dart';
+import 'package:video_player/video_player.dart';
 import '../../core/theme.dart';
 import '../../widgets/custom_drawer.dart';
 import '../../services/mini_player_service.dart';
@@ -109,8 +109,8 @@ class _MainLayoutState extends State<MainLayout> {
                       );
                     },
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      height: 72,
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      height: 68,
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(14),
@@ -120,21 +120,28 @@ class _MainLayoutState extends State<MainLayout> {
                       ),
                       child: Row(
                         children: [
-                          // Video thumbnail
+                          // Video thumbnail — use VideoPlayer directly to avoid overflow
                           ClipRRect(
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(14),
                               bottomLeft: Radius.circular(14),
                             ),
                             child: SizedBox(
-                              width: 100,
-                              height: 72,
-                              child: mini.chewieController != null
-                                  ? Chewie(controller: mini.chewieController!)
-                                  : const ColoredBox(color: Colors.black),
+                              width: 90,
+                              height: 68,
+                              child: mini.videoController != null && mini.videoController!.value.isInitialized
+                                  ? FittedBox(
+                                      fit: BoxFit.cover,
+                                      child: SizedBox(
+                                        width: mini.videoController!.value.size.width,
+                                        height: mini.videoController!.value.size.height,
+                                        child: VideoPlayer(mini.videoController!),
+                                      ),
+                                    )
+                                  : const ColoredBox(color: Colors.black, child: Icon(Icons.play_circle_outline, color: Colors.white54, size: 28)),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -144,23 +151,25 @@ class _MainLayoutState extends State<MainLayout> {
                                   mini.lesson!.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                                 ),
                                 Text(
                                   mini.courseTitle ?? '',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                  style: const TextStyle(color: Colors.white54, fontSize: 10),
                                 ),
                               ],
                             ),
                           ),
                           // Play/Pause toggle
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                             icon: Icon(
                               mini.videoController?.value.isPlaying == true ? Icons.pause_rounded : Icons.play_arrow_rounded,
                               color: Colors.white,
-                              size: 28,
+                              size: 24,
                             ),
                             onPressed: () {
                               if (mini.videoController?.value.isPlaying == true) {
@@ -173,9 +182,12 @@ class _MainLayoutState extends State<MainLayout> {
                           ),
                           // Close button
                           IconButton(
-                            icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 22),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                            icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
                             onPressed: () => mini.close(),
                           ),
+                          const SizedBox(width: 4),
                         ],
                       ),
                     ),

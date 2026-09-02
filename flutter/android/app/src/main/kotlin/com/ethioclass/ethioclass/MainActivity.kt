@@ -1,5 +1,5 @@
 package com.ethioclass.ethioclass
 
-import cl.puntito.simple_pip_mode.PipCallbackHelperActivityWrapper
+import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity : PipCallbackHelperActivityWrapper()
+class MainActivity : FlutterActivity()
