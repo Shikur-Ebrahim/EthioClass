@@ -104,8 +104,11 @@ class CourseService {
     }
   }
 
-  /// Fetches chapters for a specific course.
+  /// Fetches chapters for a specific course (cached for instant loading).
   Future<List<Chapter>> getChapters(String courseId) async {
+    if (_chaptersCache.containsKey(courseId)) {
+      return _chaptersCache[courseId]!;
+    }
     try {
       final response = await http
           .get(
@@ -116,13 +119,29 @@ class CourseService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
+        final chapters = data
             .map((e) => Chapter.fromJson(e as Map<String, dynamic>))
             .toList();
+        _chaptersCache[courseId] = chapters;
+        return chapters;
       }
       return [];
     } catch (_) {
       return [];
+    }
+  }
+
+  /// Returns cached chapters instantly (null if not yet fetched).
+  List<Chapter>? getCachedChapters(String courseId) {
+    return _chaptersCache[courseId];
+  }
+
+  /// Pre-fetches chapters for all courses in the background.
+  void prefetchChapters(List<Course> courses) {
+    for (final course in courses) {
+      if (!_chaptersCache.containsKey(course.id)) {
+        getChapters(course.id);
+      }
     }
   }
 
