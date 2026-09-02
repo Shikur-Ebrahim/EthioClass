@@ -46,6 +46,10 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 	// Course Enrollment
 	r.POST("/courses/:id/enroll", handlers.EnrollCourseHandler(db))
 
+	// Course Reviews
+	r.GET("/courses/:id/reviews", handlers.GetCourseReviewsHandler(db))
+	r.POST("/courses/:id/reviews", handlers.SubmitCourseReviewHandler(db))
+
 	// Bookmarks
 	r.POST("/bookmarks/lessons", handlers.AddLessonBookmarkHandler(db))
 	r.DELETE("/bookmarks/lessons/:id", handlers.RemoveLessonBookmarkHandler(db))

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
@@ -11,6 +11,8 @@ import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../services/session_service.dart';
 import '../../services/my_learning_service.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../auth/signup_screen.dart';
 import '../auth/login_screen.dart';
 import 'lesson_detail_screen.dart';
@@ -51,6 +53,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   bool _isEnrolled = false;
   bool _enrollLoading = false;
 
+  // Reviews
+  List<Map<String, dynamic>> _reviews = [];
+  double _avgRating = 4.89;
+  int _totalReviews = 0;
+  Map<String, int> _starCounts = {'5': 0, '4': 0, '3': 0, '2': 0, '1': 0};
+  bool _reviewsLoading = false;
+
   final List<Color> _headerColors = [
     const Color(0xFF0F172A),
     const Color(0xFF1E3A8A),
@@ -72,6 +81,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     _preInitializePayment();
     _checkBookmarkState();
     _checkEnrollmentState();
+    _fetchReviews();
   }
 
     Future<void> _checkEnrollmentState() async {
@@ -81,6 +91,161 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         _isEnrolled = prefs.getBool('enrolled_${widget.course.id}') ?? false;
       });
     }
+  }
+
+  Future<void> _fetchReviews() async {
+    if (mounted) setState(() => _reviewsLoading = true);
+    try {
+      final res = await http.get(
+        Uri.parse('$apiBaseUrl/courses/${widget.course.id}/reviews'),
+      );
+      if (res.statusCode == 200 && mounted) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _reviews = List<Map<String, dynamic>>.from(data['reviews'] ?? []);
+          _avgRating = (data['avg_rating'] as num?)?.toDouble() ?? 4.89;
+          _totalReviews = data['total_reviews'] ?? 0;
+          _starCounts = {
+            '5': data['star_counts']?['5'] ?? 0,
+            '4': data['star_counts']?['4'] ?? 0,
+            '3': data['star_counts']?['3'] ?? 0,
+            '2': data['star_counts']?['2'] ?? 0,
+            '1': data['star_counts']?['1'] ?? 0,
+          };
+          _reviewsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _reviewsLoading = false);
+    }
+  }
+
+  Future<void> _submitReview(String userName, int rating, String comment) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiBaseUrl/courses/${widget.course.id}/reviews'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_name': userName, 'rating': rating, 'comment': comment}),
+      );
+      if (res.statusCode == 200 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Review submitted! Thank you 🎉'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+        _fetchReviews();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit review')),
+        );
+      }
+    }
+  }
+
+  void _showReviewBottomSheet() {
+    int selectedRating = 5;
+    final nameCtrl = TextEditingController();
+    final commentCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            top: 24, left: 24, right: 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 20),
+              const Text('Write a Review', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+              const SizedBox(height: 16),
+              // Star selector
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final star = i + 1;
+                  return GestureDetector(
+                    onTap: () => setModalState(() => selectedRating = star),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Icon(
+                        star <= selectedRating ? Icons.star_rounded : Icons.star_border_rounded,
+                        color: const Color(0xFFFBBF24),
+                        size: 40,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 8),
+              Center(child: Text(
+                ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][selectedRating],
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary),
+              )),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Your name (optional)',
+                  filled: true, fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: commentCtrl,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Share your experience with this course...',
+                  filled: true, fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _submitReview(
+                      nameCtrl.text.trim().isEmpty ? 'Anonymous' : nameCtrl.text.trim(),
+                      selectedRating,
+                      commentCtrl.text.trim(),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Submit Review', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _enrollCourse() async {
@@ -661,21 +826,181 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Widget _buildReviewsTab() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-      ),
-      child: const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Text('No reviews yet.', style: TextStyle(color: AppColors.grey, fontSize: 14)),
+    if (_reviewsLoading) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(32),
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ));
+    }
+
+    return Column(
+      children: [
+        // Rating Summary Card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  // Big rating number
+                  Column(
+                    children: [
+                      Text(
+                        _avgRating.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 52, fontWeight: FontWeight.w900, color: AppColors.textDark, height: 1),
+                      ),
+                      Row(
+                        children: List.generate(5, (i) => Icon(
+                          i < _avgRating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: const Color(0xFFFBBF24), size: 16,
+                        )),
+                      ),
+                      const SizedBox(height: 4),
+                      Text('$_totalReviews review${_totalReviews != 1 ? 's' : ''}',
+                        style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                    ],
+                  ),
+                  const SizedBox(width: 20),
+                  // Star bars
+                  Expanded(
+                    child: Column(
+                      children: [5, 4, 3, 2, 1].map((star) {
+                        final count = _starCounts[star.toString()] ?? 0;
+                        final total = _totalReviews > 0 ? _totalReviews : 1;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Text('$star', style: const TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 12),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: count / total,
+                                    minHeight: 6,
+                                    backgroundColor: AppColors.greyLight,
+                                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFBBF24)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              SizedBox(
+                                width: 20,
+                                child: Text('$count', style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Write Review Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _showReviewBottomSheet,
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Write a Review', style: TextStyle(fontWeight: FontWeight.w700)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+
+        // Review cards
+        if (_reviews.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(
+              child: Text('Be the first to review this course!',
+                style: TextStyle(color: AppColors.grey, fontSize: 13)),
+            ),
+          )
+        else
+          ..._reviews.map((r) {
+            final rating = (r['rating'] as num?)?.toInt() ?? 5;
+            final name = r['user_name'] as String? ?? 'Anonymous';
+            final comment = r['comment'] as String? ?? '';
+            final createdAt = r['created_at'] as String? ?? '';
+            String dateStr = '';
+            try {
+              final dt = DateTime.parse(createdAt).toLocal();
+              dateStr = '${dt.day}/${dt.month}/${dt.year}';
+            } catch (_) {}
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                        child: Center(child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                        )),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                            Text(dateStr, style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: List.generate(5, (i) => Icon(
+                          i < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: const Color(0xFFFBBF24), size: 14,
+                        )),
+                      ),
+                    ],
+                  ),
+                  if (comment.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(comment, style: const TextStyle(fontSize: 13, color: AppColors.textMedium, height: 1.5)),
+                  ],
+                ],
+              ),
+            );
+          }),
+      ],
     );
   }
+
 
   Future<void> _handleChapterTap(Chapter chapter) async {
     if (!chapter.isFree) {
