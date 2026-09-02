@@ -5,6 +5,7 @@ import '../../config/api_config.dart';
 import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import '../../services/offline_cache_service.dart';
 import 'how_to_start_screen.dart';
 import 'all_categories_screen.dart';
 import 'category_detail_screen.dart';
@@ -67,16 +68,43 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _loadData() async {
+    // ── Step 1: Load from disk cache instantly (offline-first) ──────────────
+    final cachedCategories = await OfflineCacheService.instance
+        .loadCategories();
+    final cachedCourses = await OfflineCacheService.instance.loadCourses();
+
+    if (cachedCategories != null &&
+        cachedCategories.isNotEmpty &&
+        cachedCourses != null &&
+        cachedCourses.isNotEmpty) {
+      final cats = cachedCategories.map((e) => Category.fromJson(e)).toList();
+      final crss = cachedCourses.map((e) => Course.fromJson(e)).toList();
+      // Also load chapters from disk cache into memory
+      // Warm in-memory chapter cache from disk (getChapters checks disk cache)
+      await Future.wait(crss.map((c) => CourseService().getChapters(c.id)));
+      if (mounted) {
+        setState(() {
+          _allCategories = cats;
+          _allCourses = crss;
+          _filteredCategories = cats;
+          _filteredCourses = crss;
+          _dataLoaded = true;
+        });
+      }
+      // ── Step 2: Refresh from network silently in background ────────────────
+      _refreshFromNetwork(crss);
+      return;
+    }
+
+    // ── First time: no cache — fetch from network ─────────────────────────
     try {
-      // Step 1: fetch categories + courses in parallel
       final results = await Future.wait([
         CourseService().getCategories(),
         CourseService().getCourses(),
       ]);
       final courses = results[1] as List<Course>;
 
-      // Step 2: prefetch chapters for ALL courses in parallel — wait for them
-      // so chapters are guaranteed in cache before home screen is shown
+      // Prefetch all chapters (also saves to disk via new CourseService)
       await Future.wait(courses.map((c) => CourseService().getChapters(c.id)));
 
       if (mounted) {
@@ -86,6 +114,32 @@ class _HomeScreenState extends State<HomeScreen>
           _filteredCategories = _allCategories;
           _filteredCourses = _allCourses;
           _dataLoaded = true;
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Silently refreshes data from network and updates UI if changed.
+  Future<void> _refreshFromNetwork(List<Course> existingCourses) async {
+    try {
+      final results = await Future.wait([
+        CourseService().refreshCategories(),
+        CourseService().refreshCourses(),
+      ]);
+      final freshCourses = results[1] as List<Course>;
+      // Refresh chapters for all courses in background
+      for (final c in freshCourses) {
+        CourseService().refreshChapters(c.id);
+      }
+      if (mounted) {
+        final query = _searchQuery;
+        setState(() {
+          _allCategories = results[0] as List<Category>;
+          _allCourses = freshCourses;
+          if (query.isEmpty) {
+            _filteredCategories = _allCategories;
+            _filteredCourses = _allCourses;
+          }
         });
       }
     } catch (_) {}

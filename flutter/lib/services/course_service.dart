@@ -8,18 +8,32 @@ import '../models/division_model.dart';
 import '../models/lesson_model.dart';
 import '../models/lesson_material_model.dart';
 import '../models/question_model.dart';
+import '../services/offline_cache_service.dart';
 import '../services/session_service.dart';
 
-/// CourseService fetches course and category data from the EthioClass Go backend,
-/// which in turn queries Supabase (so we don't expose Supabase keys in Flutter).
+/// CourseService - cache-first with full offline support.
+/// All data is saved to disk on first online open and served from
+/// disk on subsequent opens (online or offline).
 class CourseService {
   static const String _baseUrl = apiBaseUrl;
 
-  // Cache for instant loading
+  // In-memory cache for speed (cleared on hot restart)
   static final Map<String, List<Chapter>> _chaptersCache = {};
 
-  /// Fetches all categories from the backend.
+  // ── Categories ──────────────────────────────────────────────────────────────
   Future<List<Category>> getCategories() async {
+    // 1. Try disk cache first
+    final disk = await OfflineCacheService.instance.loadCategories();
+    if (disk != null && disk.isNotEmpty) {
+      // Return disk cache immediately, then refresh in background
+      refreshCategories();
+      return disk.map((e) => Category.fromJson(e)).toList();
+    }
+    // 2. No cache — fetch from network
+    return refreshCategories();
+  }
+
+  Future<List<Category>> refreshCategories() async {
     try {
       final response = await http
           .get(
@@ -27,54 +41,39 @@ class CourseService {
             headers: {'Content-Type': 'application/json'},
           )
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => Category.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final list = jsonDecode(response.body) as List<dynamic>;
+        final rawMaps = list.cast<Map<String, dynamic>>();
+        await OfflineCacheService.instance.saveCategories(rawMaps);
+        return rawMaps.map((e) => Category.fromJson(e)).toList();
       }
-      return [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) {}
+    return [];
   }
 
-  /// Fetches divisions, optionally filtered by categoryId.
-  Future<List<Division>> getDivisions({String? categoryId}) async {
-    try {
-      final uri = categoryId != null
-          ? Uri.parse('$_baseUrl/divisions?category_id=$categoryId')
-          : Uri.parse('$_baseUrl/divisions');
-
-      final response = await http
-          .get(uri, headers: {'Content-Type': 'application/json'})
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => Division.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-      return [];
-    } catch (_) {
-      return [];
-    }
-  }
-
-  /// Fetches all courses from the backend, optionally filtered by divisionId or categoryId.
-  Future<void> enrollCourse(String courseId) async {
-    final response = await http.post(
-      Uri.parse('$apiBaseUrl/courses/$courseId/enroll'),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to enroll in course');
-    }
-  }
-
+  // ── Courses ──────────────────────────────────────────────────────────────────
   Future<List<Course>> getCourses({
+    String? divisionId,
+    String? categoryId,
+  }) async {
+    // For filtered queries, fetch from network only (or cache by key if needed)
+    if (divisionId != null || categoryId != null) {
+      return _fetchCourses(divisionId: divisionId, categoryId: categoryId);
+    }
+    // Unfiltered: disk-cache-first
+    final disk = await OfflineCacheService.instance.loadCourses();
+    if (disk != null && disk.isNotEmpty) {
+      refreshCourses();
+      return disk.map((e) => Course.fromJson(e)).toList();
+    }
+    return refreshCourses();
+  }
+
+  Future<List<Course>> refreshCourses() async {
+    return _fetchCourses();
+  }
+
+  Future<List<Course>> _fetchCourses({
     String? divisionId,
     String? categoryId,
   }) async {
@@ -87,28 +86,40 @@ class CourseService {
       } else {
         uri = Uri.parse('$_baseUrl/courses');
       }
-
       final response = await http
           .get(uri, headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => Course.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final list = jsonDecode(response.body) as List<dynamic>;
+        final rawMaps = list.cast<Map<String, dynamic>>();
+        if (divisionId == null && categoryId == null) {
+          await OfflineCacheService.instance.saveCourses(rawMaps);
+        }
+        return rawMaps.map((e) => Course.fromJson(e)).toList();
       }
-      return [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) {}
+    return [];
   }
 
-  /// Fetches chapters for a specific course (cached for instant loading).
+  // ── Chapters ──────────────────────────────────────────────────────────────────
   Future<List<Chapter>> getChapters(String courseId) async {
+    // 1. In-memory cache (fastest)
     if (_chaptersCache.containsKey(courseId)) {
       return _chaptersCache[courseId]!;
     }
+    // 2. Disk cache
+    final disk = await OfflineCacheService.instance.loadChapters(courseId);
+    if (disk != null && disk.isNotEmpty) {
+      final chapters = disk.map((e) => Chapter.fromJson(e)).toList();
+      _chaptersCache[courseId] = chapters;
+      refreshChapters(courseId); // refresh in background
+      return chapters;
+    }
+    // 3. Network
+    return refreshChapters(courseId);
+  }
+
+  Future<List<Chapter>> refreshChapters(String courseId) async {
     try {
       final response = await http
           .get(
@@ -116,37 +127,38 @@ class CourseService {
             headers: {'Content-Type': 'application/json'},
           )
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        final chapters = data
-            .map((e) => Chapter.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final list = jsonDecode(response.body) as List<dynamic>;
+        final rawMaps = list.cast<Map<String, dynamic>>();
+        await OfflineCacheService.instance.saveChapters(courseId, rawMaps);
+        final chapters = rawMaps.map((e) => Chapter.fromJson(e)).toList();
         _chaptersCache[courseId] = chapters;
         return chapters;
       }
-      return [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) {}
+    return _chaptersCache[courseId] ?? [];
   }
 
-  /// Returns cached chapters instantly (null if not yet fetched).
-  List<Chapter>? getCachedChapters(String courseId) {
-    return _chaptersCache[courseId];
-  }
+  List<Chapter>? getCachedChapters(String courseId) => _chaptersCache[courseId];
 
-  /// Pre-fetches chapters for all courses in the background.
   void prefetchChapters(List<Course> courses) {
     for (final course in courses) {
-      if (!_chaptersCache.containsKey(course.id)) {
-        getChapters(course.id);
-      }
+      if (!_chaptersCache.containsKey(course.id)) getChapters(course.id);
     }
   }
 
-  /// Fetches lessons for a specific chapter.
+  // ── Lessons ──────────────────────────────────────────────────────────────────
   Future<List<Lesson>> getLessons(String chapterId) async {
+    // Disk cache first
+    final disk = await OfflineCacheService.instance.loadLessons(chapterId);
+    if (disk != null && disk.isNotEmpty) {
+      _refreshLessons(chapterId);
+      return disk.map((e) => Lesson.fromJson(e)).toList();
+    }
+    return _refreshLessons(chapterId);
+  }
+
+  Future<List<Lesson>> _refreshLessons(String chapterId) async {
     try {
       final response = await http
           .get(
@@ -154,20 +166,47 @@ class CourseService {
             headers: {'Content-Type': 'application/json'},
           )
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => Lesson.fromJson(e as Map<String, dynamic>))
+        final list = jsonDecode(response.body) as List<dynamic>;
+        final rawMaps = list.cast<Map<String, dynamic>>();
+        await OfflineCacheService.instance.saveLessons(chapterId, rawMaps);
+        return rawMaps.map((e) => Lesson.fromJson(e)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // ── Divisions ──────────────────────────────────────────────────────────────
+  Future<List<Division>> getDivisions({String? categoryId}) async {
+    try {
+      final uri = categoryId != null
+          ? Uri.parse('$_baseUrl/divisions?category_id=$categoryId')
+          : Uri.parse('$_baseUrl/divisions');
+      final response = await http
+          .get(uri, headers: {'Content-Type': 'application/json'})
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list
+            .cast<Map<String, dynamic>>()
+            .map((e) => Division.fromJson(e))
             .toList();
       }
-      return [];
-    } catch (_) {
-      return [];
+    } catch (_) {}
+    return [];
+  }
+
+  // ── Enroll ─────────────────────────────────────────────────────────────────
+  Future<void> enrollCourse(String courseId) async {
+    final response = await http.post(
+      Uri.parse('$apiBaseUrl/courses/$courseId/enroll'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to enroll in course');
     }
   }
 
-  /// Fetches lesson materials for a specific lesson.
+  // ── Lesson Materials ────────────────────────────────────────────────────────
   Future<List<LessonMaterial>> getLessonMaterials(String lessonId) async {
     try {
       final response = await http
@@ -176,20 +215,18 @@ class CourseService {
             headers: {'Content-Type': 'application/json'},
           )
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => LessonMaterial.fromJson(e as Map<String, dynamic>))
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list
+            .cast<Map<String, dynamic>>()
+            .map((e) => LessonMaterial.fromJson(e))
             .toList();
       }
-      return [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) {}
+    return [];
   }
 
-  /// Fetches questions for a specific lesson.
+  // ── Questions ───────────────────────────────────────────────────────────────
   Future<List<Question>> getQuestions(String lessonId) async {
     try {
       final response = await http
@@ -198,16 +235,14 @@ class CourseService {
             headers: {'Content-Type': 'application/json'},
           )
           .timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-        return data
-            .map((e) => Question.fromJson(e as Map<String, dynamic>))
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list
+            .cast<Map<String, dynamic>>()
+            .map((e) => Question.fromJson(e))
             .toList();
       }
-      return [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) {}
+    return [];
   }
 }
