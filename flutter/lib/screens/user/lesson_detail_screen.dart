@@ -15,6 +15,7 @@ import '../../services/download_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
 import '../../models/downloaded_lesson_model.dart';
+import '../../services/mini_player_service.dart';
 
 import 'exam_preparation_screen.dart';
 
@@ -303,8 +304,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _chewieController?.dispose();
-    _videoController?.dispose();
+    // Only dispose video controllers if they have NOT been handed off to the mini player
+    if (!MiniPlayerService.instance.isMinimized) {
+      _chewieController?.dispose();
+      _videoController?.dispose();
+    }
     super.dispose();
   }
 
@@ -388,7 +392,24 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            final lesson = _currentLesson;
+                            if (lesson != null && _videoController != null && _chewieController != null &&
+                                _videoController!.value.isPlaying) {
+                              // Hand off the video to the global mini player
+                              MiniPlayerService.instance.handover(
+                                lesson: lesson,
+                                courseTitle: widget.courseTitle,
+                                videoController: _videoController!,
+                                chewieController: _chewieController!,
+                              );
+                              MiniPlayerService.instance.minimize();
+                              // Nullify local references so dispose() won't kill them
+                              _videoController = null;
+                              _chewieController = null;
+                            }
+                            Navigator.pop(context);
+                          },
                           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                         ),
                         Row(

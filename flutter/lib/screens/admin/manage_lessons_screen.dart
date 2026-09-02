@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:mime/mime.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/chapter_model.dart';
@@ -293,12 +295,14 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
   bool _isSubmitting = false;
   double _uploadProgress = 0.0;
   CancelToken? _cancelToken;
-
+  VideoPlayerController? _videoPlayerController;
+  ChewieController? _chewieController;
 
   bool get _isEditing => widget.lessonToEdit != null;
 
   @override
   void initState() {
+
     super.initState();
     if (_isEditing) {
       final l = widget.lessonToEdit!;
@@ -316,7 +320,27 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
     _titleCtrl.dispose();
     _lessonNumCtrl.dispose();
     _durationCtrl.dispose();
+    _videoPlayerController?.dispose();
+    _chewieController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _initVideoPreview(File file) async {
+    _chewieController?.dispose();
+    _videoPlayerController?.dispose();
+    
+    _videoPlayerController = VideoPlayerController.file(file);
+    await _videoPlayerController!.initialize();
+    
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController!,
+      aspectRatio: _videoPlayerController!.value.aspectRatio,
+      autoPlay: false,
+      looping: false,
+      allowMuting: true,
+      showControls: true,
+    );
+    if (mounted) setState(() {});
   }
 
   Future<void> _pickThumbnail() async {
@@ -328,7 +352,9 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
   Future<void> _pickVideo() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.video);
     if (result != null && result.files.single.path != null) {
-      setState(() => _videoFile = File(result.files.single.path!));
+      final file = File(result.files.single.path!);
+      setState(() => _videoFile = file);
+      await _initVideoPreview(file);
     }
   }
 
@@ -558,43 +584,84 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
                 // ── Video Upload ───────────────────────
                 const Text('Video', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textDark)),
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickVideo,
-                  child: Container(
-                    height: 100,
+                if (_chewieController != null && _chewieController!.videoPlayerController.value.isInitialized)
+                  Container(
+                    height: 200,
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withOpacity(0.05),
+                      color: Colors.black,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.4), width: 2),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _videoFile != null || existVideo != null ? Icons.check_circle : Icons.videocam_rounded,
-                          color: _videoFile != null || existVideo != null ? AppColors.success : const Color(0xFF2563EB).withOpacity(0.8),
-                          size: 32,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _videoFile != null
-                              ? _videoFile!.path.split('/').last.split('\\').last
-                              : (existVideo != null ? '✔ Video uploaded (tap to replace)' : 'Tap to upload video (MP4 up to 1GB)'),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _videoFile != null || existVideo != null ? AppColors.textDark : const Color(0xFF2563EB).withOpacity(0.8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(child: Chewie(controller: _chewieController!)),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                _chewieController?.pause();
+                                _chewieController?.dispose();
+                                _videoPlayerController?.dispose();
+                                setState(() {
+                                  _chewieController = null;
+                                  _videoPlayerController = null;
+                                  _videoFile = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 20),
+                              ),
+                            ),
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: _pickVideo,
+                    child: Container(
+                      height: 100,
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.4), width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            existVideo != null ? Icons.check_circle : Icons.videocam_rounded,
+                            color: existVideo != null ? AppColors.success : const Color(0xFF2563EB).withOpacity(0.8),
+                            size: 32,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            existVideo != null ? 'Video uploaded (tap to replace)' : 'Tap to upload video (MP4 up to 1GB)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: existVideo != null ? AppColors.textDark : const Color(0xFF2563EB).withOpacity(0.8),
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 12),
 
                 // ── Notes Upload ───────────────────────
