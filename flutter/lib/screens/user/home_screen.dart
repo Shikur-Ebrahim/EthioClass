@@ -583,7 +583,8 @@ class _HomeScreenState extends State<HomeScreen>
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: cats.length,
-            itemBuilder: (_, i) => _CategoryCard(cat: cats[i], index: i),
+            itemBuilder: (_, i) =>
+                _CategoryCard(cat: cats[i], index: i, allCourses: _allCourses),
           ),
         );
       },
@@ -634,8 +635,13 @@ class _HomeScreenState extends State<HomeScreen>
 class _CategoryCard extends StatelessWidget {
   final Category cat;
   final int index;
+  final List<Course> allCourses;
 
-  const _CategoryCard({required this.cat, required this.index});
+  const _CategoryCard({
+    required this.cat,
+    required this.index,
+    required this.allCourses,
+  });
 
   static const List<Color> _fallbackColors = [
     Color(0xFF2E7D32),
@@ -658,7 +664,7 @@ class _CategoryCard extends StatelessWidget {
             category: cat,
             headerColor: fallbackColor.withOpacity(0.2),
             iconColor: fallbackColor,
-            initialCourses: _allCourses
+            initialCourses: allCourses
                 .where((c) => c.categoryId == cat.id)
                 .toList(),
           ),
