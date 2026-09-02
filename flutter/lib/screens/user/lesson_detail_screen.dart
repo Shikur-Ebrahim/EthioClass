@@ -369,6 +369,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Full-screen loader while video is initializing
+    if (_videoLoading) {
+      return PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
+          _handleBack();
+        },
+        child: const Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(child: EthioClassLoading()),
+        ),
+      );
+    }
+
     final lesson = _currentLesson;
     final thumbUrl = lesson?.thumbnailUrl ?? widget.thumbnailUrl;
     final title = lesson?.title ?? widget.chapterTitle;
@@ -1344,9 +1359,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: EthioClassLoading(),
-      );
+      return const Center(child: EthioClassLoading());
     }
     final lessonsWithQuiz = _lessonsWithQuiz;
     if (lessonsWithQuiz.isEmpty) {
