@@ -126,6 +126,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    if (!_dataLoaded) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: EthioClassLoading()),
+      );
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(

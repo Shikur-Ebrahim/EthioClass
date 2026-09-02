@@ -88,7 +88,7 @@ class _EthioClassLoadingState extends State<EthioClassLoading> with SingleTicker
             const Text(
               'EthioClass',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textDark,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -98,7 +98,7 @@ class _EthioClassLoadingState extends State<EthioClassLoading> with SingleTicker
             Text(
               'Loading...',
               style: TextStyle(
-                color: Colors.white54,
+                color: AppColors.textMedium,
                 fontSize: 12,
                 letterSpacing: 0.5,
               ),
