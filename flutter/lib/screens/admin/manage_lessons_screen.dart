@@ -364,12 +364,61 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
           ? '$apiBaseUrl/admin/lessons/${widget.lessonToEdit!.id}'
           : '$apiBaseUrl/admin/lessons';
 
-      var formData = FormData.fromMap({
+      final dio = Dio();
+
+      String? presignedVideoKey;
+      if (_videoFile != null) {
+        final mime = lookupMimeType(_videoFile!.path) ?? 'application/octet-stream';
+        final fileName = _videoFile!.path.split('/').last;
+
+        final presignRes = await dio.post(
+          '$apiBaseUrl/admin/lessons/presigned-url',
+          data: {
+            'filename': fileName,
+            'content_type': mime,
+          },
+          cancelToken: _cancelToken,
+        );
+
+        if (presignRes.statusCode != 200) {
+          throw Exception('Failed to get upload URL: ${presignRes.data}');
+        }
+
+        final uploadUrl = presignRes.data['url'];
+        presignedVideoKey = presignRes.data['key'];
+        
+        final videoLen = await _videoFile!.length();
+
+        await dio.put(
+          uploadUrl,
+          data: _videoFile!.openRead(),
+          options: Options(
+            headers: {
+              Headers.contentLengthHeader: videoLen,
+              Headers.contentTypeHeader: mime,
+            },
+          ),
+          cancelToken: _cancelToken,
+          onSendProgress: (count, total) {
+            if (total > 0 && mounted) {
+              setState(() {
+                _uploadProgress = count / total;
+              });
+            }
+          },
+        );
+      }
+
+      var formMap = {
         'chapter_id': widget.chapter.id,
         'title': _titleCtrl.text.trim(),
         'lesson_number': _lessonNumCtrl.text.trim(),
         'duration_minutes': _durationCtrl.text.trim(),
-      });
+      };
+      if (presignedVideoKey != null) {
+        formMap['video_key'] = presignedVideoKey;
+      }
+      var formData = FormData.fromMap(formMap);
 
       Future<void> addFile(File file, String field) async {
         final mime = lookupMimeType(file.path)?.split('/');
@@ -383,21 +432,12 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
       }
 
       if (_thumbnailFile != null) await addFile(_thumbnailFile!, 'thumbnail');
-      if (_videoFile != null) await addFile(_videoFile!, 'video');
       if (_notesFile != null) await addFile(_notesFile!, 'notes');
 
-      final dio = Dio();
       final response = await (_isEditing ? dio.put : dio.post)(
         uri,
         data: formData,
         cancelToken: _cancelToken,
-        onSendProgress: (count, total) {
-          if (total > 0 && mounted) {
-            setState(() {
-              _uploadProgress = count / total;
-            });
-          }
-        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

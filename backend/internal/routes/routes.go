@@ -84,6 +84,7 @@ func Register(r *gin.Engine, db *sql.DB, r2 *storage.R2Client) {
 		adminGroup.PUT("/chapters/:id", handlers.UpdateChapterHandler(db, r2))
 		adminGroup.DELETE("/chapters/:id", handlers.DeleteChapterHandler(db))
 
+		adminGroup.POST("/lessons/presigned-url", handlers.GetPresignedURLHandler(r2))
 		adminGroup.POST("/lessons", handlers.CreateLessonHandler(db, r2))
 		adminGroup.PUT("/lessons/:id", handlers.UpdateLessonHandler(db, r2))
 		adminGroup.DELETE("/lessons/:id", handlers.DeleteLessonHandler(db))

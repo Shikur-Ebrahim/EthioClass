@@ -105,8 +105,10 @@ func CreateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 			}
 		}
 
-		// Upload video
-		if file, header, err := c.Request.FormFile("video"); err == nil {
+		// Upload video or use presigned video_key
+		if videoKey := strings.TrimSpace(c.Request.FormValue("video_key")); videoKey != "" {
+			videoURL = &videoKey
+		} else if file, header, err := c.Request.FormFile("video"); err == nil {
 			defer file.Close()
 			ext := filepath.Ext(header.Filename)
 			if ext == "" { ext = ".mp4" }
@@ -181,8 +183,10 @@ func UpdateLessonHandler(db *sql.DB, r2 *storage.R2Client) gin.HandlerFunc {
 			if err == nil { thumbnailURL = &uploaded }
 		}
 
-		// Upload new video if provided
-		if file, header, err := c.Request.FormFile("video"); err == nil {
+		// Upload new video if provided or use presigned video_key
+		if videoKey := strings.TrimSpace(c.Request.FormValue("video_key")); videoKey != "" {
+			videoURL = &videoKey
+		} else if file, header, err := c.Request.FormFile("video"); err == nil {
 			defer file.Close()
 			ext := filepath.Ext(header.Filename)
 			if ext == "" { ext = ".mp4" }
@@ -227,5 +231,44 @@ func DeleteLessonHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Lesson deleted"})
+	}
+}
+
+type PresignRequest struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
+}
+
+// GetPresignedURLHandler generates a presigned URL for direct R2 uploads
+func GetPresignedURLHandler(r2 *storage.R2Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req PresignRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+			return
+		}
+
+		if r2 == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "R2 not configured"})
+			return
+		}
+
+		ext := filepath.Ext(req.Filename)
+		if req.ContentType == "" {
+			req.ContentType = "application/octet-stream"
+		}
+		
+		key := fmt.Sprintf("lessons/videos/%s%s", uuid.New().String(), ext)
+		
+		url, err := r2.GeneratePresignedURL(c.Request.Context(), key, req.ContentType, 15*60000000000) // 15 mins
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"url": url,
+			"key": key,
+		})
 	}
 }

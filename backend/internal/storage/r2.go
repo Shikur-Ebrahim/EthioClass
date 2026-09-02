@@ -86,6 +86,30 @@ func (r *R2Client) UploadFile(ctx context.Context, file io.Reader, key string, c
 	return key, nil
 }
 
+// GeneratePresignedURL generates a temporary upload URL for a specific key.
+func (r *R2Client) GeneratePresignedURL(ctx context.Context, key string, contentType string, expire time.Duration) (string, error) {
+	if r.Client == nil {
+		return "", fmt.Errorf("R2 client not initialized")
+	}
+
+	presignClient := s3.NewPresignClient(r.Client)
+
+	req, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(r.BucketName),
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = expire
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return req.URL, nil
+}
+
+
 // GetObject streams an object from R2 by key and returns its size.
 func (r *R2Client) GetObject(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
 	if r.Client == nil {
