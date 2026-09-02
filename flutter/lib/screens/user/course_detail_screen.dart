@@ -457,14 +457,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Full-screen loader until chapters are fetched
-    if (_isLoadingChapters && _chapters.isEmpty) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: EthioClassLoading()),
-      );
-    }
-
     final headerColor = _headerColors[widget.index % _headerColors.length];
     final description = widget.course.description.isNotEmpty
         ? widget.course.description

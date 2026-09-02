@@ -14,12 +14,14 @@ class CategoryDetailScreen extends StatefulWidget {
   final Category category;
   final Color headerColor;
   final Color iconColor;
+  final List<Course>? initialCourses;
 
   const CategoryDetailScreen({
     super.key,
     required this.category,
     required this.headerColor,
     required this.iconColor,
+    this.initialCourses,
   });
 
   @override
@@ -41,13 +43,32 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchAll();
+    if (widget.initialCourses != null && widget.initialCourses!.isNotEmpty) {
+      _courses = widget.initialCourses!;
+      _isLoading = false;
+      _fetchBackgroundData();
+    } else {
+      _fetchAll();
+    }
+  }
+
+  Future<void> _fetchBackgroundData() async {
+    try {
+      final results = await Future.wait([
+        CourseService().getDivisions(categoryId: widget.category.id),
+        _fetchStats(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _divisions = results[0] as List<Division>;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchAll() async {
     setState(() => _isLoading = true);
     try {
-      // Fetch divisions, courses, and stats in parallel
       final results = await Future.wait([
         CourseService().getDivisions(categoryId: widget.category.id),
         CourseService().getCourses(categoryId: widget.category.id),
@@ -94,14 +115,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Full-screen loader until courses are fetched
-    if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: EthioClassLoading()),
-      );
-    }
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(

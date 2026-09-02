@@ -658,6 +658,9 @@ class _CategoryCard extends StatelessWidget {
             category: cat,
             headerColor: fallbackColor.withOpacity(0.2),
             iconColor: fallbackColor,
+            initialCourses: _allCourses
+                .where((c) => c.categoryId == cat.id)
+                .toList(),
           ),
         ),
       ),
