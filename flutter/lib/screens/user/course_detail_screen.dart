@@ -398,53 +398,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                 ),
 
-                // â”€â”€ Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                SliverToBoxAdapter(
-                  child: ValueListenableBuilder<Set<String>>(
-                    valueListenable: ProgressService.instance.completedLessonsNotifier,
-                    builder: (context, _, __) {
-                      final progress = ProgressService.instance.calculateCourseProgress(
-                        widget.course.id, 
-                        widget.course.lessonCount,
-                      );
-                      
-                      return Container(
-                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('Course Progress',
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-                                Text('${(progress * 100).toInt()}% Complete',
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: LinearProgressIndicator(
-                                value: progress > 0 ? progress : 0.0,
-                                minHeight: 8,
-                                backgroundColor: AppColors.greyLight,
-                                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
                 // â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(
                   child: Container(
