@@ -31,7 +31,6 @@ class OfflineCacheService {
     await _prefs.setString(_keyCourses, jsonEncode(data));
   }
 
-  
   List<Map<String, dynamic>>? loadCategoriesSync() {
     final raw = _prefs.getString(_keyCategories);
     if (raw == null) return null;
@@ -57,6 +56,12 @@ class OfflineCacheService {
     await _prefs.setString(_keyChapters(courseId), jsonEncode(data));
   }
 
+  List<Map<String, dynamic>>? loadChaptersSync(String courseId) {
+    final raw = _prefs.getString(_keyChapters(courseId));
+    if (raw == null) return null;
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+  }
+
   Future<List<Map<String, dynamic>>?> loadChapters(String courseId) async {
     final raw = _prefs.getString(_keyChapters(courseId));
     if (raw == null) return null;
@@ -77,6 +82,7 @@ class OfflineCacheService {
   }
 
   Future<bool> hasCache() async {
-    return _prefs.containsKey(_keyCategories) || _prefs.containsKey(_keyCourses);
+    return _prefs.containsKey(_keyCategories) ||
+        _prefs.containsKey(_keyCourses);
   }
 }

@@ -7,6 +7,7 @@ import '../../config/api_config.dart';
 import '../../models/course_model.dart';
 import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
+import '../../services/offline_cache_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/bookmark_service.dart';
@@ -80,14 +81,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       }
     });
 
-    // Instant load from cache if available
+    // Instant load from in-memory cache
     final cached = CourseService().getCachedChapters(widget.course.id);
-    if (cached != null) {
+    if (cached != null && cached.isNotEmpty) {
       _chapters = cached;
       _isLoadingChapters = false;
+    } else {
+      // Fall back to disk cache synchronously (works on cold start)
+      final diskRaw = OfflineCacheService.instance.loadChaptersSync(
+        widget.course.id,
+      );
+      if (diskRaw != null && diskRaw.isNotEmpty) {
+        _chapters = diskRaw.map((e) => Chapter.fromJson(e)).toList();
+        _isLoadingChapters = false;
+      }
     }
 
-    _loadChapters();
+    _loadChapters(); // Always refresh from network in background
     _preInitializePayment();
     _checkBookmarkState();
     _checkEnrollmentState();
