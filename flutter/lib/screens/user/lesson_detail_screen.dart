@@ -360,22 +360,16 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     super.dispose();
   }
 
-  void _handleBack() {
-    final lesson = _currentLesson;
-    if (lesson != null &&
-        _videoController != null &&
-        _chewieController != null &&
-        _videoController!.value.isInitialized) {
-      MiniPlayerService.instance.handover(
-        lesson: lesson,
-        courseTitle: widget.courseTitle,
-        videoController: _videoController!,
-        chewieController: _chewieController!,
-      );
-      MiniPlayerService.instance.minimize();
-      _videoController = null;
-      _chewieController = null;
+  Future<void> _handleBack() async {
+    // If a video is loaded, enter Android native PIP mode instead of closing.
+    if (_videoController != null && _videoController!.value.isInitialized) {
+      final bool available = await SimplePip.isPipAvailable;
+      if (available) {
+        await SimplePip().enterPipMode(aspectRatio: (16, 9));
+        return;
+      }
     }
+    // Fallback: just pop the screen.
     if (mounted && Navigator.canPop(context)) {
       Navigator.pop(context);
     }
