@@ -312,6 +312,25 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     super.dispose();
   }
 
+  void _handleBack() {
+    final lesson = _currentLesson;
+    if (lesson != null && _videoController != null && _chewieController != null &&
+        _videoController!.value.isPlaying) {
+      MiniPlayerService.instance.handover(
+        lesson: lesson,
+        courseTitle: widget.courseTitle,
+        videoController: _videoController!,
+        chewieController: _chewieController!,
+      );
+      MiniPlayerService.instance.minimize();
+      _videoController = null;
+      _chewieController = null;
+    }
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final lesson = _currentLesson;
@@ -319,7 +338,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
     final title = lesson?.title ?? widget.chapterTitle;
     final desc = widget.chapterDescription;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _handleBack();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
@@ -392,24 +417,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          onPressed: () {
-                            final lesson = _currentLesson;
-                            if (lesson != null && _videoController != null && _chewieController != null &&
-                                _videoController!.value.isPlaying) {
-                              // Hand off the video to the global mini player
-                              MiniPlayerService.instance.handover(
-                                lesson: lesson,
-                                courseTitle: widget.courseTitle,
-                                videoController: _videoController!,
-                                chewieController: _chewieController!,
-                              );
-                              MiniPlayerService.instance.minimize();
-                              // Nullify local references so dispose() won't kill them
-                              _videoController = null;
-                              _chewieController = null;
-                            }
-                            Navigator.pop(context);
-                          },
+                          onPressed: _handleBack,
                           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                         ),
                         Row(
@@ -1111,6 +1119,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
             ],
           );
         }).toList(),
+      ),
       ),
     );
   }
