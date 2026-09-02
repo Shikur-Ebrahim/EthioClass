@@ -111,12 +111,9 @@ func GetCategoryStatsHandler(db *sql.DB) gin.HandlerFunc {
 			stats.QuizCount = 0
 		}
 
-		// Count enrolled students (users who have enrolled in courses in this category)
+		// Sum students from all courses in this category (uses existing courses.students column)
 		err = db.QueryRowContext(c.Request.Context(),
-			`SELECT COUNT(DISTINCT u.id) FROM users u
-			 JOIN payments p ON p.user_id = u.id
-			 JOIN courses co ON p.course_id = co.id
-			 WHERE co.category_id = $1 AND p.status = 'success'`, categoryID).Scan(&stats.StudentCount)
+			`SELECT COALESCE(SUM(students), 0) FROM courses WHERE category_id = $1`, categoryID).Scan(&stats.StudentCount)
 		if err != nil {
 			stats.StudentCount = 0
 		}
