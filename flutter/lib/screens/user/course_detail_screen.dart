@@ -404,14 +404,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ),
                   centerTitle: true,
                   actions: [
-                    Container(
-                      margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
+                    GestureDetector(
+                      onTap: () {
+                        // TODO: Implement share
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.share_rounded, color: Colors.white, size: 22),
                       ),
-                      child: const Icon(Icons.share_rounded, color: Colors.white, size: 24),
                     ),
                   ],
                   flexibleSpace: FlexibleSpaceBar(

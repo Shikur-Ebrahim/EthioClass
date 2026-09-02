@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:dio/dio.dart';
 import 'package:mime/mime.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
@@ -290,6 +291,9 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
   File? _videoFile;
   File? _notesFile;
   bool _isSubmitting = false;
+  double _uploadProgress = 0.0;
+  CancelToken? _cancelToken;
+
 
   bool get _isEditing => widget.lessonToEdit != null;
 
@@ -349,24 +353,32 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _uploadProgress = 0.0;
+    });
+    _cancelToken = CancelToken();
 
     try {
       final uri = _isEditing
-          ? Uri.parse('$apiBaseUrl/admin/lessons/${widget.lessonToEdit!.id}')
-          : Uri.parse('$apiBaseUrl/admin/lessons');
+          ? '$apiBaseUrl/admin/lessons/${widget.lessonToEdit!.id}'
+          : '$apiBaseUrl/admin/lessons';
 
-      final request = http.MultipartRequest(_isEditing ? 'PUT' : 'POST', uri);
-      request.fields['chapter_id'] = widget.chapter.id;
-      request.fields['title'] = _titleCtrl.text.trim();
-      request.fields['lesson_number'] = _lessonNumCtrl.text.trim();
-      request.fields['duration_minutes'] = _durationCtrl.text.trim();
+      var formData = FormData.fromMap({
+        'chapter_id': widget.chapter.id,
+        'title': _titleCtrl.text.trim(),
+        'lesson_number': _lessonNumCtrl.text.trim(),
+        'duration_minutes': _durationCtrl.text.trim(),
+      });
 
       Future<void> addFile(File file, String field) async {
         final mime = lookupMimeType(file.path)?.split('/');
-        request.files.add(await http.MultipartFile.fromPath(
-          field, file.path,
-          contentType: mime != null ? MediaType(mime[0], mime[1]) : MediaType('application', 'octet-stream'),
+        formData.files.add(MapEntry(
+          field,
+          await MultipartFile.fromFile(
+            file.path,
+            contentType: mime != null ? MediaType(mime[0], mime[1]) : MediaType('application', 'octet-stream'),
+          ),
         ));
       }
 
@@ -374,20 +386,35 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
       if (_videoFile != null) await addFile(_videoFile!, 'video');
       if (_notesFile != null) await addFile(_notesFile!, 'notes');
 
-      final streamed = await request.send();
-      final res = await http.Response.fromStream(streamed);
+      final dio = Dio();
+      final response = await (_isEditing ? dio.put : dio.post)(
+        uri,
+        data: formData,
+        cancelToken: _cancelToken,
+        onSendProgress: (count, total) {
+          if (total > 0 && mounted) {
+            setState(() {
+              _uploadProgress = count / total;
+            });
+          }
+        },
+      );
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         _showSnack(_isEditing ? 'Lesson updated!' : 'Lesson created!');
         widget.onSuccess();
         if (mounted) Navigator.pop(context);
       } else {
-        _showSnack('Failed: ${res.body}', isError: true);
+        _showSnack('Failed: ${response.data}', isError: true);
       }
     } catch (e) {
-      _showSnack('Error: $e', isError: true);
+      if (e is DioException && e.type == DioExceptionType.cancel) {
+         _showSnack('Upload cancelled');
+      } else {
+         _showSnack('Error: $e', isError: true);
+      }
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) setState(() { _isSubmitting = false; _uploadProgress = 0.0; });
     }
   }
 
@@ -546,18 +573,39 @@ class _LessonFormScreenState extends State<_LessonFormScreen> {
 
                 const SizedBox(height: 20),
 
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                if (_isSubmitting) ...[
+                  LinearProgressIndicator(
+                    value: _uploadProgress,
+                    minHeight: 8,
+                    backgroundColor: Colors.grey[200],
+                    color: const Color(0xFF16A34A),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(_isEditing ? 'Save Changes' : 'Create Lesson',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(_uploadProgress * 100).toStringAsFixed(1)}% uploaded',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMedium),
+                  ),
+                  TextButton(
+                    onPressed: () => _cancelToken?.cancel(),
+                    child: const Text('Cancel Upload', style: TextStyle(color: AppColors.error)),
+                  ),
+                  const SizedBox(height: 8),
+                ] else ...[
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      _isEditing ? 'Save Changes' : 'Create Lesson',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
