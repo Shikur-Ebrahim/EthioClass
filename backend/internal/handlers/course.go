@@ -760,10 +760,18 @@ func EnrollCourseHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Increment students count in courses table
 		_, err := db.ExecContext(c.Request.Context(), `UPDATE courses SET students = students + 1 WHERE id = $1`, courseID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enroll in course: " + err.Error()})
 			return
+		}
+
+		// Also increment students count in categories table
+		var catID string
+		err = db.QueryRowContext(c.Request.Context(), `SELECT category_id FROM courses WHERE id = $1`, courseID).Scan(&catID)
+		if err == nil && catID != "" {
+			db.ExecContext(c.Request.Context(), `UPDATE categories SET students = students + 1 WHERE id = $1`, catID)
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Enrolled successfully"})
