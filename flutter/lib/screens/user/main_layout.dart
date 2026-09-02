@@ -80,14 +80,12 @@ class _MainLayoutState extends State<MainLayout> {
               });
             },
           ),
-          body: Stack(
-            children: [
-              IndexedStack(
+          body: IndexedStack(
                 index: _selectedIndex,
                 children: _pages,
               ),
-              // ── Mini Player ────────────────────────────────────────────────
-              if (mini.isActive && mini.isMinimized)
+              // ── Mini Player removed ──
+/*              if (mini.isActive && mini.isMinimized)
                 Positioned(
                   left: 0,
                   right: 0,
