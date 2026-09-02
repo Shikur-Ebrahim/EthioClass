@@ -1870,7 +1870,9 @@ class _ChapterTile extends StatelessWidget {
                     return (thumbToUse != null && thumbToUse.isNotEmpty)
                         ? CachedNetworkImage(
                             fadeInDuration: Duration.zero,
-                            imageUrl: '$apiBaseUrl/media/$thumbToUse',
+                            imageUrl: thumbToUse.startsWith('http')
+                                ? thumbToUse
+                                : '$apiBaseUrl/media/$thumbToUse',
                             fit: BoxFit.cover,
                             errorWidget: (context, url, error) => Container(
                               decoration: BoxDecoration(

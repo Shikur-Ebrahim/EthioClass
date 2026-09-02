@@ -8,6 +8,7 @@ import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../models/division_model.dart';
 import '../../services/course_service.dart';
+import '../../services/offline_cache_service.dart';
 import 'course_detail_screen.dart';
 import '../../widgets/ethioclass_loading.dart';
 
@@ -45,10 +46,26 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   void initState() {
     super.initState();
     if (widget.initialCourses != null && widget.initialCourses!.isNotEmpty) {
+      // Passed from home screen — instant display
       _courses = widget.initialCourses!;
       _isLoading = false;
       _fetchBackgroundData();
     } else {
+      // Try disk cache first (offline support)
+      final diskRaw = OfflineCacheService.instance.loadCoursesSync();
+      if (diskRaw != null && diskRaw.isNotEmpty) {
+        final allCached = diskRaw.map((e) => Course.fromJson(e)).toList();
+        final filtered = allCached
+            .where((c) => c.categoryId == widget.category.id)
+            .toList();
+        if (filtered.isNotEmpty) {
+          _courses = filtered;
+          _isLoading = false;
+          _fetchBackgroundData(); // refresh stats/divisions in background
+          return;
+        }
+      }
+      // No cache — fetch from network
       _fetchAll();
     }
   }

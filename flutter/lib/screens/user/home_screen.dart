@@ -898,7 +898,9 @@ class _CourseCard extends StatelessWidget {
                         course.thumbnailUrl!.isNotEmpty
                     ? CachedNetworkImage(
                         fadeInDuration: Duration.zero,
-                        imageUrl: '$apiBaseUrl/media/${course.thumbnailUrl!}',
+                        imageUrl: course.thumbnailUrl!.startsWith('http')
+                            ? course.thumbnailUrl!
+                            : '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) =>
                             _fallbackThumbnail(cardColor),
