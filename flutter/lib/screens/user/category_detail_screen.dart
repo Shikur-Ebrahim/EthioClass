@@ -149,6 +149,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   if (widget.category.imageUrl != null &&
                       widget.category.imageUrl!.isNotEmpty)
                     CachedNetworkImage(
+                      fadeInDuration: Duration.zero,
                       imageUrl: widget.category.imageUrl!,
                       fit: BoxFit.cover,
                       errorWidget: (context, url, error) =>
@@ -462,6 +463,7 @@ class _CourseTile extends StatelessWidget {
                     course.thumbnailUrl != null &&
                         course.thumbnailUrl!.isNotEmpty
                     ? CachedNetworkImage(
+                        fadeInDuration: Duration.zero,
                         imageUrl: '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) => const Icon(

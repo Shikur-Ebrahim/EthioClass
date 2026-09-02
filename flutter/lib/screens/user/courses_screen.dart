@@ -961,6 +961,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           ? course.thumbnailUrl!
           : '$apiBaseUrl/media/${course.thumbnailUrl!}';
       return CachedNetworkImage(
+        fadeInDuration: Duration.zero,
         imageUrl: url,
         width: width,
         height: height,

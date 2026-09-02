@@ -532,6 +532,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         if (widget.course.thumbnailUrl != null &&
                             widget.course.thumbnailUrl!.isNotEmpty)
                           CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
                             imageUrl:
                                 '$apiBaseUrl/media/${widget.course.thumbnailUrl!}',
                             fit: BoxFit.cover,
@@ -1813,11 +1814,13 @@ class _HeaderStat extends StatelessWidget {
 class _ChapterTile extends StatelessWidget {
   final Chapter chapter;
   final int index;
+  final String? fallbackThumbnailUrl;
   final VoidCallback onTap;
 
   const _ChapterTile({
     required this.chapter,
     required this.index,
+    this.fallbackThumbnailUrl,
     required this.onTap,
   });
 
@@ -1847,37 +1850,45 @@ class _ChapterTile extends StatelessWidget {
               child: SizedBox(
                 width: 100,
                 height: 72,
-                child:
-                    (chapter.thumbnailUrl != null &&
-                        chapter.thumbnailUrl!.isNotEmpty)
-                    ? CachedNetworkImage(
-                        imageUrl: '$apiBaseUrl/media/${chapter.thumbnailUrl!}',
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary.withOpacity(0.7),
-                                AppColors.primary,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                child: Builder(
+                  builder: (context) {
+                    final thumbToUse =
+                        (chapter.thumbnailUrl != null &&
+                            chapter.thumbnailUrl!.isNotEmpty)
+                        ? chapter.thumbnailUrl!
+                        : fallbackThumbnailUrl;
+                    return (thumbToUse != null && thumbToUse.isNotEmpty)
+                        ? CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
+                            imageUrl: '$apiBaseUrl/media/$thumbToUse',
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) => Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primary.withOpacity(0.7),
+                                    AppColors.primary,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF1B5E20),
-                              AppColors.primary,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF1B5E20),
+                                  AppColors.primary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          );
+                  },
+                ),
               ),
             ),
             const SizedBox(width: 12),

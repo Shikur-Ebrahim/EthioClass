@@ -757,6 +757,7 @@ class _CategoryCard extends StatelessWidget {
             // Full background image
             if (hasImage)
               CachedNetworkImage(
+                fadeInDuration: Duration.zero,
                 imageUrl: cat.imageUrl!,
                 fit: BoxFit.cover,
                 errorWidget: (context, url, error) =>
@@ -896,6 +897,7 @@ class _CourseCard extends StatelessWidget {
                     course.thumbnailUrl != null &&
                         course.thumbnailUrl!.isNotEmpty
                     ? CachedNetworkImage(
+                        fadeInDuration: Duration.zero,
                         imageUrl: '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) =>

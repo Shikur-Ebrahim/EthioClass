@@ -370,6 +370,7 @@ class _CategoryGridCard extends StatelessWidget {
                 child:
                     category.imageUrl != null && category.imageUrl!.isNotEmpty
                     ? CachedNetworkImage(
+                        fadeInDuration: Duration.zero,
                         imageUrl: category.imageUrl!,
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) =>

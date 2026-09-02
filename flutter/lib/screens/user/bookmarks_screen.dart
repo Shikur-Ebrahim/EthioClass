@@ -463,6 +463,7 @@ class _BookmarksScreenState extends State<BookmarksScreen>
                     borderRadius: BorderRadius.circular(10),
                     child: thumbUrl != null && thumbUrl.isNotEmpty
                         ? CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
                             imageUrl: '$apiBaseUrl/media/$thumbUrl',
                             fit: BoxFit.cover,
                             errorWidget: (context, url, error) => const Center(
@@ -635,6 +636,7 @@ class _BookmarksScreenState extends State<BookmarksScreen>
                 borderRadius: BorderRadius.circular(12),
                 child: thumbUrl != null && thumbUrl.isNotEmpty
                     ? CachedNetworkImage(
+                        fadeInDuration: Duration.zero,
                         imageUrl: '$apiBaseUrl/media/$thumbUrl',
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) => const Icon(

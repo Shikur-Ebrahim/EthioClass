@@ -403,6 +403,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                       height: 80,
                       child: thumbUrl != null && thumbUrl.isNotEmpty
                           ? CachedNetworkImage(
+                              fadeInDuration: Duration.zero,
                               imageUrl: '$apiBaseUrl/media/$thumbUrl',
                               fit: BoxFit.cover,
                               errorWidget: (context, url, error) =>
@@ -570,6 +571,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                     color: Colors.white.withOpacity(0.15),
                     child: thumbUrl.isNotEmpty
                         ? CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
                             imageUrl: '$apiBaseUrl/media/$thumbUrl',
                             fit: BoxFit.cover,
                             errorWidget: (context, url, error) => const Icon(
@@ -769,6 +771,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                     borderRadius: BorderRadius.circular(10),
                     child: thumbUrl != null && thumbUrl.isNotEmpty
                         ? CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
                             imageUrl: '$apiBaseUrl/media/$thumbUrl',
                             fit: BoxFit.cover,
                             errorWidget: (context, url, error) => const Center(

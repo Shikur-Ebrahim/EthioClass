@@ -371,7 +371,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   @override
   Widget build(BuildContext context) {
     final lesson = _currentLesson;
-    final thumbUrl = lesson?.thumbnailUrl ?? widget.thumbnailUrl;
+    final thumbUrl =
+        lesson?.thumbnailUrl ??
+        widget.thumbnailUrl ??
+        widget.courseThumbnailUrl;
     final title = lesson?.title ?? widget.chapterTitle;
     final desc = widget.chapterDescription;
 
@@ -1254,6 +1257,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
   Widget _buildBannerImage(String? thumbUrl) {
     if (thumbUrl != null && thumbUrl.isNotEmpty) {
       return CachedNetworkImage(
+        fadeInDuration: Duration.zero,
         imageUrl: '$apiBaseUrl/media/$thumbUrl',
         fit: BoxFit.cover,
         errorWidget: (context, url, error) => _defaultBanner(),

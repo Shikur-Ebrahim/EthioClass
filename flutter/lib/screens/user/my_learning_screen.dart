@@ -322,6 +322,7 @@ class _MyLearningScreenState extends State<MyLearningScreen>
                         course.thumbnailUrl != null &&
                             course.thumbnailUrl!.isNotEmpty
                         ? CachedNetworkImage(
+                            fadeInDuration: Duration.zero,
                             imageUrl:
                                 '$apiBaseUrl/media/${course.thumbnailUrl}',
                             width: 72,

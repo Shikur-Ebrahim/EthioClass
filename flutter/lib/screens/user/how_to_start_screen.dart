@@ -104,6 +104,7 @@ class _HowToStartScreenState extends State<HowToStartScreen> {
                           color: Colors.grey[300],
                           child: video.thumbnailUrl.isNotEmpty
                               ? CachedNetworkImage(
+                                  fadeInDuration: Duration.zero,
                                   imageUrl: thumbUrl,
                                   fit: BoxFit.cover,
                                   errorWidget: (context, url, error) =>
