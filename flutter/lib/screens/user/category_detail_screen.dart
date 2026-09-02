@@ -8,6 +8,7 @@ import '../../models/course_model.dart';
 import '../../models/division_model.dart';
 import '../../services/course_service.dart';
 import 'course_detail_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final Category category;
@@ -72,7 +73,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   Future<dynamic> _fetchStats() async {
     try {
       final res = await http.get(
-        Uri.parse('$apiBaseUrl/category-stats?category_id=${widget.category.id}'),
+        Uri.parse(
+          '$apiBaseUrl/category-stats?category_id=${widget.category.id}',
+        ),
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -110,19 +113,24 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   color: Colors.black.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (widget.category.imageUrl != null && widget.category.imageUrl!.isNotEmpty)
+                  if (widget.category.imageUrl != null &&
+                      widget.category.imageUrl!.isNotEmpty)
                     Image.network(
                       widget.category.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: widget.headerColor),
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: widget.headerColor),
                     )
                   else
                     Container(color: widget.headerColor),
@@ -190,7 +198,11 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(Icons.category_rounded, color: Colors.white, size: 44),
+                            child: const Icon(
+                              Icons.category_rounded,
+                              color: Colors.white,
+                              size: 44,
+                            ),
                           ),
                         ],
                       ),
@@ -220,13 +232,33 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _StatItem(value: '$_courseCount', label: 'Courses', icon: Icons.book_rounded, color: widget.iconColor),
+                  _StatItem(
+                    value: '$_courseCount',
+                    label: 'Courses',
+                    icon: Icons.book_rounded,
+                    color: widget.iconColor,
+                  ),
                   _Divider(),
-                  _StatItem(value: '$_videoCount', label: 'Videos', icon: Icons.play_circle_rounded, color: const Color(0xFF7C3AED)),
+                  _StatItem(
+                    value: '$_videoCount',
+                    label: 'Videos',
+                    icon: Icons.play_circle_rounded,
+                    color: const Color(0xFF7C3AED),
+                  ),
                   _Divider(),
-                  _StatItem(value: '$_quizCount', label: 'Practice Qs', icon: Icons.quiz_rounded, color: const Color(0xFF16A34A)),
+                  _StatItem(
+                    value: '$_quizCount',
+                    label: 'Practice Qs',
+                    icon: Icons.quiz_rounded,
+                    color: const Color(0xFF16A34A),
+                  ),
                   _Divider(),
-                  _StatItem(value: '$_studentCount', label: 'Students', icon: Icons.people_rounded, color: const Color(0xFFF97316)),
+                  _StatItem(
+                    value: '$_studentCount',
+                    label: 'Students',
+                    icon: Icons.people_rounded,
+                    color: const Color(0xFFF97316),
+                  ),
                 ],
               ),
             ),
@@ -250,20 +282,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           // Courses list
           if (_isLoading)
             const SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              ),
+              child: Center(child: const EthioClassLoading()),
             )
           else if (_errorMessage != null)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Center(
-                  child: Text('Failed to load: $_errorMessage',
-                      style: const TextStyle(color: AppColors.error)),
+                  child: Text(
+                    'Failed to load: $_errorMessage',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 ),
               ),
             )
@@ -272,8 +301,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               child: Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(
-                  child: Text('No courses found in this category yet.',
-                      style: TextStyle(color: AppColors.grey)),
+                  child: Text(
+                    'No courses found in this category yet.',
+                    style: TextStyle(color: AppColors.grey),
+                  ),
                 ),
               ),
             )
@@ -349,7 +380,12 @@ class _CourseTile extends StatelessWidget {
   final Color iconColor;
   final String categoryName;
 
-  const _CourseTile({required this.course, required this.index, required this.iconColor, required this.categoryName});
+  const _CourseTile({
+    required this.course,
+    required this.index,
+    required this.iconColor,
+    required this.categoryName,
+  });
 
   static const List<Color> _cardColors = [
     Color(0xFF1B5E20), // dark green
@@ -366,7 +402,13 @@ class _CourseTile extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => CourseDetailScreen(course: course, index: index, categoryName: categoryName)),
+        MaterialPageRoute(
+          builder: (_) => CourseDetailScreen(
+            course: course,
+            index: index,
+            categoryName: categoryName,
+          ),
+        ),
       ),
       child: Container(
         height: 115,
@@ -394,20 +436,33 @@ class _CourseTile extends StatelessWidget {
                 width: 115,
                 height: 115,
                 color: cardColor,
-                child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
+                child:
+                    course.thumbnailUrl != null &&
+                        course.thumbnailUrl!.isNotEmpty
                     ? Image.network(
                         '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.school_rounded, color: Colors.white54, size: 36),
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.school_rounded,
+                          color: Colors.white54,
+                          size: 36,
+                        ),
                       )
-                    : const Icon(Icons.school_rounded, color: Colors.white54, size: 36),
+                    : const Icon(
+                        Icons.school_rounded,
+                        color: Colors.white54,
+                        size: 36,
+                      ),
               ),
             ),
             const SizedBox(width: 14),
             // Info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -417,7 +472,10 @@ class _CourseTile extends StatelessWidget {
                         builder: (context) {
                           final colors = _getCategoryColors(categoryName);
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             margin: const EdgeInsets.only(bottom: 4),
                             decoration: BoxDecoration(
                               color: colors[0], // Light background
@@ -432,9 +490,9 @@ class _CourseTile extends StatelessWidget {
                               ),
                             ),
                           );
-                        }
+                        },
                       ),
-                    
+
                     // Title
                     Text(
                       course.title,
@@ -447,41 +505,64 @@ class _CourseTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Instructor Name
                     if (course.instructorName.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMedium),
+                          const Icon(
+                            Icons.person_outline_rounded,
+                            size: 14,
+                            color: AppColors.textMedium,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               course.instructorName,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMedium,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                    
+
                     const Spacer(),
-                    
+
                     // Lessons & Duration Row
                     Row(
                       children: [
-                        const Icon(Icons.play_circle_outline_rounded, size: 14, color: Color(0xFFD97706)),
+                        const Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 14,
+                          color: Color(0xFFD97706),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${course.lessonCount} lessons',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textMedium),
+                        const Icon(
+                          Icons.schedule_rounded,
+                          size: 14,
+                          color: AppColors.textMedium,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${course.durationMinutes ~/ 60}h ${course.durationMinutes % 60}m',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMedium),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
                         ),
                       ],
                     ),
@@ -491,7 +572,11 @@ class _CourseTile extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 22),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+                size: 22,
+              ),
             ),
           ],
         ),
@@ -517,5 +602,3 @@ class _CourseTile extends StatelessWidget {
     }
   }
 }
-
-

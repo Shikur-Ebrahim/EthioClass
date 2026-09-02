@@ -200,12 +200,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildSearchResults() {
     if (!_dataLoaded) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      );
+      return const Center(child: EthioClassLoading());
     }
 
     final hasCategories = _filteredCategories.isNotEmpty;
