@@ -18,7 +18,7 @@ class MiniPlayerService extends ChangeNotifier {
   VideoPlayerController? get videoController => _videoController;
   ChewieController? get chewieController => _chewieController;
   bool get isMinimized => _isMinimized;
-  bool get isActive => _lesson != null && _chewieController != null;
+  bool get isActive => _lesson != null && _videoController != null;
 
   bool hasActiveLesson(String lessonId) {
     return _lesson?.id == lessonId && _videoController != null;
