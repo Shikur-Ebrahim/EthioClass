@@ -4,6 +4,7 @@ import '../../config/api_config.dart';
 import '../../services/my_learning_service.dart';
 import 'course_detail_screen.dart';
 import '../../services/course_service.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class MyLearningScreen extends StatefulWidget {
   const MyLearningScreen({super.key});
@@ -146,7 +147,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(child: EthioClassLoading())
           : _error != null
               ? _buildError()
               : TabBarView(

@@ -6,6 +6,7 @@ import '../../models/chapter_model.dart';
 import '../../config/api_config.dart';
 import 'dart:async';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ExamPreparationScreen extends StatefulWidget {
   final Chapter chapter;
@@ -118,7 +119,7 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: const Center(child: EthioClassLoading()),
       );
     }
 

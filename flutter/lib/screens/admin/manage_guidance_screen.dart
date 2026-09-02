@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/theme.dart';
 import '../../models/guidance_video.dart';
 import '../../services/guidance_service.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ManageGuidanceScreen extends StatefulWidget {
   const ManageGuidanceScreen({super.key});
@@ -217,7 +218,7 @@ class _ManageGuidanceScreenState extends State<ManageGuidanceScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: EthioClassLoading())
           : _videos.isEmpty
               ? const Center(child: Text('No videos found.'))
               : ListView.builder(

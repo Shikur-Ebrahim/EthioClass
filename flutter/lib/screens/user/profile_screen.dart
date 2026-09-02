@@ -9,6 +9,7 @@ import 'guidance_feed_screen.dart';
 import '../auth/signup_screen.dart';
 import '../auth/login_screen.dart';
 import '../../services/session_service.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userName;
@@ -219,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Guidance Videos Grid Section
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const Center(child: EthioClassLoading())
                 : _videos.isEmpty
                     ? const Center(
                         child: Text(

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import '../../core/theme.dart';
 import '../../models/lesson_model.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ManageQuizScreen extends StatefulWidget {
   final Lesson lesson;
@@ -130,7 +131,7 @@ class _ManageQuizScreenState extends State<ManageQuizScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(child: EthioClassLoading())
           : _quizzes.isEmpty
               ? Center(
                   child: Column(

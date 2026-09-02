@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../models/category_model.dart';
 import '../../services/course_service.dart';
 import 'category_detail_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
   const AllCategoriesScreen({super.key});
@@ -169,7 +170,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const Center(child: EthioClassLoading())
                 : _filtered.isEmpty
                     ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Icon(Icons.category_outlined, size: 64, color: AppColors.grey.withOpacity(0.4)),

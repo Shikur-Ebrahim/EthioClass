@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../core/theme.dart';
 import '../../models/chapter_model.dart';
 import '../../config/api_config.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ManageExamScreen extends StatefulWidget {
   final Chapter chapter;
@@ -81,7 +82,7 @@ class _ManageExamScreenState extends State<ManageExamScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: EthioClassLoading())
           : _questions.isEmpty
               ? const Center(child: Text('No questions added yet.'))
               : ListView.builder(

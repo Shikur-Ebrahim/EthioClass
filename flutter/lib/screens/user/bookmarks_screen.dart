@@ -6,6 +6,7 @@ import '../../models/lesson_model.dart';
 import '../../models/course_model.dart';
 import 'lesson_detail_screen.dart';
 import 'course_detail_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class BookmarksScreen extends StatefulWidget {
   const BookmarksScreen({super.key});
@@ -110,7 +111,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
             _buildTabBar(),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? const Center(child: EthioClassLoading())
                   : _error != null
                       ? Center(
                           child: Padding(

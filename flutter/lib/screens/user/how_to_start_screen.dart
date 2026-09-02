@@ -4,6 +4,7 @@ import '../../models/guidance_video.dart';
 import '../../services/guidance_service.dart';
 import '../../config/api_config.dart';
 import 'guidance_feed_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class HowToStartScreen extends StatefulWidget {
   const HowToStartScreen({super.key});
@@ -57,7 +58,7 @@ class _HowToStartScreenState extends State<HowToStartScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(child: EthioClassLoading())
           : _videos.isEmpty
               ? const Center(
                   child: Text(

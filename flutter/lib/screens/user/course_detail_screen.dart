@@ -17,6 +17,7 @@ import '../auth/signup_screen.dart';
 import '../auth/login_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'payment_webview_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -1233,7 +1234,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        builder: (_) => const Center(child: EthioClassLoading()),
       );
       if (!_isInitializingPayment) {
         await _preInitializePayment();

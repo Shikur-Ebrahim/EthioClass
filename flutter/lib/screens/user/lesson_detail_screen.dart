@@ -1,3 +1,4 @@
+import '../../widgets/ethioclass_loading.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -1344,7 +1345,7 @@ class _ChapterQuizSectionState extends State<_ChapterQuizSection> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+        child: EthioClassLoading(),
       );
     }
     final lessonsWithQuiz = _lessonsWithQuiz;

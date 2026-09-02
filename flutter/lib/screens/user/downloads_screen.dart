@@ -8,6 +8,7 @@ import '../../services/progress_service.dart';
 import '../../models/chapter_model.dart';
 import 'lesson_detail_screen.dart';
 import 'exam_preparation_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
@@ -116,7 +117,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [_buildSliverHeader()],
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const Center(child: EthioClassLoading())
             : _groupedDownloads.isEmpty
                 ? _buildEmptyState()
                 : RefreshIndicator(

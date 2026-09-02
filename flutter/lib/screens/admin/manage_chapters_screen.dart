@@ -12,6 +12,7 @@ import '../../models/chapter_model.dart';
 import '../../services/course_service.dart';
 import 'manage_lessons_screen.dart';
 import 'manage_exam_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ManageChaptersScreen extends StatefulWidget {
   final Course course;
@@ -146,7 +147,7 @@ class _ManageChaptersScreenState extends State<ManageChaptersScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
+          ? const Center(child: EthioClassLoading())
           : _chapters.isEmpty
               ? Center(
                   child: Column(

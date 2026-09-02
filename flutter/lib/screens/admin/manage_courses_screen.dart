@@ -11,6 +11,7 @@ import '../../models/category_model.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
 import 'manage_chapters_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class ManageCoursesScreen extends StatefulWidget {
   const ManageCoursesScreen({super.key});
@@ -150,7 +151,7 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
         ],
       ),
       body: _isLoadingList
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
+          ? const Center(child: EthioClassLoading())
           : _courses.isEmpty
               ? Center(
                   child: Column(

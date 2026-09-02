@@ -9,6 +9,7 @@ import 'how_to_start_screen.dart';
 import 'all_categories_screen.dart';
 import 'category_detail_screen.dart';
 import 'course_detail_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -507,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 120,
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: const Center(child: EthioClassLoading()),
           );
         }
         if (snapshot.hasError) {
@@ -545,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 160,
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: const Center(child: EthioClassLoading()),
           );
         }
         if (snapshot.hasError) {

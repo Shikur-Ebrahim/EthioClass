@@ -9,6 +9,7 @@ import '../../services/course_service.dart';
 import '../../services/progress_service.dart';
 import 'course_detail_screen.dart';
 import 'lesson_detail_screen.dart';
+import '../../widgets/ethioclass_loading.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -127,7 +128,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      builder: (_) => const Center(child: EthioClassLoading()),
     );
 
     try {
@@ -193,7 +194,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [_buildSliverHeader()],
         body: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const Center(child: EthioClassLoading())
             : _error != null
                 ? _buildError()
                 : _filtered.isEmpty
