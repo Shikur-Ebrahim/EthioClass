@@ -57,7 +57,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     int size = 0;
     try {
       if (await dir.exists()) {
-        await for (final entity in dir.list(recursive: true, followLinks: false)) {
+        await for (final entity in dir.list(
+          recursive: true,
+          followLinks: false,
+        )) {
           if (entity is File) {
             size += await entity.length();
           }
@@ -71,7 +74,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (bytes <= 0) return '0 B';
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
@@ -134,130 +138,176 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildSectionHeader('Security'),
-                _buildCard([
-                  ListTile(
-                    leading: const Icon(Icons.lock_outline_rounded, color: AppColors.textMedium),
-                    title: const Text('Change Password', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ChangePasswordScreen(accessToken: _accessToken)),
-                      );
-                    },
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildSectionHeader('Security'),
+          _buildCard([
+            ListTile(
+              leading: const Icon(
+                Icons.lock_outline_rounded,
+                color: AppColors.textMedium,
+              ),
+              title: const Text(
+                'Change Password',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ChangePasswordScreen(accessToken: _accessToken),
                   ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.security_outlined, color: AppColors.textMedium),
-                    title: const Text('Security Settings', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SecurityScreen()),
-                      );
-                    },
-                  ),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionHeader('Preferences'),
-                _buildCard([
-                  _buildDropdownRow(
-                    icon: Icons.language,
-                    title: 'Language',
-                    value: _settings.language,
-                    items: const [
-                      DropdownMenuItem(value: 'en', child: Text('English')),
-                      DropdownMenuItem(value: 'am', child: Text('Amharic')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) _updateSetting(_settings.copyWith(language: val));
-                    },
-                  ),
-                  const Divider(height: 1),
-                  _buildDropdownRow(
-                    icon: Icons.palette_outlined,
-                    title: 'Theme',
-                    value: _settings.theme,
-                    items: const [
-                      DropdownMenuItem(value: 'system', child: Text('System Default')),
-                      DropdownMenuItem(value: 'light', child: Text('Light')),
-                      DropdownMenuItem(value: 'dark', child: Text('Dark')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) _updateSetting(_settings.copyWith(theme: val));
-                    },
-                  ),
-                  const Divider(height: 1),
-                  _buildDropdownRow(
-                    icon: Icons.hd_outlined,
-                    title: 'Download Quality',
-                    value: _settings.downloadQuality,
-                    items: const [
-                      DropdownMenuItem(value: '1080p', child: Text('High (1080p)')),
-                      DropdownMenuItem(value: '720p', child: Text('Medium (720p)')),
-                      DropdownMenuItem(value: '480p', child: Text('Low (480p)')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) _updateSetting(_settings.copyWith(downloadQuality: val));
-                    },
-                  ),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionHeader('Notifications'),
-                _buildCard([
-                  _buildSwitchRow(
-                    icon: Icons.notifications_active_outlined,
-                    title: 'Push Notifications',
-                    value: _settings.pushNotifications,
-                    onChanged: (val) {
-                      _updateSetting(_settings.copyWith(pushNotifications: val));
-                    },
-                  ),
-                  const Divider(height: 1),
-                  _buildSwitchRow(
-                    icon: Icons.email_outlined,
-                    title: 'Email Notifications',
-                    value: _settings.emailNotifications,
-                    onChanged: (val) {
-                      _updateSetting(_settings.copyWith(emailNotifications: val));
-                    },
-                  ),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionHeader('Storage'),
-                _buildCard([
-                  ListTile(
-                    leading: const Icon(Icons.cleaning_services_outlined, color: AppColors.textMedium),
-                    title: const Text('Clear Cache', style: TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: const Text('Temporary files and cached data', style: TextStyle(fontSize: 12)),
-                    trailing: _isClearingCache
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                          )
-                        : Text(
-                            _cacheSize,
-                            style: const TextStyle(
-                              color: AppColors.textMedium,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                    onTap: _isClearingCache ? null : () async {
+                );
+              },
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(
+                Icons.security_outlined,
+                color: AppColors.textMedium,
+              ),
+              title: const Text(
+                'Security Settings',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecurityScreen()),
+                );
+              },
+            ),
+          ]),
+          const SizedBox(height: 24),
+          _buildSectionHeader('Preferences'),
+          _buildCard([
+            _buildDropdownRow(
+              icon: Icons.language,
+              title: 'Language',
+              value: _settings.language,
+              items: const [
+                DropdownMenuItem(value: 'en', child: Text('English')),
+                DropdownMenuItem(value: 'am', child: Text('Amharic')),
+              ],
+              onChanged: (val) {
+                if (val != null)
+                  _updateSetting(_settings.copyWith(language: val));
+              },
+            ),
+            const Divider(height: 1),
+            _buildDropdownRow(
+              icon: Icons.palette_outlined,
+              title: 'Theme',
+              value: _settings.theme,
+              items: const [
+                DropdownMenuItem(
+                  value: 'system',
+                  child: Text('System Default'),
+                ),
+                DropdownMenuItem(value: 'light', child: Text('Light')),
+                DropdownMenuItem(value: 'dark', child: Text('Dark')),
+              ],
+              onChanged: (val) {
+                if (val != null) _updateSetting(_settings.copyWith(theme: val));
+              },
+            ),
+            const Divider(height: 1),
+            _buildDropdownRow(
+              icon: Icons.hd_outlined,
+              title: 'Download Quality',
+              value: _settings.downloadQuality,
+              items: const [
+                DropdownMenuItem(value: '1080p', child: Text('High (1080p)')),
+                DropdownMenuItem(value: '720p', child: Text('Medium (720p)')),
+                DropdownMenuItem(value: '480p', child: Text('Low (480p)')),
+              ],
+              onChanged: (val) {
+                if (val != null)
+                  _updateSetting(_settings.copyWith(downloadQuality: val));
+              },
+            ),
+          ]),
+          const SizedBox(height: 24),
+          _buildSectionHeader('Notifications'),
+          _buildCard([
+            _buildSwitchRow(
+              icon: Icons.notifications_active_outlined,
+              title: 'Push Notifications',
+              value: _settings.pushNotifications,
+              onChanged: (val) {
+                _updateSetting(_settings.copyWith(pushNotifications: val));
+              },
+            ),
+            const Divider(height: 1),
+            _buildSwitchRow(
+              icon: Icons.email_outlined,
+              title: 'Email Notifications',
+              value: _settings.emailNotifications,
+              onChanged: (val) {
+                _updateSetting(_settings.copyWith(emailNotifications: val));
+              },
+            ),
+          ]),
+          const SizedBox(height: 24),
+          _buildSectionHeader('Storage'),
+          _buildCard([
+            ListTile(
+              leading: const Icon(
+                Icons.cleaning_services_outlined,
+                color: AppColors.textMedium,
+              ),
+              title: const Text(
+                'Clear Cache',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Temporary files and cached data',
+                style: TextStyle(fontSize: 12),
+              ),
+              trailing: _isClearingCache
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : Text(
+                      _cacheSize,
+                      style: const TextStyle(
+                        color: AppColors.textMedium,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+              onTap: _isClearingCache
+                  ? null
+                  : () async {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Clear Cache'),
-                          content: Text('This will delete $_cacheSize of cached data. Continue?'),
+                          content: Text(
+                            'This will delete $_cacheSize of cached data. Continue?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -265,42 +315,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             ElevatedButton(
                               onPressed: () => Navigator.pop(ctx, true),
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                              child: const Text('Clear', style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                              ),
+                              child: const Text(
+                                'Clear',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ],
                         ),
                       );
                       if (confirm == true) _clearCache();
                     },
-                  ),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionHeader('About'),
-                _buildCard([
-                  const ListTile(
-                    leading: Icon(Icons.info_outline_rounded, color: AppColors.textMedium),
-                    title: Text('App Version', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: Text('1.0.0', style: TextStyle(color: AppColors.textMedium)),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.description_outlined, color: AppColors.textMedium),
-                    title: const Text('Terms of Service', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
-                    onTap: () {},
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.textMedium),
-                    title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w500)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
-                    onTap: () {},
-                  ),
-                ]),
-                const SizedBox(height: 32),
-              ],
             ),
+          ]),
+          const SizedBox(height: 24),
+          _buildSectionHeader('About'),
+          _buildCard([
+            const ListTile(
+              leading: Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.textMedium,
+              ),
+              title: Text(
+                'App Version',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: Text(
+                '1.0.0',
+                style: TextStyle(color: AppColors.textMedium),
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(
+                Icons.description_outlined,
+                color: AppColors.textMedium,
+              ),
+              title: const Text(
+                'Terms of Service',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+              ),
+              onTap: () {},
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(
+                Icons.privacy_tip_outlined,
+                color: AppColors.textMedium,
+              ),
+              title: const Text(
+                'Privacy Policy',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+              ),
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 
@@ -346,7 +428,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textDark,
+              ),
             ),
           ),
           DropdownButton<String>(
@@ -355,7 +441,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: onChanged,
             underline: const SizedBox(),
             icon: const Icon(Icons.expand_more_rounded, color: AppColors.grey),
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
             alignment: Alignment.centerRight,
           ),
         ],
@@ -374,7 +464,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Icon(icon, color: AppColors.textMedium),
       title: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textDark,
+        ),
       ),
       trailing: Switch(
         value: value,

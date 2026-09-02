@@ -11,13 +11,13 @@ class SecurityScreen extends StatefulWidget {
 
 class _SecurityScreenState extends State<SecurityScreen> {
   String _deviceId = 'Loading...';
-  
+
   @override
   void initState() {
     super.initState();
     _loadDeviceId();
   }
-  
+
   Future<void> _loadDeviceId() async {
     try {
       final id = await AuthService().getCurrentDeviceId();
@@ -40,7 +40,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Security', style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Security',
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: AppColors.surface,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
@@ -55,8 +62,15 @@ class _SecurityScreenState extends State<SecurityScreen> {
               style: AppTextStyles.subtitle,
             ),
             const SizedBox(height: 32),
-            
-            const Text('Account Protection', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+
+            const Text(
+              'Account Protection',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -73,26 +87,49 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       color: AppColors.success.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.shield_rounded, color: AppColors.success, size: 24),
+                    child: const Icon(
+                      Icons.shield_rounded,
+                      color: AppColors.success,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('1 Device Per Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text(
+                          '1 Device Per Account',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         SizedBox(height: 4),
-                        Text('Enabled: Your account is strictly bound to your primary phone.', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                        Text(
+                          'Enabled: Your account is strictly bound to your primary phone.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
-            const Text('Registered Device', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+
+            const Text(
+              'Registered Device',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -105,26 +142,52 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.smartphone_rounded, color: AppColors.primary, size: 28),
+                      const Icon(
+                        Icons.smartphone_rounded,
+                        color: AppColors.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Current Phone', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            const Text(
+                              'Current Phone',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text('ID: $_deviceId', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                            Text(
+                              'ID: $_deviceId',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textMedium,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.success.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text('Active', style: TextStyle(fontSize: 10, color: AppColors.success, fontWeight: FontWeight.bold)),
-                      )
+                        child: const Text(
+                          'Active',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const Padding(
@@ -133,7 +196,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   ),
                   const Text(
                     'If you get a new phone and need to transfer your account, please contact customer support.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textMedium, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMedium,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),

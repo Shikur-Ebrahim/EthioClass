@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/my_learning_service.dart';
@@ -13,7 +14,8 @@ class MyLearningScreen extends StatefulWidget {
   State<MyLearningScreen> createState() => _MyLearningScreenState();
 }
 
-class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerProviderStateMixin {
+class _MyLearningScreenState extends State<MyLearningScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   List<MyLearningCourse> _inProgress = [];
@@ -40,7 +42,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
   }
 
   Future<void> _loadData() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final data = await MyLearningService.instance.getMyLearning();
       final enrolled = data['enrolled'] ?? [];
@@ -57,7 +62,9 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
         final err = e.toString().toLowerCase();
         setState(() {
           _isLoading = false;
-          _error = (err.contains('socketexception') || err.contains('failed host lookup'))
+          _error =
+              (err.contains('socketexception') ||
+                  err.contains('failed host lookup'))
               ? 'No internet connection.'
               : 'Failed to load your courses.';
         });
@@ -83,9 +90,13 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
   List<MyLearningCourse> _filtered(List<MyLearningCourse> list) {
     if (_searchQuery.isEmpty) return list;
     final q = _searchQuery.toLowerCase();
-    return list.where((c) =>
-        c.title.toLowerCase().contains(q) ||
-        c.instructorName.toLowerCase().contains(q)).toList();
+    return list
+        .where(
+          (c) =>
+              c.title.toLowerCase().contains(q) ||
+              c.instructorName.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   @override
@@ -102,14 +113,21 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
         ),
         title: const Text(
           'My Learning',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(112),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: TextField(
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _searchQuery = v),
@@ -117,7 +135,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                   decoration: InputDecoration(
                     hintText: 'Search your courses...',
                     hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.6)),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.08),
                     border: OutlineInputBorder(
@@ -132,8 +153,14 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                 controller: _tabController,
                 labelColor: AppColors.primary,
                 unselectedLabelColor: Colors.white.withOpacity(0.5),
-                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
                 indicatorColor: AppColors.primary,
                 indicatorWeight: 3,
                 tabs: [
@@ -149,15 +176,15 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
       body: _isLoading
           ? const Center(child: EthioClassLoading())
           : _error != null
-              ? _buildError()
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildList(_filtered(_inProgress), 'in_progress'),
-                    _buildList(_filtered(_completed), 'completed'),
-                    _buildList(_filtered(_saved), 'saved'),
-                  ],
-                ),
+          ? _buildError()
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildList(_filtered(_inProgress), 'in_progress'),
+                _buildList(_filtered(_completed), 'completed'),
+                _buildList(_filtered(_saved), 'saved'),
+              ],
+            ),
     );
   }
 
@@ -170,12 +197,17 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
           children: [
             const Icon(Icons.wifi_off_rounded, size: 64, color: AppColors.grey),
             const SizedBox(height: 16),
-            Text(_error!, textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textMedium, fontSize: 16)),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMedium, fontSize: 16),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _loadData,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('Retry', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -190,7 +222,8 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
       IconData icon;
       switch (type) {
         case 'in_progress':
-          msg = 'No courses in progress.\nStart learning by unlocking a course!';
+          msg =
+              'No courses in progress.\nStart learning by unlocking a course!';
           icon = Icons.play_circle_outline_rounded;
           break;
         case 'completed':
@@ -209,8 +242,15 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
             children: [
               Icon(icon, size: 64, color: AppColors.greyLight),
               const SizedBox(height: 16),
-              Text(msg, textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textMedium, fontSize: 15, height: 1.5)),
+              Text(
+                msg,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textMedium,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -231,21 +271,28 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
 
   Widget _buildCard(MyLearningCourse course, String type) {
     final pct = (course.progress * 100).toInt();
-    final badgeText = type == 'completed' ? 'Completed' : type == 'saved' ? 'Saved' : 'In Progress';
+    final badgeText = type == 'completed'
+        ? 'Completed'
+        : type == 'saved'
+        ? 'Saved'
+        : 'In Progress';
     final badgeColor = type == 'completed'
         ? const Color(0xFF27AE60)
         : type == 'saved'
-            ? const Color(0xFF9B51E0)
-            : const Color(0xFF2D9CDB);
+        ? const Color(0xFF9B51E0)
+        : const Color(0xFF2D9CDB);
 
     return GestureDetector(
       onTap: () async {
         final courses = await CourseService().getCourses();
         final match = courses.where((c) => c.id == course.id).toList();
         if (match.isNotEmpty && mounted) {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(course: match.first, index: 0),
-          ));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CourseDetailScreen(course: match.first, index: 0),
+            ),
+          );
         }
       },
       child: Container(
@@ -271,13 +318,17 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                   // Thumbnail
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty
-                        ? Image.network(
-                            '$apiBaseUrl/media/${course.thumbnailUrl}',
+                    child:
+                        course.thumbnailUrl != null &&
+                            course.thumbnailUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl:
+                                '$apiBaseUrl/media/${course.thumbnailUrl}',
                             width: 72,
                             height: 72,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _placeholderIcon(),
+                            errorWidget: (context, url, error) =>
+                                _placeholderIcon(),
                           )
                         : _placeholderIcon(),
                   ),
@@ -295,15 +346,19 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textDark,
-                                    height: 1.3),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textDark,
+                                  height: 1.3,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: badgeColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
@@ -311,9 +366,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                               child: Text(
                                 badgeText,
                                 style: TextStyle(
-                                    color: badgeColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800),
+                                  color: badgeColor,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ],
@@ -321,14 +377,21 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.grey),
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              size: 14,
+                              color: AppColors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 course.instructorName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textMedium,
+                                ),
                               ),
                             ),
                           ],
@@ -336,11 +399,18 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.menu_book_outlined, size: 14, color: AppColors.grey),
+                            const Icon(
+                              Icons.menu_book_outlined,
+                              size: 14,
+                              color: AppColors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${course.completedLessons}/${course.totalLessons} lessons',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMedium,
+                              ),
                             ),
                           ],
                         ),
@@ -373,9 +443,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
                   Text(
                     '$pct%',
                     style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
                   ),
                 ],
               ),
@@ -387,14 +458,22 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 14, color: AppColors.grey),
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: AppColors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Last accessed: ${_formatLastAccessed(course.lastAccessedAt)}',
                     style: const TextStyle(fontSize: 12, color: AppColors.grey),
                   ),
                   const Spacer(),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.grey),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppColors.grey,
+                  ),
                 ],
               ),
             ),
@@ -412,7 +491,11 @@ class _MyLearningScreenState extends State<MyLearningScreen> with SingleTickerPr
         color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 36),
+      child: const Icon(
+        Icons.school_rounded,
+        color: AppColors.primary,
+        size: 36,
+      ),
     );
   }
 }

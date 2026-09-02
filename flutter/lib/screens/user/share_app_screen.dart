@@ -7,7 +7,8 @@ import '../../widgets/auth_widgets.dart';
 class ShareAppScreen extends StatelessWidget {
   const ShareAppScreen({super.key});
 
-  final String appLink = "https://ethioclass.com/download"; // Replace with actual link
+  final String appLink =
+      "https://ethioclass.com/download"; // Replace with actual link
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +60,7 @@ class ShareAppScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Text(
               'Let them scan this QR code or send them the download link directly.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textMedium,
-              ),
+              style: TextStyle(fontSize: 14, color: AppColors.textMedium),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
@@ -100,7 +98,8 @@ class ShareAppScreen extends StatelessWidget {
               text: 'Share Link',
               onPressed: () {
                 Share.share(
-                    'Check out EthioClass! Download the app here: $appLink');
+                  'Check out EthioClass! Download the app here: $appLink',
+                );
               },
             ),
             const SizedBox(height: 20),

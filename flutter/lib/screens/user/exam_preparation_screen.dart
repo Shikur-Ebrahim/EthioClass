@@ -36,7 +36,9 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
 
   Future<void> _fetchQuestions() async {
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/chapters/${widget.chapter.id}/exam'));
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/chapters/${widget.chapter.id}/exam'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
@@ -44,10 +46,14 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
             _questions = data;
             _isLoading = false;
             if (_questions.isNotEmpty) {
-               _userAnswers = List.filled(_questions.length, null, growable: true);
-               _startGlobalTimer();
+              _userAnswers = List.filled(
+                _questions.length,
+                null,
+                growable: true,
+              );
+              _startGlobalTimer();
             } else {
-               _isFinished = true;
+              _isFinished = true;
             }
           });
         }
@@ -73,7 +79,7 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
           if (_timeLeft > 0) {
             _timeLeft--;
           } else {
-             _finishExam(); // Time's up
+            _finishExam(); // Time's up
           }
         });
       }
@@ -84,7 +90,9 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
     _timer?.cancel();
     _score = 0;
     for (int i = 0; i < _questions.length; i++) {
-      if (i < _userAnswers.length && _userAnswers[i] != null && _userAnswers[i] == _questions[i]['correct_option']) {
+      if (i < _userAnswers.length &&
+          _userAnswers[i] != null &&
+          _userAnswers[i] == _questions[i]['correct_option']) {
         _score++;
       }
     }
@@ -130,10 +138,20 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           iconTheme: const IconThemeData(color: AppColors.textDark),
-          title: Text('${widget.chapter.title} Exam', style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+          title: Text(
+            '${widget.chapter.title} Exam',
+            style: const TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
         ),
         body: const Center(
-          child: Text('No questions available for this exam.', style: TextStyle(color: AppColors.textMedium, fontSize: 16)),
+          child: Text(
+            'No questions available for this exam.',
+            style: TextStyle(color: AppColors.textMedium, fontSize: 16),
+          ),
         ),
       );
     }
@@ -148,20 +166,38 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
-        title: Text('${widget.chapter.title} Exam', style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          '${widget.chapter.title} Exam',
+          style: const TextStyle(
+            color: AppColors.textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
         actions: [
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Row(
                 children: [
-                  const Icon(Icons.timer_outlined, color: AppColors.error, size: 20),
+                  const Icon(
+                    Icons.timer_outlined,
+                    color: AppColors.error,
+                    size: 20,
+                  ),
                   const SizedBox(width: 4),
-                  Text(_formatTime(_timeLeft), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(
+                    _formatTime(_timeLeft),
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
       body: ListView.builder(
@@ -170,7 +206,9 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
         itemBuilder: (context, index) {
           if (index == _questions.length) {
             // Submit button at the bottom
-            final allAnswered = _unlockedIndex == _questions.length - 1 && _userAnswers.last != null;
+            final allAnswered =
+                _unlockedIndex == _questions.length - 1 &&
+                _userAnswers.last != null;
             return Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 24),
               child: ElevatedButton(
@@ -179,9 +217,18 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
                   backgroundColor: AppColors.primary,
                   disabledBackgroundColor: Colors.grey.shade300,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text('Submit Exam', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: const Text(
+                  'Submit Exam',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             );
           }
@@ -199,14 +246,33 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Question ${index + 1}', style: const TextStyle(color: AppColors.textMedium, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Question ${index + 1}',
+                      style: const TextStyle(
+                        color: AppColors.textMedium,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    Text(q['question_text'], style: const TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      q['question_text'],
+                      style: const TextStyle(
+                        color: AppColors.textDark,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     _buildOption(index, 'A', q['option_a']),
                     const SizedBox(height: 12),
@@ -234,23 +300,40 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.greyLight, width: 2),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.greyLight,
+            width: 2,
+          ),
         ),
         child: Row(
           children: [
-             Container(
-               width: 32, height: 32,
-               decoration: BoxDecoration(
-                 color: isSelected ? AppColors.primary : AppColors.greyLight,
-                 shape: BoxShape.circle,
-               ),
-               child: Center(child: Text(id, style: TextStyle(color: isSelected ? Colors.white : AppColors.textDark, fontWeight: FontWeight.bold))),
-             ),
-             const SizedBox(width: 12),
-             Expanded(child: Text(text, style: const TextStyle(color: AppColors.textDark, fontSize: 15))),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.greyLight,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  id,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textDark,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(color: AppColors.textDark, fontSize: 15),
+              ),
+            ),
           ],
-        )
-      )
+        ),
+      ),
     );
   }
 
@@ -258,10 +341,16 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-         backgroundColor: Colors.white,
-         elevation: 0,
-         iconTheme: const IconThemeData(color: AppColors.textDark),
-         title: const Text('Exam Result', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+        title: const Text(
+          'Exam Result',
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -271,32 +360,69 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               children: [
-                const Icon(Icons.emoji_events_rounded, size: 64, color: Colors.amber),
+                const Icon(
+                  Icons.emoji_events_rounded,
+                  size: 64,
+                  color: Colors.amber,
+                ),
                 const SizedBox(height: 16),
-                Text('You scored $_score out of ${_questions.length}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                Text(
+                  'You scored $_score out of ${_questions.length}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, 
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14)
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
                   ),
-                  child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                )
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Review Answers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          const Text(
+            'Review Answers',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 16),
           ...List.generate(_questions.length, (index) {
             final q = _questions[index];
-            final userAnswer = _userAnswers.length > index ? _userAnswers[index] : null;
+            final userAnswer = _userAnswers.length > index
+                ? _userAnswers[index]
+                : null;
             final correctAnswer = q['correct_option'];
             final isCorrect = userAnswer == correctAnswer;
 
@@ -308,8 +434,11 @@ class _ExamPreparationScreenState extends State<ExamPreparationScreen> {
               return '';
             }
 
-            final userAnswerText = userAnswer != null ? '$userAnswer: ${getOptionText(userAnswer)}' : 'Not answered';
-            final correctAnswerText = '$correctAnswer: ${getOptionText(correctAnswer)}';
+            final userAnswerText = userAnswer != null
+                ? '$userAnswer: ${getOptionText(userAnswer)}'
+                : 'Not answered';
+            final correctAnswerText =
+                '$correctAnswer: ${getOptionText(correctAnswer)}';
 
             return ResultQuestionCard(
               index: index,
@@ -360,7 +489,7 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
 
   Future<void> _fetchExplanation() async {
     if (_explanation != null) return; // Already fetched
-    
+
     setState(() {
       _isExplaining = true;
       _isLoadingExplanation = true;
@@ -384,7 +513,8 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
           if (mounted) {
             setState(() {
               if (errMsg == 'daily_limit_reached') {
-                _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+                _error =
+                    'The AI reached its daily limit. Please try again tomorrow! 🙏';
               } else {
                 _error = 'AI Error: $errMsg';
               }
@@ -402,7 +532,8 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
       } else if (response.statusCode == 429) {
         if (mounted) {
           setState(() {
-            _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+            _error =
+                'The AI reached its daily limit. Please try again tomorrow! 🙏';
             _isLoadingExplanation = false;
           });
         }
@@ -419,7 +550,8 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Could not connect to AI service. Please try again next time!';
+          _error =
+              'Could not connect to AI service. Please try again next time!';
           _isLoadingExplanation = false;
         });
       }
@@ -434,7 +566,9 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: widget.isCorrect ? Colors.green.shade300 : Colors.red.shade300),
+        border: Border.all(
+          color: widget.isCorrect ? Colors.green.shade300 : Colors.red.shade300,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,40 +576,64 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(widget.isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded, 
-                   color: widget.isCorrect ? Colors.green : Colors.red, size: 24),
+              Icon(
+                widget.isCorrect
+                    ? Icons.check_circle_rounded
+                    : Icons.cancel_rounded,
+                color: widget.isCorrect ? Colors.green : Colors.red,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Q${widget.index + 1}: ${widget.question['question_text']}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.textDark,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text('Your Answer: ${widget.userAnswerText}', 
-               style: TextStyle(color: widget.isCorrect ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w600)),
+          Text(
+            'Your Answer: ${widget.userAnswerText}',
+            style: TextStyle(
+              color: widget.isCorrect
+                  ? Colors.green.shade700
+                  : Colors.red.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (!widget.isCorrect) ...[
             const SizedBox(height: 4),
-            Text('Correct Answer: ${widget.correctAnswerText}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+            Text(
+              'Correct Answer: ${widget.correctAnswerText}',
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
           const SizedBox(height: 16),
-          
+
           if (!_isExplaining)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.blue.withOpacity(0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 onPressed: () {
                   if (_explanation != null) {
                     setState(() {
                       _isExplaining = true;
-                      _isFirstTimeExplaining = false; 
+                      _isFirstTimeExplaining = false;
                     });
                   } else {
                     _fetchExplanation();
@@ -507,7 +665,13 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('Ask AI to Explain', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Ask AI to Explain',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -559,7 +723,11 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
                       const SizedBox(width: 8),
                       const Text(
                         'EthioClass AI Teacher',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: AppColors.textDark,
+                        ),
                       ),
                     ],
                   ),
@@ -570,11 +738,21 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
                       child: Row(
                         children: [
                           const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue),
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.blue,
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Text('Analyzing the question...', style: TextStyle(color: AppColors.textMedium, fontStyle: FontStyle.italic)),
+                          Text(
+                            'Analyzing the question...',
+                            style: TextStyle(
+                              color: AppColors.textMedium,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -587,21 +765,40 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 13))),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     )
                   else
-                    TypewriterMarkdown(text: _explanation!, animate: _isFirstTimeExplaining),
-                    
+                    TypewriterMarkdown(
+                      text: _explanation!,
+                      animate: _isFirstTimeExplaining,
+                    ),
+
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -609,7 +806,14 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
                         ),
                       ),
                       onPressed: () => setState(() => _isExplaining = false),
-                      child: const Text('Hide Explanation', style: TextStyle(color: AppColors.textMedium, fontWeight: FontWeight.w600, fontSize: 13)),
+                      child: const Text(
+                        'Hide Explanation',
+                        style: TextStyle(
+                          color: AppColors.textMedium,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -625,7 +829,11 @@ class _ResultQuestionCardState extends State<ResultQuestionCard> {
 class TypewriterMarkdown extends StatefulWidget {
   final String text;
   final bool animate;
-  const TypewriterMarkdown({super.key, required this.text, this.animate = true});
+  const TypewriterMarkdown({
+    super.key,
+    required this.text,
+    this.animate = true,
+  });
 
   @override
   State<TypewriterMarkdown> createState() => _TypewriterMarkdownState();
@@ -671,7 +879,10 @@ class _TypewriterMarkdownState extends State<TypewriterMarkdown> {
           height: 1.6,
           color: AppColors.textDark,
         ),
-        strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        strong: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
       ),
     );
   }

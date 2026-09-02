@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../services/bookmark_service.dart';
@@ -15,13 +16,14 @@ class BookmarksScreen extends StatefulWidget {
   State<BookmarksScreen> createState() => _BookmarksScreenState();
 }
 
-class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProviderStateMixin {
+class _BookmarksScreenState extends State<BookmarksScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
   String? _error;
   List<dynamic> _lessons = [];
   List<dynamic> _courses = [];
-  
+
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
 
@@ -58,7 +60,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
         setState(() {
           _isLoading = false;
           final errorStr = e.toString().toLowerCase();
-          if (errorStr.contains('socketexception') || errorStr.contains('failed host lookup')) {
+          if (errorStr.contains('socketexception') ||
+              errorStr.contains('failed host lookup')) {
             _error = 'No internet connection.';
           } else {
             _error = 'Failed to load bookmarks.';
@@ -79,7 +82,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
       await BookmarkService.instance.removeLessonBookmark(lessonId);
       _loadBookmarks();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to remove bookmark')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to remove bookmark')),
+        );
     }
   }
 
@@ -88,19 +94,34 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
       await BookmarkService.instance.removeCourseBookmark(courseId);
       _loadBookmarks();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to remove bookmark')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to remove bookmark')),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredLessons = _searchQuery.isEmpty 
-        ? _lessons 
-        : _lessons.where((l) => (l['title'] ?? '').toString().toLowerCase().contains(_searchQuery)).toList();
-        
-    final filteredCourses = _searchQuery.isEmpty 
-        ? _courses 
-        : _courses.where((c) => (c['title'] ?? '').toString().toLowerCase().contains(_searchQuery)).toList();
+    final filteredLessons = _searchQuery.isEmpty
+        ? _lessons
+        : _lessons
+              .where(
+                (l) => (l['title'] ?? '').toString().toLowerCase().contains(
+                  _searchQuery,
+                ),
+              )
+              .toList();
+
+    final filteredCourses = _searchQuery.isEmpty
+        ? _courses
+        : _courses
+              .where(
+                (c) => (c['title'] ?? '').toString().toLowerCase().contains(
+                  _searchQuery,
+                ),
+              )
+              .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
@@ -113,36 +134,48 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
               child: _isLoading
                   ? const Center(child: EthioClassLoading())
                   : _error != null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.wifi_off_rounded, size: 64, color: AppColors.grey),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _error!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: AppColors.textMedium, fontSize: 16),
-                                ),
-                                const SizedBox(height: 24),
-                                ElevatedButton(
-                                  onPressed: _loadBookmarks,
-                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                                  child: const Text('Retry', style: TextStyle(color: Colors.white)),
-                                )
-                              ],
-                            ),
-                          ),
-                        )
-                      : TabBarView(
-                          controller: _tabController,
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildCoursesTab(filteredCourses),
-                            _buildLessonsTab(filteredLessons),
+                            const Icon(
+                              Icons.wifi_off_rounded,
+                              size: 64,
+                              color: AppColors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppColors.textMedium,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: _loadBookmarks,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                              ),
+                              child: const Text(
+                                'Retry',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                           ],
                         ),
+                      ),
+                    )
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildCoursesTab(filteredCourses),
+                        _buildLessonsTab(filteredLessons),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -174,25 +207,51 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Bookmarks', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                          Text(
+                            'Bookmarks',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
                           SizedBox(height: 2),
-                          Text('Your saved content', style: TextStyle(fontSize: 13, color: Colors.white54)),
+                          Text(
+                            'Your saved content',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white54,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     if (!_isLoading && totalCount > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.bookmark, color: Colors.amber, size: 16),
+                            const Icon(
+                              Icons.bookmark,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
                             const SizedBox(width: 6),
-                            Text('$totalCount Saved',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text(
+                              '$totalCount Saved',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -214,12 +273,26 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Search bookmarks...',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.6), size: 20),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 14,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Colors.white.withOpacity(0.6),
+                        size: 20,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.6), size: 18),
-                              onPressed: () { _searchCtrl.clear(); _applySearch(''); },
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: Colors.white.withOpacity(0.6),
+                                size: 18,
+                              ),
+                              onPressed: () {
+                                _searchCtrl.clear();
+                                _applySearch('');
+                              },
                             )
                           : null,
                       border: InputBorder.none,
@@ -243,21 +316,35 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
         height: 44,
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(12), // slightly reduced for the outer container too
+          borderRadius: BorderRadius.circular(
+            12,
+          ), // slightly reduced for the outer container too
         ),
         child: TabBar(
           controller: _tabController,
           indicator: BoxDecoration(
             color: AppColors.primary,
-            borderRadius: BorderRadius.circular(8), // Reduced radius for a more rectangular, attractive look
+            borderRadius: BorderRadius.circular(
+              8,
+            ), // Reduced radius for a more rectangular, attractive look
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           labelColor: Colors.white,
           unselectedLabelColor: AppColors.textMedium,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
           dividerColor: Colors.transparent,
           tabs: [
             Tab(text: 'Courses (${_courses.length})'),
@@ -273,7 +360,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
       return _buildEmptyState(
         icon: Icons.play_lesson_outlined,
         title: 'No Lesson Bookmarks',
-        subtitle: 'Save important lessons while watching them\nto easily find them later.',
+        subtitle:
+            'Save important lessons while watching them\nto easily find them later.',
       );
     }
     return RefreshIndicator(
@@ -314,7 +402,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
 
   Widget _buildLessonCard(dynamic l) {
     final thumbUrl = l['thumbnail_url'] ?? l['course_thumbnail_url'];
-    
+
     // Create Lesson object for navigation
     final lessonObj = Lesson(
       id: l['id'],
@@ -329,17 +417,20 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
 
     return InkWell(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => LessonDetailScreen(
-            lessons: [lessonObj], // Just pass this single lesson for now
-            chapterTitle: l['chapter_title'] ?? 'Chapter',
-            chapterDescription: '',
-            courseTitle: l['course_title'] ?? 'Course',
-            courseThumbnailUrl: l['course_thumbnail_url'] ?? '',
-            thumbnailUrl: thumbUrl ?? '',
-            initialLessonIndex: 0,
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonDetailScreen(
+              lessons: [lessonObj], // Just pass this single lesson for now
+              chapterTitle: l['chapter_title'] ?? 'Chapter',
+              chapterDescription: '',
+              courseTitle: l['course_title'] ?? 'Course',
+              courseThumbnailUrl: l['course_thumbnail_url'] ?? '',
+              thumbnailUrl: thumbUrl ?? '',
+              initialLessonIndex: 0,
+            ),
           ),
-        )).then((_) => _loadBookmarks());
+        ).then((_) => _loadBookmarks());
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -347,13 +438,20 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             // Thumbnail
             Container(
-              width: 100, height: 70,
+              width: 100,
+              height: 70,
               decoration: BoxDecoration(
                 color: const Color(0xFFE8E8E8),
                 borderRadius: BorderRadius.circular(10),
@@ -364,24 +462,57 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: thumbUrl != null && thumbUrl.isNotEmpty
-                        ? Image.network('$apiBaseUrl/media/$thumbUrl', fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)))
-                        : const Center(child: Icon(Icons.ondemand_video_rounded, color: AppColors.grey)),
+                        ? CachedNetworkImage(
+                            imageUrl: '$apiBaseUrl/media/$thumbUrl',
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) => const Center(
+                              child: Icon(
+                                Icons.ondemand_video_rounded,
+                                color: AppColors.grey,
+                              ),
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.ondemand_video_rounded,
+                              color: AppColors.grey,
+                            ),
+                          ),
                   ),
                   Center(
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), shape: BoxShape.circle),
-                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                   Positioned(
-                    bottom: 4, right: 4,
+                    bottom: 4,
+                    right: 4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.72), borderRadius: BorderRadius.circular(4)),
-                      child: Text('${l['duration_minutes']}m',
-                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.72),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${l['duration_minutes']}m',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -393,23 +524,48 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l['title'] ?? 'Lesson',
-                      maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
+                  Text(
+                    l['title'] ?? 'Lesson',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                      height: 1.2,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(l['course_title'] ?? 'Course',
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
+                  Text(
+                    l['course_title'] ?? 'Course',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMedium,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(l['chapter_title'] ?? 'Chapter',
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                  Text(
+                    l['chapter_title'] ?? 'Chapter',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMedium,
+                    ),
+                  ),
                 ],
               ),
             ),
             // Remove button
             IconButton(
-              icon: const Icon(Icons.bookmark_remove_rounded, color: Colors.amber, size: 24),
+              icon: const Icon(
+                Icons.bookmark_remove_rounded,
+                color: Colors.amber,
+                size: 24,
+              ),
               onPressed: () => _removeLessonBookmark(l['id']),
             ),
           ],
@@ -437,9 +593,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
 
     return InkWell(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => CourseDetailScreen(course: courseObj, index: 0),
-        )).then((_) => _loadBookmarks());
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CourseDetailScreen(course: courseObj, index: 0),
+          ),
+        ).then((_) => _loadBookmarks());
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -447,26 +606,48 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             // Thumbnail
             Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary.withOpacity(0.7), AppColors.primary],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary.withOpacity(0.7),
+                    AppColors.primary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: thumbUrl != null && thumbUrl.isNotEmpty
-                    ? Image.network('$apiBaseUrl/media/$thumbUrl', fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.school_rounded, color: Colors.white, size: 30))
-                    : const Icon(Icons.school_rounded, color: Colors.white, size: 30),
+                    ? CachedNetworkImage(
+                        imageUrl: '$apiBaseUrl/media/$thumbUrl',
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.school_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.school_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      ),
               ),
             ),
             const SizedBox(width: 14),
@@ -476,21 +657,51 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                    child: Text(c['category_name'] ?? 'Category',
-                        style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w800)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      c['category_name'] ?? 'Category',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
-                  Text(c['title'] ?? 'Course',
-                      maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
+                  Text(
+                    c['title'] ?? 'Course',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                      height: 1.2,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.play_circle_outline, size: 12, color: AppColors.textMedium),
+                      const Icon(
+                        Icons.play_circle_outline,
+                        size: 12,
+                        color: AppColors.textMedium,
+                      ),
                       const SizedBox(width: 4),
-                      Text('${c['lesson_count'] ?? 0} lessons', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                      Text(
+                        '${c['lesson_count'] ?? 0} lessons',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMedium,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -498,7 +709,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
             ),
             // Remove button
             IconButton(
-              icon: const Icon(Icons.bookmark_remove_rounded, color: Colors.amber, size: 24),
+              icon: const Icon(
+                Icons.bookmark_remove_rounded,
+                color: Colors.amber,
+                size: 24,
+              ),
               onPressed: () => _removeCourseBookmark(c['id']),
             ),
           ],
@@ -507,7 +722,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildEmptyState({required IconData icon, required String title, required String subtitle}) {
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -515,16 +734,33 @@ class _BookmarksScreenState extends State<BookmarksScreen> with SingleTickerProv
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 100, height: 100,
-              decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), shape: BoxShape.circle),
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, size: 48, color: Colors.amber),
             ),
             const SizedBox(height: 24),
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5)),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textMedium,
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       ),

@@ -43,7 +43,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       final email = session?['email'] ?? '';
 
       if (email.isEmpty) {
-        _showSnack('Could not verify identity. Please log in again.', isError: true);
+        _showSnack(
+          'Could not verify identity. Please log in again.',
+          isError: true,
+        );
         setState(() => _isLoading = false);
         return;
       }
@@ -78,12 +81,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   void _showSnack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? AppColors.error : AppColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -93,7 +98,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(
         title: const Text(
           'Change Password',
-          style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
@@ -115,7 +124,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     color: AppColors.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 36),
+                  child: const Icon(
+                    Icons.lock_reset_rounded,
+                    color: AppColors.primary,
+                    size: 36,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -147,7 +160,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 prefixIcon: Icons.lock_outline,
                 isPassword: true,
                 controller: _currentPasswordController,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter your current password' : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Please enter your current password'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -160,9 +175,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 isPassword: true,
                 controller: _newPasswordController,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please enter a new password';
-                  if (v.length < 6) return 'Password must be at least 6 characters';
-                  if (v == _currentPasswordController.text) return 'New password must be different';
+                  if (v == null || v.isEmpty)
+                    return 'Please enter a new password';
+                  if (v.length < 6)
+                    return 'Password must be at least 6 characters';
+                  if (v == _currentPasswordController.text)
+                    return 'New password must be different';
                   return null;
                 },
               ),
@@ -177,7 +195,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 isPassword: true,
                 controller: _confirmPasswordController,
                 validator: (v) {
-                  if (v != _newPasswordController.text) return 'Passwords do not match';
+                  if (v != _newPasswordController.text)
+                    return 'Passwords do not match';
                   return null;
                 },
               ),

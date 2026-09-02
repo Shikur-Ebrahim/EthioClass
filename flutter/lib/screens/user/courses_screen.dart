@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
 import '../../models/course_model.dart';
@@ -44,7 +45,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         CourseService().getCategories(),
@@ -58,15 +62,21 @@ class _CoursesScreenState extends State<CoursesScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Could not load courses.'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = 'Could not load courses.';
+          _loading = false;
+        });
     }
   }
 
   List<Course> get _filtered {
     var list = _allCourses.where((c) {
-      final matchCat = _selectedCategoryId == null || c.categoryId == _selectedCategoryId;
+      final matchCat =
+          _selectedCategoryId == null || c.categoryId == _selectedCategoryId;
       final q = _searchQuery.toLowerCase();
-      final matchSearch = q.isEmpty ||
+      final matchSearch =
+          q.isEmpty ||
           c.title.toLowerCase().contains(q) ||
           c.description.toLowerCase().contains(q) ||
           c.instructorName.toLowerCase().contains(q);
@@ -91,9 +101,14 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   static const _catColors = [
-    Color(0xFF4F63D2), Color(0xFFE85D04), Color(0xFF2D9CDB),
-    Color(0xFF27AE60), Color(0xFF9B51E0), Color(0xFFEB5757),
-    Color(0xFF219653), Color(0xFFF2994A),
+    Color(0xFF4F63D2),
+    Color(0xFFE85D04),
+    Color(0xFF2D9CDB),
+    Color(0xFF27AE60),
+    Color(0xFF9B51E0),
+    Color(0xFFEB5757),
+    Color(0xFF219653),
+    Color(0xFFF2994A),
   ];
 
   Color _colorForIndex(int i) => _catColors[i % _catColors.length];
@@ -114,13 +129,17 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   void _openCourse(Course course, int i, {bool autoPlay = false}) async {
     if (!autoPlay) {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => CourseDetailScreen(
-          course: course, index: i,
-          categoryName: course.categoryName ?? 'Course',
-          autoPlayLast: false,
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CourseDetailScreen(
+            course: course,
+            index: i,
+            categoryName: course.categoryName ?? 'Course',
+            autoPlayLast: false,
+          ),
         ),
-      ));
+      );
       return;
     }
 
@@ -155,7 +174,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
       }
 
       final lessons = await CourseService().getLessons(targetChapter.id);
-      final safeIndex = targetLessonIndex < lessons.length ? targetLessonIndex : 0;
+      final safeIndex = targetLessonIndex < lessons.length
+          ? targetLessonIndex
+          : 0;
 
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
@@ -181,9 +202,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not resume course: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not resume course: $e')));
     }
   }
 
@@ -196,17 +217,18 @@ class _CoursesScreenState extends State<CoursesScreen> {
         body: _loading
             ? const Center(child: EthioClassLoading())
             : _error != null
-                ? _buildError()
-                : _filtered.isEmpty
-                    ? _buildEmpty()
-                    : _buildScrollableBody(),
+            ? _buildError()
+            : _filtered.isEmpty
+            ? _buildEmpty()
+            : _buildScrollableBody(),
       ),
     );
   }
 
   Course? _getLastWatchedCourse() {
     if (_searchQuery.isNotEmpty || _selectedCategoryId != null) return null;
-    final lastCourseId = ProgressService.instance.getGlobalLastWatchedCourseId();
+    final lastCourseId = ProgressService.instance
+        .getGlobalLastWatchedCourseId();
     if (lastCourseId != null) {
       try {
         return _allCourses.firstWhere((c) => c.id == lastCourseId);
@@ -227,13 +249,24 @@ class _CoursesScreenState extends State<CoursesScreen> {
           color: const Color(0xFFE8F5E9), // Light green background
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFF81C784), width: 1.5),
-          boxShadow: [BoxShadow(color: const Color(0xFF81C784).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF81C784).withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: _buildThumbnail(course, AppColors.primary, width: 70, height: 70),
+              child: _buildThumbnail(
+                course,
+                AppColors.primary,
+                width: 70,
+                height: 70,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -242,14 +275,25 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 children: [
                   Text(
                     course.title,
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  const Text('Jump back into your last lesson', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                  const Text(
+                    'Jump back into your last lesson',
+                    style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                  ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(6),
@@ -257,12 +301,23 @@ class _CoursesScreenState extends State<CoursesScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.play_arrow_rounded, size: 14, color: AppColors.navy),
+                        Icon(
+                          Icons.play_arrow_rounded,
+                          size: 14,
+                          color: AppColors.navy,
+                        ),
                         SizedBox(width: 4),
-                        Text('Resume', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.navy)),
+                        Text(
+                          'Resume',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                          ),
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -303,11 +358,22 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Explore Courses',
-                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                            const Text(
+                              'Explore Courses',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                             const SizedBox(height: 3),
-                            Text('${_allCourses.length} courses available',
-                                style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                            Text(
+                              '${_allCourses.length} courses available',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white60,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -318,8 +384,16 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         ),
                         child: Row(
                           children: [
-                            _toggleBtn(Icons.view_list_rounded, !_isGridView, () => setState(() => _isGridView = false)),
-                            _toggleBtn(Icons.grid_view_rounded, _isGridView, () => setState(() => _isGridView = true)),
+                            _toggleBtn(
+                              Icons.view_list_rounded,
+                              !_isGridView,
+                              () => setState(() => _isGridView = false),
+                            ),
+                            _toggleBtn(
+                              Icons.grid_view_rounded,
+                              _isGridView,
+                              () => setState(() => _isGridView = true),
+                            ),
                           ],
                         ),
                       ),
@@ -340,15 +414,32 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search courses, instructors...',
-                        hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                        hintStyle: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: Colors.white54,
+                          size: 20,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? GestureDetector(
-                                onTap: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
-                                child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18))
+                                onTap: () {
+                                  _searchCtrl.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white54,
+                                  size: 18,
+                                ),
+                              )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -375,21 +466,31 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   itemBuilder: (_, i) {
                     final isAll = i == 0;
                     final cat = isAll ? null : _categories[i - 1];
-                    final selected = isAll ? _selectedCategoryId == null : _selectedCategoryId == cat!.id;
+                    final selected = isAll
+                        ? _selectedCategoryId == null
+                        : _selectedCategoryId == cat!.id;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedCategoryId = isAll ? null : cat!.id),
+                      onTap: () => setState(
+                        () => _selectedCategoryId = isAll ? null : cat!.id,
+                      ),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primary : Colors.white.withOpacity(0.12),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.white.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Text(
                             isAll ? 'All' : cat!.name,
                             style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               color: selected ? AppColors.navy : Colors.white70,
                             ),
                           ),
@@ -404,23 +505,42 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Row(
                   children: [
-                    Text('${_filtered.length} course${_filtered.length == 1 ? '' : 's'}',
-                        style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                    Text(
+                      '${_filtered.length} course${_filtered.length == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 12,
+                      ),
+                    ),
                     const Spacer(),
-                    const Icon(Icons.sort_rounded, color: Colors.white60, size: 16),
+                    const Icon(
+                      Icons.sort_rounded,
+                      color: Colors.white60,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _sortBy,
                         dropdownColor: AppColors.navy,
                         iconEnabledColor: Colors.white60,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                         items: const [
-                          DropdownMenuItem(value: 'newest', child: Text('Newest')),
-                          DropdownMenuItem(value: 'popular', child: Text('Popular')),
+                          DropdownMenuItem(
+                            value: 'newest',
+                            child: Text('Newest'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'popular',
+                            child: Text('Popular'),
+                          ),
                           DropdownMenuItem(value: 'az', child: Text('A → Z')),
                         ],
-                        onChanged: (v) => setState(() => _sortBy = v ?? 'newest'),
+                        onChanged: (v) =>
+                            setState(() => _sortBy = v ?? 'newest'),
                       ),
                     ),
                   ],
@@ -442,7 +562,11 @@ class _CoursesScreenState extends State<CoursesScreen> {
           color: active ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: active ? AppColors.navy : Colors.white60, size: 20),
+        child: Icon(
+          icon,
+          color: active ? AppColors.navy : Colors.white60,
+          size: 20,
+        ),
       ),
     );
   }
@@ -467,25 +591,48 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       padding: EdgeInsets.fromLTRB(4, 0, 0, 4),
                       child: Row(
                         children: [
-                          Icon(Icons.history_rounded, size: 18, color: AppColors.primary),
+                          Icon(
+                            Icons.history_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(width: 8),
-                          Text('Continue Learning', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                          Text(
+                            'Continue Learning',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textDark,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     _buildContinueLearningCard(lastCourse),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(4, 16, 0, 8),
-                      child: Text('All Courses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                      child: Text(
+                        'All Courses',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textDark,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          
+
           if (!_isGridView)
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(16, lastCourse == null ? 16 : 8, 16, 100),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                lastCourse == null ? 16 : 8,
+                16,
+                100,
+              ),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (_, i) => Padding(
@@ -498,14 +645,22 @@ class _CoursesScreenState extends State<CoursesScreen> {
             )
           else
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(16, lastCourse == null ? 16 : 8, 16, 100),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                lastCourse == null ? 16 : 8,
+                16,
+                100,
+              ),
               sliver: SliverGrid(
                 delegate: SliverChildBuilderDelegate(
                   (_, i) => _buildGridCard(courses[i], i),
                   childCount: courses.length,
                 ),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.88,
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.88,
                 ),
               ),
             ),
@@ -522,12 +677,20 @@ class _CoursesScreenState extends State<CoursesScreen> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(20),
+              ),
               child: _buildThumbnail(course, color, width: 110, height: 110),
             ),
             Expanded(
@@ -539,42 +702,111 @@ class _CoursesScreenState extends State<CoursesScreen> {
                     if (course.categoryName != null)
                       Container(
                         margin: const EdgeInsets.only(bottom: 5),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
-                        child: Text(course.categoryName!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          course.categoryName!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
                       ),
-                    Text(course.title,
-                        maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
+                    Text(
+                      course.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                        height: 1.2,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     if (course.instructorName.isNotEmpty)
-                      Row(children: [
-                        const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.grey),
-                        const SizedBox(width: 3),
-                        Expanded(child: Text(course.instructorName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, color: AppColors.grey))),
-                      ]),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline_rounded,
+                            size: 12,
+                            color: AppColors.grey,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              course.instructorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         if (course.lessonCount > 0) ...[
-                          const Icon(Icons.play_circle_outline_rounded, size: 12, color: AppColors.primary),
+                          const Icon(
+                            Icons.play_circle_outline_rounded,
+                            size: 12,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 3),
-                          Text('${course.lessonCount} lessons', style: const TextStyle(fontSize: 11, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
+                          Text(
+                            '${course.lessonCount} lessons',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textMedium,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                         ],
                         if (course.durationMinutes > 0) ...[
-                          const Icon(Icons.access_time_rounded, size: 12, color: AppColors.grey),
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 12,
+                            color: AppColors.grey,
+                          ),
                           const SizedBox(width: 3),
-                          Text(_formatDuration(course.durationMinutes), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                          Text(
+                            _formatDuration(course.durationMinutes),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
                         ],
                         const Spacer(),
                         if (course.studentCount > 0)
-                          Row(children: [
-                            const Icon(Icons.group_outlined, size: 12, color: AppColors.grey),
-                            const SizedBox(width: 3),
-                            Text(_formatCount(course.studentCount), style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
-                          ]),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.group_outlined,
+                                size: 12,
+                                color: AppColors.grey,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                _formatCount(course.studentCount),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMedium,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ],
@@ -583,7 +815,11 @@ class _CoursesScreenState extends State<CoursesScreen> {
             ),
             const Padding(
               padding: EdgeInsets.only(right: 8),
-              child: Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 20),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -599,14 +835,27 @@ class _CoursesScreenState extends State<CoursesScreen> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 10, offset: const Offset(0, 3))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              child: _buildThumbnail(course, color, width: double.infinity, height: 110),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+              child: _buildThumbnail(
+                course,
+                color,
+                width: double.infinity,
+                height: 110,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
@@ -614,33 +863,82 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(course.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 1.2)),
+                  Text(
+                    course.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                      height: 1.2,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   if (course.instructorName.isNotEmpty)
-                    Text(course.instructorName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+                    Text(
+                      course.instructorName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.grey,
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       if (course.lessonCount > 0) ...[
-                        const Icon(Icons.play_circle_outline_rounded, size: 11, color: AppColors.primary),
+                        const Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 11,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 2),
-                        Text('${course.lessonCount} lessons', style: const TextStyle(fontSize: 10, color: AppColors.textMedium, fontWeight: FontWeight.w600)),
+                        Text(
+                          '${course.lessonCount} lessons',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMedium,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                       if (course.durationMinutes > 0) ...[
                         const SizedBox(width: 8),
-                        const Icon(Icons.access_time_rounded, size: 11, color: AppColors.grey),
+                        const Icon(
+                          Icons.access_time_rounded,
+                          size: 11,
+                          color: AppColors.grey,
+                        ),
                         const SizedBox(width: 2),
-                        Text(_formatDuration(course.durationMinutes), style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
+                        Text(
+                          _formatDuration(course.durationMinutes),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
                       ],
                       const Spacer(),
                       if (course.studentCount > 0)
-                        Row(children: [
-                          const Icon(Icons.group_outlined, size: 11, color: AppColors.grey),
-                          const SizedBox(width: 2),
-                          Text(_formatCount(course.studentCount), style: const TextStyle(fontSize: 10, color: AppColors.textMedium)),
-                        ]),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.group_outlined,
+                              size: 11,
+                              color: AppColors.grey,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              _formatCount(course.studentCount),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textMedium,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ],
@@ -652,75 +950,174 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
-  Widget _buildThumbnail(Course course, Color fallbackColor, {required double width, required double height}) {
+  Widget _buildThumbnail(
+    Course course,
+    Color fallbackColor, {
+    required double width,
+    required double height,
+  }) {
     if (course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty) {
       final url = course.thumbnailUrl!.startsWith('http')
           ? course.thumbnailUrl!
           : '$apiBaseUrl/media/${course.thumbnailUrl!}';
-      return Image.network(url, width: width, height: height, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _fallbackThumbnail(course, fallbackColor, width, height));
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorWidget: (context, url, error) =>
+            _fallbackThumbnail(course, fallbackColor, width, height),
+      );
     }
     return _fallbackThumbnail(course, fallbackColor, width, height);
   }
 
-  Widget _fallbackThumbnail(Course course, Color color, double width, double height) {
+  Widget _fallbackThumbnail(
+    Course course,
+    Color color,
+    double width,
+    double height,
+  ) {
     return Container(
-      width: width, height: height,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color, color.withOpacity(0.7)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(
+          colors: [color, color.withOpacity(0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
-      child: Stack(children: [
-        Positioned(right: -10, top: -10,
-            child: Container(width: 70, height: 70,
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), shape: BoxShape.circle))),
-        Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.play_circle_filled_rounded, color: Colors.white70, size: 32),
-          if (course.categoryName != null) ...[
-            const SizedBox(height: 4),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(course.categoryName!, textAlign: TextAlign.center, maxLines: 2,
-                  style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w600))),
-          ],
-        ])),
-      ]),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -10,
+            top: -10,
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.play_circle_filled_rounded,
+                  color: Colors.white70,
+                  size: 32,
+                ),
+                if (course.categoryName != null) ...[
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text(
+                      course.categoryName!,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildError() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Icon(Icons.wifi_off_rounded, size: 60, color: AppColors.grey),
-      const SizedBox(height: 12),
-      const Text('Could not load courses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-      const SizedBox(height: 6),
-      const Text('Check your connection and try again', style: TextStyle(color: AppColors.grey)),
-      const SizedBox(height: 20),
-      ElevatedButton.icon(
-        onPressed: _loadData,
-        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.navy,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-        icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w700)),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 60, color: AppColors.grey),
+          const SizedBox(height: 12),
+          const Text(
+            'Could not load courses',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Check your connection and try again',
+            style: TextStyle(color: AppColors.grey),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _loadData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.navy,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text(
+              'Retry',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
-    ]));
+    );
   }
 
   Widget _buildEmpty() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Icon(Icons.search_off_rounded, size: 60, color: AppColors.grey),
-      const SizedBox(height: 12),
-      Text(_searchQuery.isNotEmpty ? 'No courses match "$_searchQuery"' : 'No courses in this category',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-      const SizedBox(height: 20),
-      GestureDetector(
-        onTap: () => setState(() { _searchQuery = ''; _searchCtrl.clear(); _selectedCategoryId = null; }),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
-          child: const Text('Clear Filters', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy)),
-        ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off_rounded, size: 60, color: AppColors.grey),
+          const SizedBox(height: 12),
+          Text(
+            _searchQuery.isNotEmpty
+                ? 'No courses match "$_searchQuery"'
+                : 'No courses in this category',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => setState(() {
+              _searchQuery = '';
+              _searchCtrl.clear();
+              _selectedCategoryId = null;
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Clear Filters',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    ]));
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import '../../core/theme.dart';
@@ -147,10 +148,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 children: [
                   if (widget.category.imageUrl != null &&
                       widget.category.imageUrl!.isNotEmpty)
-                    Image.network(
-                      widget.category.imageUrl!,
+                    CachedNetworkImage(
+                      imageUrl: widget.category.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
+                      errorWidget: (context, url, error) =>
                           Container(color: widget.headerColor),
                     )
                   else
@@ -460,10 +461,10 @@ class _CourseTile extends StatelessWidget {
                 child:
                     course.thumbnailUrl != null &&
                         course.thumbnailUrl!.isNotEmpty
-                    ? Image.network(
-                        '$apiBaseUrl/media/${course.thumbnailUrl!}',
+                    ? CachedNetworkImage(
+                        imageUrl: '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorWidget: (context, url, error) => const Icon(
                           Icons.school_rounded,
                           color: Colors.white54,
                           size: 36,

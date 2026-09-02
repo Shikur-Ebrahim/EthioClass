@@ -18,7 +18,8 @@ class GuidanceFeedScreen extends StatefulWidget {
   State<GuidanceFeedScreen> createState() => _GuidanceFeedScreenState();
 }
 
-class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTickerProviderStateMixin {
+class _GuidanceFeedScreenState extends State<GuidanceFeedScreen>
+    with SingleTickerProviderStateMixin {
   late PageController _pageController;
   late int _currentIndex;
   bool _showOverlay = false;
@@ -30,23 +31,23 @@ class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTick
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    
+
     _animation = Tween<double>(begin: 0.0, end: -60.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
+
     _checkAndShowOverlay();
   }
-  
+
   Future<void> _checkAndShowOverlay() async {
     final prefs = await SharedPreferences.getInstance();
     int shownCount = prefs.getInt('guidance_feed_overlay_count') ?? 0;
-    
+
     if (shownCount < 3) {
       if (mounted) {
         setState(() {
@@ -103,7 +104,7 @@ class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTick
               );
             },
           ),
-          
+
           // Swipe Gesture Overlay
           if (_showOverlay)
             GestureDetector(
@@ -138,7 +139,9 @@ class _GuidanceFeedScreenState extends State<GuidanceFeedScreen> with SingleTick
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                            shadows: [
+                              Shadow(color: Colors.black54, blurRadius: 4),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 12),

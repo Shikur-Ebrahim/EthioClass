@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../config/api_config.dart';
@@ -755,10 +756,11 @@ class _CategoryCard extends StatelessWidget {
           children: [
             // Full background image
             if (hasImage)
-              Image.network(
-                cat.imageUrl!,
+              CachedNetworkImage(
+                imageUrl: cat.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: fallbackColor),
+                errorWidget: (context, url, error) =>
+                    Container(color: fallbackColor),
               )
             else
               Container(color: fallbackColor),
@@ -893,10 +895,10 @@ class _CourseCard extends StatelessWidget {
                 child:
                     course.thumbnailUrl != null &&
                         course.thumbnailUrl!.isNotEmpty
-                    ? Image.network(
-                        '$apiBaseUrl/media/${course.thumbnailUrl!}',
+                    ? CachedNetworkImage(
+                        imageUrl: '$apiBaseUrl/media/${course.thumbnailUrl!}',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorWidget: (context, url, error) =>
                             _fallbackThumbnail(cardColor),
                       )
                     : _fallbackThumbnail(cardColor),

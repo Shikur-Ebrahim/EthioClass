@@ -34,7 +34,10 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
       ..loadRequest(Uri.parse(widget.checkoutUrl));
 
     // Poll every 4 seconds to check payment success
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _verifyPayment());
+    _timer = Timer.periodic(
+      const Duration(seconds: 4),
+      (_) => _verifyPayment(),
+    );
   }
 
   Future<void> _verifyPayment() async {
@@ -84,7 +87,11 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
             ),
             child: Row(
               children: const [
-                Icon(Icons.lock_outline_rounded, size: 12, color: AppColors.primary),
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 12,
+                  color: AppColors.primary,
+                ),
                 SizedBox(width: 4),
                 Text(
                   'Secured by Chapa',
@@ -99,11 +106,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-        ],
-      ),
+      body: Stack(children: [WebViewWidget(controller: _controller)]),
     );
   }
 }

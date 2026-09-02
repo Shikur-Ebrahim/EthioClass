@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
@@ -400,9 +401,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
                     else if (_videoLoading)
                       Stack(
                         fit: StackFit.expand,
-                        children: [
-                          _buildBannerImage(thumbUrl),
-                        ],
+                        children: [_buildBannerImage(thumbUrl)],
                       )
                     else
                       Stack(
@@ -1254,10 +1253,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen>
 
   Widget _buildBannerImage(String? thumbUrl) {
     if (thumbUrl != null && thumbUrl.isNotEmpty) {
-      return Image.network(
-        '$apiBaseUrl/media/$thumbUrl',
+      return CachedNetworkImage(
+        imageUrl: '$apiBaseUrl/media/$thumbUrl',
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _defaultBanner(),
+        errorWidget: (context, url, error) => _defaultBanner(),
       );
     }
     return _defaultBanner();

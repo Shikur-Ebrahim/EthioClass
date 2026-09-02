@@ -33,13 +33,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.currentName);
-    
+
     // Hide the dummy email we generate during signup so the user can enter a real one
     String initialEmail = widget.currentEmail;
-    if (initialEmail.endsWith('@ethioclass.com') && initialEmail.replaceAll('@ethioclass.com', '').length == 10) {
+    if (initialEmail.endsWith('@ethioclass.com') &&
+        initialEmail.replaceAll('@ethioclass.com', '').length == 10) {
       initialEmail = '';
     }
-    
+
     _emailController = TextEditingController(text: initialEmail);
     _phoneController = TextEditingController(text: widget.currentPhone);
   }
@@ -93,12 +94,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   void _showSnack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? AppColors.error : AppColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -106,8 +109,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Personal Information',
-            style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Personal Information',
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: AppColors.surface,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
@@ -127,7 +136,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     color: AppColors.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, size: 40, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.person,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -138,7 +151,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 hint: 'Enter your full name',
                 prefixIcon: Icons.person_outline,
                 controller: _nameController,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter your name' : null,
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Please enter your name' : null,
               ),
               const SizedBox(height: 20),
 
@@ -149,7 +163,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 controller: _phoneController,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter your phone number' : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Please enter your phone number'
+                    : null,
               ),
               const SizedBox(height: 20),
 

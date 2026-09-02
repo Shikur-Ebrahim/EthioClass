@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
@@ -530,10 +531,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                         // Course banner image via media proxy
                         if (widget.course.thumbnailUrl != null &&
                             widget.course.thumbnailUrl!.isNotEmpty)
-                          Image.network(
-                            '$apiBaseUrl/media/${widget.course.thumbnailUrl!}',
+                          CachedNetworkImage(
+                            imageUrl:
+                                '$apiBaseUrl/media/${widget.course.thumbnailUrl!}',
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorWidget: (context, url, error) => Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
@@ -1848,10 +1850,10 @@ class _ChapterTile extends StatelessWidget {
                 child:
                     (chapter.thumbnailUrl != null &&
                         chapter.thumbnailUrl!.isNotEmpty)
-                    ? Image.network(
-                        '$apiBaseUrl/media/${chapter.thumbnailUrl!}',
+                    ? CachedNetworkImage(
+                        imageUrl: '$apiBaseUrl/media/${chapter.thumbnailUrl!}',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorWidget: (context, url, error) => Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [

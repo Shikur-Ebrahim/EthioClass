@@ -51,7 +51,8 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
           if (mounted) {
             setState(() {
               if (errMsg == 'daily_limit_reached') {
-                _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+                _error =
+                    'The AI reached its daily limit. Please try again tomorrow! 🙏';
               } else {
                 _error = 'AI Error: $errMsg';
               }
@@ -70,7 +71,8 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
         // Daily limit reached
         if (mounted) {
           setState(() {
-            _error = 'The AI reached its daily limit. Please try again tomorrow! 🙏';
+            _error =
+                'The AI reached its daily limit. Please try again tomorrow! 🙏';
             _isLoading = false;
           });
         }
@@ -88,7 +90,8 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Could not connect to AI service. Please try again next time!';
+          _error =
+              'Could not connect to AI service. Please try again next time!';
           _isLoading = false;
         });
       }
@@ -119,7 +122,10 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
                 height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF2196F3), Color(0xFF9C27B0)], // Blue to Purple
+                    colors: [
+                      Color(0xFF2196F3),
+                      Color(0xFF9C27B0),
+                    ], // Blue to Purple
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -181,7 +187,10 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
                     SizedBox(height: 8),
                     Text(
                       'Generating a tailored explanation',
-                      style: TextStyle(color: AppColors.textMedium, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -198,7 +207,15 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             )
@@ -216,9 +233,18 @@ class _AIExplanationSheetState extends State<AIExplanationSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Got it!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              child: const Text(
+                'Got it!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
         ],
@@ -264,14 +290,19 @@ class _TypewriterMarkdownState extends State<TypewriterMarkdown> {
   @override
   Widget build(BuildContext context) {
     return MarkdownBody(
-      data: _displayedText + (_isAnimating ? ' 🔵' : ''), // Blinking cursor effect
+      data:
+          _displayedText +
+          (_isAnimating ? ' 🔵' : ''), // Blinking cursor effect
       styleSheet: MarkdownStyleSheet(
         p: const TextStyle(
           fontSize: 15,
           height: 1.6,
           color: AppColors.textDark,
         ),
-        strong: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        strong: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme.dart';
 import 'personal_info_screen.dart';
 import 'settings_screen.dart';
@@ -108,7 +109,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'S',
+                      widget.userName.isNotEmpty
+                          ? widget.userName[0].toUpperCase()
+                          : 'S',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -124,7 +127,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.userName.isNotEmpty ? widget.userName : 'Student',
+                        widget.userName.isNotEmpty
+                            ? widget.userName
+                            : 'Student',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -133,8 +138,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       if (widget.userEmail.isNotEmpty &&
-                          !(widget.userEmail.endsWith('@ethioclass.com') && 
-                            widget.userEmail.replaceAll('@ethioclass.com', '').length == 10))
+                          !(widget.userEmail.endsWith('@ethioclass.com') &&
+                              widget.userEmail
+                                      .replaceAll('@ethioclass.com', '')
+                                      .length ==
+                                  10))
                         Text(
                           widget.userEmail,
                           style: const TextStyle(
@@ -148,7 +156,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (widget.userName.isEmpty) {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => _hasRegisteredDevice ? const LoginScreen() : const SignupScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => _hasRegisteredDevice
+                                    ? const LoginScreen()
+                                    : const SignupScreen(),
+                              ),
                             );
                             return;
                           }
@@ -168,7 +180,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              widget.userName.isEmpty ? (_hasRegisteredDevice ? 'Log In' : 'Create Account') : 'Edit Profile',
+                              widget.userName.isEmpty
+                                  ? (_hasRegisteredDevice
+                                        ? 'Log In'
+                                        : 'Create Account')
+                                  : 'Edit Profile',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -176,8 +192,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.arrow_forward_ios_rounded,
-                                size: 10, color: Color(0xFFFFB800)),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: Color(0xFFFFB800),
+                            ),
                           ],
                         ),
                       ),
@@ -216,125 +235,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          
+
           // Guidance Videos Grid Section
           Expanded(
             child: _isLoading
                 ? const Center(child: EthioClassLoading())
                 : _videos.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No guidance videos yet.',
-                          style: TextStyle(color: AppColors.textMedium),
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                ? const Center(
+                    child: Text(
+                      'No guidance videos yet.',
+                      style: TextStyle(color: AppColors.textMedium),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.7, // Taller items for video thumbnails
+                          childAspectRatio:
+                              0.7, // Taller items for video thumbnails
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),
-                        itemCount: _videos.length,
-                        itemBuilder: (context, index) {
-                          final video = _videos[index];
-                          final thumbUrl = video.thumbnailUrl.startsWith('http') 
-                            ? video.thumbnailUrl 
-                            : '$apiBaseUrl/media/${video.thumbnailUrl}';
-                            
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GuidanceFeedScreen(
-                                    videos: _videos,
-                                    initialIndex: index,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  // Thumbnail Image
-                                  Container(
-                                    color: Colors.grey[300],
-                                    child: video.thumbnailUrl.isNotEmpty
-                                      ? Image.network(
-                                          thumbUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Center(
-                                            child: Icon(Icons.video_library, color: Colors.grey, size: 40),
-                                          ),
-                                        )
-                                      : const Center(
-                                          child: Icon(Icons.video_library, color: Colors.grey, size: 40),
-                                        ),
-                                  ),
-                                  // Dark Gradient Overlay
-                                  Container(
-                                    decoration: const BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black87,
-                                        ],
-                                        stops: [0.6, 1.0],
-                                      ),
-                                    ),
-                                  ),
-                                  // Play icon at center
-                                  const Center(
-                                    child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 48),
-                                  ),
-                                  // Title and Number at bottom
-                                  Positioned(
-                                    bottom: 12,
-                                    left: 12,
-                                    right: 12,
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundColor: AppColors.primary,
-                                          radius: 10,
-                                          child: Text(
-                                            '${video.orderIndex}',
-                                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            video.title,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                    itemCount: _videos.length,
+                    itemBuilder: (context, index) {
+                      final video = _videos[index];
+                      final thumbUrl = video.thumbnailUrl.startsWith('http')
+                          ? video.thumbnailUrl
+                          : '$apiBaseUrl/media/${video.thumbnailUrl}';
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GuidanceFeedScreen(
+                                videos: _videos,
+                                initialIndex: index,
                               ),
                             ),
                           );
                         },
-                      ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // Thumbnail Image
+                              Container(
+                                color: Colors.grey[300],
+                                child: video.thumbnailUrl.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: thumbUrl,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (context, url, error) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.video_library,
+                                                color: Colors.grey,
+                                                size: 40,
+                                              ),
+                                            ),
+                                      )
+                                    : const Center(
+                                        child: Icon(
+                                          Icons.video_library,
+                                          color: Colors.grey,
+                                          size: 40,
+                                        ),
+                                      ),
+                              ),
+                              // Dark Gradient Overlay
+                              Container(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black87,
+                                    ],
+                                    stops: [0.6, 1.0],
+                                  ),
+                                ),
+                              ),
+                              // Play icon at center
+                              const Center(
+                                child: Icon(
+                                  Icons.play_circle_fill,
+                                  color: Colors.white70,
+                                  size: 48,
+                                ),
+                              ),
+                              // Title and Number at bottom
+                              Positioned(
+                                bottom: 12,
+                                left: 12,
+                                right: 12,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: AppColors.primary,
+                                      radius: 10,
+                                      child: Text(
+                                        '${video.orderIndex}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        video.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 }
-
-
